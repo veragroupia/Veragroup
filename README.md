@@ -20,18 +20,20 @@ Abra `http://localhost:8080`.
 
 1. **WhatsApp:** coloque o número comercial em `assets/js/config.js` (`whatsapp: '5511...'`). Sem ele, os botões levam para o formulário, e o formulário abre o WhatsApp para a pessoa escolher o contato.
 2. **Vídeos:** rode `sh scripts/baixar-videos.sh` para trazer os dois vídeos do Higgsfield para `assets/video/`. Enquanto isso não acontece, o site usa o endereço do CDN do Higgsfield.
-3. **Prévia do link:** com o domínio definido, troque `assets/img/og.jpg` no `<meta property="og:image">` do `index.html` pelo endereço completo (`https://seudominio.com.br/assets/img/og.jpg`). O WhatsApp só mostra a imagem com endereço completo.
+3. **Prévia do link:** o `<meta property="og:image">` do `index.html` aponta para `https://vera-group.vercel.app/assets/img/og.jpg`. Ao ligar o domínio próprio, troque esse endereço, porque o WhatsApp só mostra a imagem com endereço completo.
 
-## Publicar na Vercel
+## Onde está no ar
 
-Importe o repositório como projeto novo, sem framework e sem comando de build. O `vercel.json` já cuida de cache e cabeçalhos.
+Projeto `vera-group` na Vercel, ligado a este repositório: **https://vera-group.vercel.app**
+
+Sem framework e sem comando de build. O `vercel.json` cuida de cache e cabeçalhos.
 
 ## Link personalizado para prospecção
 
 A página aceita três parâmetros. O Maestro pode montar esse link em cada mensagem:
 
 ```
-https://seudominio.com.br/?empresa=Clínica%20Sorriso&nicho=dentista&cidade=Itu
+https://vera-group.vercel.app/?empresa=Clínica%20Sorriso&nicho=dentista&cidade=Itu
 ```
 
 O que muda:
