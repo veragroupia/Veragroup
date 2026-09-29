@@ -334,9 +334,19 @@ function mensagemPadrao(assunto) {
     if (cid && cid !== 'Outra') msg += `, de ${cid}`;
     msg += `. Preciso de ${precisa}. Vi o portfólio de vocês.`;
 
-    aviso.textContent = numeroWhats ? 'Abrindo o WhatsApp com a mensagem pronta.' : 'Abrindo o WhatsApp. Escolha a conversa da Vera Group para enviar.';
+    // Link de verdade, clicado no mesmo gesto: abre o WhatsApp em qualquer navegador,
+    // inclusive dentro do proprio WhatsApp. O aviso deixa o link a mao se nada abrir.
     const url = linkWhats(msg);
-    const janela = window.open(url, '_blank', 'noopener');
-    if (!janela) location.href = url;
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = 'abrir o WhatsApp';
+    aviso.replaceChildren(
+      numeroWhats ? 'Mensagem pronta. Se nada abriu, toque para ' : 'Mensagem pronta. Escolha a conversa da Vera Group ou toque para ',
+      link,
+      '.'
+    );
+    link.click();
   });
 })();

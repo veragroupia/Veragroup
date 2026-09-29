@@ -179,7 +179,8 @@ button { cursor: pointer; }
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 50;
-  height: var(--topo);
+  height: calc(var(--topo) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   transition: background-color .3s, border-color .3s;
   border-bottom: 1px solid transparent;
 }
@@ -241,8 +242,8 @@ button { cursor: pointer; }
 /* ---------- abertura ---------- */
 .abertura {
   position: relative;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: min(100vh, 1000px);
+  min-height: min(100svh, 1000px);
   display: grid;
   align-items: end;
   padding: calc(var(--topo) + 40px) 0 clamp(28px, 4.5vw, 56px);
@@ -1104,6 +1105,7 @@ circle.mapa__pulso { fill: var(--sinal); opacity: .35; }
 .formulario .botao { margin-top: 8px; min-height: 58px; font-size: 16.5px; }
 .formulario__aviso { min-height: 1.4em; margin: 0; color: var(--noite-fraco); font-size: 11.5px; text-transform: none; letter-spacing: .02em; }
 .formulario__aviso.erro { color: #F08A73; }
+.formulario__aviso a { color: var(--noite-texto); text-underline-offset: 3px; }
 
 /* ---------- rodape ---------- */
 .rodape { background: var(--noite); color: var(--noite-texto); padding: 0 0 calc(28px + env(safe-area-inset-bottom)); }
@@ -1157,12 +1159,11 @@ circle.mapa__pulso { fill: var(--sinal); opacity: .35; }
 
 /* ---------- entrada ao rolar ---------- */
 .js [data-revela] {
-  opacity: 0;
-  transform: translateY(22px);
-  transition: opacity .9s var(--curva), transform .9s var(--curva);
+  transform: translateY(28px);
+  transition: transform 1s var(--curva);
   transition-delay: var(--atraso, 0s);
 }
-.js [data-revela].revelado { opacity: 1; transform: none; }
+.js [data-revela].revelado { transform: none; }
 
 /* ---------- responsivo ---------- */
 @media (max-width: 1100px) {
@@ -1181,6 +1182,7 @@ circle.mapa__pulso { fill: var(--sinal); opacity: .35; }
 @media (max-width: 860px) {
   :root { --topo: 58px; }
   .topo__nav { display: none; }
+  .abertura { min-height: 0; padding-top: calc(var(--topo) + 72px); }
   .abertura__base { grid-template-columns: minmax(0, 1fr); }
   .teste__grade, .regiao__grade, .perguntas__grade, .contato__grade,
   .giro, .painel, .vitrine, .cabeca-secao--dupla { grid-template-columns: minmax(0, 1fr); }
