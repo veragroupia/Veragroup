@@ -318,7 +318,7 @@ button { cursor: pointer; }
   stroke-width: 2.2;
   stroke-linecap: round;
 }
-.linha > .busca { display: inline-flex; }
+.linha > .busca { display: inline-flex; min-width: min(10.5em, 100%); }
 .busca__texto { white-space: pre; }
 .busca__cursor {
   width: 2px;
