@@ -1,0 +1,120 @@
+/*
+ * Tokens do design system da Vera Group.
+ * Tudo que é cor, tipo, espaço, raio, sombra, movimento e ponto de quebra
+ * nasce aqui. O Tailwind transforma cada token em classe (bg-ink, text-display-xl...).
+ * Pares de contraste aprovados: veja /design-system.
+ */
+
+@theme {
+  /* ---------- Cores ---------- */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-ink: #0e1116;          /* fundo das seções de impacto, texto principal */
+  --color-ink-2: #1a1f27;        /* cards sobre ink */
+  --color-ink-3: #2a303a;        /* bordas sobre ink (decorativas) */
+  --color-paper: #f6f4ef;        /* fundo principal */
+  --color-paper-2: #edeae3;      /* seções alternadas */
+  --color-white: #ffffff;        /* cards sobre paper */
+
+  --color-stone: #5f6673;        /* texto secundário no claro (5,26:1 no paper) */
+  --color-stone-on-ink: #a3a9b4; /* texto secundário no escuro (8,01:1) */
+  --color-line: #e4e1da;         /* divisórias decorativas */
+  --color-line-strong: #7c828c;  /* bordas de input e controles (3,52:1) */
+
+  --color-accent: #2f6bff;        /* marca: ícones, títulos grandes, anel de foco */
+  --color-accent-strong: #2458e8; /* botão primário e links no claro (5,25:1) */
+  --color-accent-deep: #1f4fd6;   /* hover do primário */
+  --color-accent-on-ink: #7fa2ff; /* links e destaques no escuro (7,67:1) */
+  --color-accent-tint: #e6edff;   /* fundo suave de destaque */
+
+  --color-accent-2: #19c37d;        /* WhatsApp e sucesso (sempre com texto ink) */
+  --color-accent-2-hover: #3ddc97;
+  --color-accent-2-strong: #0b7a4b; /* texto de sucesso sobre paper ou white */
+  --color-accent-2-tint: #dcf5e9;
+
+  --color-warn: #f2a33a;        /* destaques da seção de perda, sobre ink */
+  --color-warn-strong: #8f5500; /* texto de alerta no claro (5,51:1) */
+  --color-warn-tint: #fcecd6;
+
+  /* ---------- Tipografia ---------- */
+  --font-*: initial;
+  --font-display: var(--font-sora);
+  --font-sans: var(--font-inter);
+
+  --text-*: initial;
+  --text-display-2xl: clamp(2.25rem, 1.58rem + 2.96vw, 4.25rem);
+  --text-display-2xl--line-height: 1.05;
+  --text-display-2xl--letter-spacing: -0.03em;
+  --text-display-xl: clamp(1.75rem, 1.33rem + 1.85vw, 3rem);
+  --text-display-xl--line-height: 1.1;
+  --text-display-xl--letter-spacing: -0.025em;
+  --text-display-lg: clamp(1.375rem, 1.25rem + 0.56vw, 1.75rem);
+  --text-display-lg--line-height: 1.2;
+  --text-display-lg--letter-spacing: -0.015em;
+  --text-title: clamp(1.125rem, 1.08rem + 0.19vw, 1.25rem);
+  --text-title--line-height: 1.3;
+  --text-title--letter-spacing: -0.01em;
+  --text-body-lg: clamp(1.125rem, 1.08rem + 0.19vw, 1.25rem);
+  --text-body-lg--line-height: 1.55;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.5;
+  --text-eyebrow: 0.8125rem;
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.08em;
+  /* Modo apresentação: legível a 60 cm */
+  --text-stage: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+  --text-stage--line-height: 1.05;
+  --text-stage--letter-spacing: -0.03em;
+  --text-stage-body: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
+  --text-stage-body--line-height: 1.35;
+
+  /* ---------- Espaço (escala de 4 px) ---------- */
+  --spacing: 0.25rem;
+  --container-content: 75rem; /* 1200 px */
+  --container-wide: 85rem;    /* 1360 px */
+  --container-prose: 40rem;   /* 640 px */
+
+  /* ---------- Forma ---------- */
+  --radius-*: initial;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --shadow-*: initial;
+  --shadow-1: 0 1px 2px rgb(14 17 22 / 0.06), 0 2px 8px rgb(14 17 22 / 0.06);
+  --shadow-2: 0 2px 6px rgb(14 17 22 / 0.06), 0 12px 32px rgb(14 17 22 / 0.12);
+
+  /* ---------- Movimento ---------- */
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 200ms;
+  --duration-base: 320ms;
+  --duration-slow: 600ms;
+
+  /* ---------- Pontos de quebra (mobile-first) ---------- */
+  --breakpoint-*: initial;
+  --breakpoint-xs: 26.875rem; /* 430 */
+  --breakpoint-md: 48rem;     /* 768 */
+  --breakpoint-lg: 64rem;     /* 1024 */
+  --breakpoint-xl: 80rem;     /* 1280 */
+  --breakpoint-2xl: 90rem;    /* 1440 */
+  --breakpoint-3xl: 120rem;   /* 1920 */
+}
+
+/*
+ * Cores semânticas: mudam conforme o tema da seção.
+ * Use bg-bg, text-fg, text-muted, border-rule, bg-surface, text-link.
+ */
+@theme inline {
+  --color-bg: var(--tema-bg);
+  --color-fg: var(--tema-fg);
+  --color-muted: var(--tema-muted);
+  --color-rule: var(--tema-rule);
+  --color-surface: var(--tema-surface);
+  --color-link: var(--tema-link);
+}

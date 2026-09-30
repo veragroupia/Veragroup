@@ -1,0 +1,102 @@
+---
+/**
+ * Consentimento de cookies (LGPD). O analytics só carrega depois do "Aceitar".
+ * A escolha fica no próprio navegador (localStorage), nada vai para servidor.
+ */
+---
+
+<section class="cookies tema-escuro" aria-label="Aviso de cookies" data-cookies hidden data-sem-flutuante>
+  <p class="text-small">
+    Usamos cookies só para contar visitas e melhorar o site, e apenas se você deixar. <a href="/politica-de-privacidade" class="link">Saiba mais</a>.
+  </p>
+  <div class="mt-4 flex gap-2">
+    <button type="button" class="btn btn-primary btn-sm flex-1" data-cookies-aceitar>Aceitar</button>
+    <button type="button" class="btn btn-secondary btn-sm flex-1" data-cookies-recusar>Recusar</button>
+  </div>
+</section>
+
+<style>
+  .cookies {
+    position: fixed;
+    z-index: 60;
+    left: 1rem;
+    right: 1rem;
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    max-width: 26rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-ink-3);
+    box-shadow: var(--shadow-2);
+    animation: cookies-entra var(--duration-slow) var(--ease-out) both;
+  }
+  @media (width >= 48rem) {
+    .cookies {
+      left: 1.5rem;
+      right: auto;
+      bottom: 1.5rem;
+    }
+  }
+  @keyframes cookies-entra {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+  }
+</style>
+
+<script>
+  const CHAVE = 'vg-consentimento';
+  const banner = document.querySelector<HTMLElement>('[data-cookies]');
+
+  function ler(): string | null {
+    try {
+      return localStorage.getItem(CHAVE);
+    } catch {
+      return null;
+    }
+  }
+  function gravar(valor: 'aceito' | 'recusado') {
+    try {
+      localStorage.setItem(CHAVE, valor);
+    } catch {
+      /* navegador sem armazenamento: vale só para esta visita */
+    }
+  }
+
+  let analyticsCarregado = false;
+  function carregarAnalytics() {
+    if (analyticsCarregado || !/vercel\.app$|veragroup/.test(location.hostname)) return;
+    analyticsCarregado = true;
+    // Vercel Web Analytics (sem cookies, dados agregados).
+    const w = window as unknown as { va?: (...a: unknown[]) => void; vaq?: unknown[] };
+    w.va = w.va || ((...a: unknown[]) => (w.vaq = w.vaq || []).push(a));
+    const s = document.createElement('script');
+    s.defer = true;
+    s.src = '/_vercel/insights/script.js';
+    document.head.appendChild(s);
+  }
+
+  function mostrar() {
+    if (!banner) return;
+    banner.hidden = false;
+    document.dispatchEvent(new Event('vera:bloqueios'));
+  }
+  function esconder() {
+    if (banner) banner.hidden = true;
+  }
+
+  const escolha = ler();
+  if (escolha === 'aceito') carregarAnalytics();
+  else if (!escolha) setTimeout(mostrar, 1200);
+
+  banner?.querySelector('[data-cookies-aceitar]')?.addEventListener('click', () => {
+    gravar('aceito');
+    esconder();
+    carregarAnalytics();
+  });
+  banner?.querySelector('[data-cookies-recusar]')?.addEventListener('click', () => {
+    gravar('recusado');
+    esconder();
+  });
+  document.querySelectorAll('[data-cookies-abrir]').forEach((b) => b.addEventListener('click', mostrar));
+</script>

@@ -1,0 +1,226 @@
+---
+/**
+ * Carrossel com rolagem nativa + snap: arraste com o dedo, roda do mouse,
+ * setas do teclado e botões. Cada filho do slot deve ser um <li class="carousel-item">.
+ */
+interface Props {
+  label: string;
+  total: number;
+  class?: string;
+  /** Largura de cada item: 'case' (padrão) ou 'tela' (galeria). */
+  size?: 'case' | 'tela' | 'estreito';
+}
+const { label, total, class: className, size = 'case' } = Astro.props;
+---
+
+<div class:list={['carousel', `carousel-${size}`, className]} data-carousel role="region" aria-roledescription="carrossel" aria-label={label}>
+  <ul class="carousel-trilho" data-carousel-trilho tabindex="0" aria-label={`${label}: role para os lados`}>
+    <slot />
+  </ul>
+  <div class="carousel-controles" data-carousel-controles>
+    <p class="text-small text-muted tabular-nums" aria-live="polite">
+      <span data-carousel-atual>1</span> de {total}
+    </p>
+    <div class="flex gap-2">
+      <button type="button" class="carousel-botao" data-carousel-anterior aria-label="Anterior">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+      </button>
+      <button type="button" class="carousel-botao" data-carousel-proximo aria-label="Próximo">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .carousel {
+    --item: 86%;
+    --gap: 1rem;
+  }
+  .carousel-tela {
+    --item: 78%;
+  }
+  .carousel-estreito {
+    --item: 64%;
+  }
+  @media (width >= 48rem) {
+    .carousel {
+      --item: 58%;
+      --gap: 1.5rem;
+    }
+    .carousel-tela {
+      --item: 70%;
+    }
+    .carousel-estreito {
+      --item: 34%;
+    }
+  }
+  @media (width >= 64rem) {
+    .carousel {
+      --item: 44%;
+    }
+    .carousel-tela {
+      --item: 62%;
+    }
+    .carousel-estreito {
+      --item: 26%;
+    }
+  }
+  .carousel-trilho {
+    display: flex;
+    gap: var(--gap);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    scrollbar-width: none;
+    padding-block: 0.5rem 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .carousel-trilho::-webkit-scrollbar {
+    display: none;
+  }
+  .carousel-trilho.is-arrastando {
+    scroll-snap-type: none;
+    cursor: grabbing;
+    user-select: none;
+  }
+  .carousel-trilho.is-arrastando :global(a) {
+    pointer-events: none;
+  }
+  .carousel-trilho :global(.carousel-item) {
+    flex: 0 0 var(--item);
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+  .carousel-controles {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+  .carousel-botao {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--tema-fg);
+    color: var(--tema-fg);
+    background: transparent;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .carousel-botao:hover {
+    background: var(--tema-fg);
+    color: var(--tema-bg);
+  }
+  .carousel-botao:active {
+    transform: scale(0.94);
+  }
+  .carousel-botao:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--tema-fg);
+  }
+</style>
+
+<script>
+  function iniciar(raiz: HTMLElement) {
+    const trilho = raiz.querySelector<HTMLElement>('[data-carousel-trilho]')!;
+    const itens = [...trilho.querySelectorAll<HTMLElement>('.carousel-item')];
+    const atual = raiz.querySelector<HTMLElement>('[data-carousel-atual]');
+    const anterior = raiz.querySelector<HTMLButtonElement>('[data-carousel-anterior]')!;
+    const proximo = raiz.querySelector<HTMLButtonElement>('[data-carousel-proximo]')!;
+    if (!itens.length) return;
+
+    const passo = () => itens[0].getBoundingClientRect().width + parseFloat(getComputedStyle(trilho).columnGap || '0');
+
+    function atualizar() {
+      const max = trilho.scrollWidth - trilho.clientWidth - 2;
+      anterior.disabled = trilho.scrollLeft <= 2;
+      proximo.disabled = trilho.scrollLeft >= max;
+      const indice = Math.min(itens.length - 1, Math.round(trilho.scrollLeft / passo()));
+      if (atual) atual.textContent = String(trilho.scrollLeft >= max ? itens.length : indice + 1);
+    }
+
+    anterior.addEventListener('click', () => trilho.scrollBy({ left: -passo(), behavior: 'smooth' }));
+    proximo.addEventListener('click', () => trilho.scrollBy({ left: passo(), behavior: 'smooth' }));
+    let pendente = false;
+    trilho.addEventListener(
+      'scroll',
+      () => {
+        if (pendente) return;
+        pendente = true;
+        requestAnimationFrame(() => {
+          atualizar();
+          pendente = false;
+        });
+      },
+      { passive: true },
+    );
+    trilho.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        trilho.scrollBy({ left: passo(), behavior: 'smooth' });
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        trilho.scrollBy({ left: -passo(), behavior: 'smooth' });
+      }
+    });
+
+    // Arraste com o mouse (no toque, a rolagem nativa já faz o trabalho).
+    let inicioX = 0;
+    let inicioScroll = 0;
+    let arrastou = false;
+    trilho.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      inicioX = e.clientX;
+      inicioScroll = trilho.scrollLeft;
+      arrastou = false;
+      const mover = (ev: PointerEvent) => {
+        const dx = ev.clientX - inicioX;
+        if (!arrastou && Math.abs(dx) > 6) {
+          arrastou = true;
+          trilho.classList.add('is-arrastando');
+          trilho.setPointerCapture(ev.pointerId);
+        }
+        if (arrastou) trilho.scrollLeft = inicioScroll - dx;
+      };
+      const soltar = () => {
+        trilho.removeEventListener('pointermove', mover);
+        if (arrastou) {
+          const alvo = Math.round(trilho.scrollLeft / passo()) * passo();
+          trilho.classList.remove('is-arrastando');
+          trilho.scrollTo({ left: alvo, behavior: 'smooth' });
+        }
+      };
+      trilho.addEventListener('pointermove', mover);
+      trilho.addEventListener('pointerup', soltar, { once: true });
+      trilho.addEventListener('pointercancel', soltar, { once: true });
+    });
+    trilho.addEventListener(
+      'click',
+      (e) => {
+        if (arrastou) {
+          e.preventDefault();
+          e.stopPropagation();
+          arrastou = false;
+        }
+      },
+      true,
+    );
+    trilho.addEventListener('dragstart', (e) => e.preventDefault());
+
+    new ResizeObserver(atualizar).observe(trilho);
+    atualizar();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(iniciar);
+</script>

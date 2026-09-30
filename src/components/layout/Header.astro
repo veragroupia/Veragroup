@@ -1,0 +1,256 @@
+---
+import { navegacao, site } from '@/config/site';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  whatsapp?: string;
+}
+const { whatsapp = site.whatsapp.mensagem } = Astro.props;
+const atual = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/') || '/';
+const ativo = (href: string) => !href.includes('#') && (atual === href || atual.startsWith(`${href}/`));
+---
+
+<header class="site-header" data-header>
+  <div class="site-header-fundo" aria-hidden="true"></div>
+  <div class="site-header-linha wrap-wide">
+    <a href="/" class="marca" aria-label="Vera Group, página inicial">Vera Group</a>
+
+    <nav aria-label="Principal" class="hidden lg:block">
+      <ul class="flex items-center gap-1">
+        {
+          navegacao.map((item) => (
+            <li>
+              <a href={item.href} class="nav-link" aria-current={ativo(item.href) ? 'page' : undefined}>
+                {item.rotulo}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <Button variant="whatsapp" size="sm" whatsapp={whatsapp} class="hidden md:inline-flex">Falar no WhatsApp</Button>
+      <button type="button" class="menu-botao menu-abrir" aria-expanded="false" aria-controls="menu-mobile" data-menu-abrir>
+        <Icon name="menu" size={24} />
+        <span class="sr-only">Abrir menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog id="menu-mobile" class="menu-mobile tema-escuro" aria-label="Menu" data-menu>
+  <div class="flex min-h-full flex-col">
+    <div class="wrap-wide flex h-16 items-center justify-between">
+      <a href="/" class="marca">Vera Group</a>
+      <button type="button" class="menu-botao" data-menu-fechar>
+        <Icon name="x" size={24} />
+        <span class="sr-only">Fechar menu</span>
+      </button>
+    </div>
+    <nav aria-label="Menu" class="wrap-wide mt-6 flex-1">
+      <ul class="menu-lista">
+        <li style="--i:0"><a href="/" aria-current={atual === '/' ? 'page' : undefined}>Início</a></li>
+        {
+          navegacao.map((item, i) => (
+            <li style={`--i:${i + 1}`}>
+              <a href={item.href} aria-current={ativo(item.href) ? 'page' : undefined}>
+                {item.rotulo}
+              </a>
+            </li>
+          ))
+        }
+        <li style={`--i:${navegacao.length + 1}`}><a href="/diagnostico">Diagnóstico gratuito</a></li>
+      </ul>
+    </nav>
+    <div class="wrap-wide grid gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8">
+      <Button variant="whatsapp" size="lg" block whatsapp={whatsapp}>Falar no WhatsApp</Button>
+      <Button variant="secondary" size="lg" block href={site.instagram.url} external icon="instagram">@{site.instagram.usuario}</Button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 40;
+    height: 4rem;
+    color: var(--color-ink);
+  }
+  /* O header "encolhe" só com transform: nada na página muda de lugar (CLS zero). */
+  .site-header-fundo {
+    position: absolute;
+    inset: 0;
+    background: var(--color-paper);
+    border-bottom: 1px solid transparent;
+    transform-origin: top;
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out);
+  }
+  .site-header-linha {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 100%;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  .site-header[data-rolou] .site-header-fundo {
+    transform: scaleY(0.8125);
+    border-color: var(--color-line);
+    box-shadow: 0 6px 20px -12px rgb(14 17 22 / 0.18);
+  }
+  .site-header[data-rolou] .site-header-linha {
+    transform: translateY(-0.375rem);
+  }
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-family: var(--font-display);
+    font-size: 1.3125rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform var(--duration-base) var(--ease-out);
+    transform-origin: left center;
+  }
+  .site-header[data-rolou] .marca {
+    transform: scale(0.94);
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .nav-link:hover {
+    background: rgb(14 17 22 / 0.06);
+  }
+  .nav-link[aria-current='page'] {
+    background: rgb(14 17 22 / 0.08);
+    font-weight: 600;
+  }
+  .menu-botao {
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .menu-botao:hover {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+  @media (width >= 64rem) {
+    .menu-abrir {
+      display: none;
+    }
+  }
+
+  /* Menu mobile em tela cheia */
+  .menu-mobile {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(-0.75rem);
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+  .menu-mobile[open] {
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    .menu-mobile[open] {
+      opacity: 0;
+      transform: translateY(-0.75rem);
+    }
+  }
+  .menu-mobile::backdrop {
+    background: transparent;
+  }
+  .menu-lista a {
+    display: flex;
+    align-items: center;
+    min-height: 3.5rem;
+    font-family: var(--font-display);
+    font-size: var(--text-display-lg);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-ink-3);
+  }
+  .menu-lista a[aria-current='page'] {
+    color: var(--color-accent-on-ink);
+  }
+  .menu-lista li {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out);
+    transition-delay: calc(80ms + var(--i) * 40ms);
+  }
+  .menu-mobile[open] .menu-lista li {
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    .menu-mobile[open] .menu-lista li {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+  :global(html:has(.menu-mobile[open])) {
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  const sentinela = document.createElement('div');
+  sentinela.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:24px;pointer-events:none';
+  sentinela.setAttribute('aria-hidden', 'true');
+  document.body.prepend(sentinela);
+  new IntersectionObserver(([e]) => header?.toggleAttribute('data-rolou', !e.isIntersecting)).observe(sentinela);
+
+  const menu = document.querySelector<HTMLDialogElement>('[data-menu]');
+  const abrir = document.querySelector<HTMLButtonElement>('[data-menu-abrir]');
+  const fechar = menu?.querySelector<HTMLButtonElement>('[data-menu-fechar]');
+  abrir?.addEventListener('click', () => {
+    menu?.showModal();
+    abrir.setAttribute('aria-expanded', 'true');
+  });
+  fechar?.addEventListener('click', () => menu?.close());
+  menu?.addEventListener('close', () => {
+    abrir?.setAttribute('aria-expanded', 'false');
+    abrir?.focus();
+  });
+  // Link de âncora na mesma página: fecha o menu antes de rolar.
+  menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => menu.close()));
+  window.matchMedia('(min-width: 64rem)').addEventListener('change', (m) => m.matches && menu?.close());
+</script>

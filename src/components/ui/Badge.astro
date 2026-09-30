@@ -1,0 +1,10 @@
+---
+interface Props {
+  tone?: 'neutro' | 'servico' | 'sucesso' | 'alerta';
+  dot?: boolean;
+  class?: string;
+}
+const { tone = 'neutro', dot = false, class: className } = Astro.props;
+---
+
+<span class:list={['badge', tone !== 'neutro' && `badge-${tone}`, dot && 'badge-ponto', className]}><slot /></span>

@@ -1,0 +1,529 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import Img from '@/components/ui/Img.astro';
+import Base from '@/layouts/Base.astro';
+import Button from '@/components/ui/Button.astro';
+import Badge from '@/components/ui/Badge.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHeader from '@/components/ui/SectionHeader.astro';
+import Accordion from '@/components/ui/Accordion.astro';
+import Stat from '@/components/ui/Stat.astro';
+import Field from '@/components/ui/Field.astro';
+import Slider from '@/components/ui/Slider.astro';
+import ChipGroup from '@/components/ui/ChipGroup.astro';
+import Carousel from '@/components/ui/Carousel.astro';
+import DeviceMockup from '@/components/ui/DeviceMockup.astro';
+import Placeholder from '@/components/ui/Placeholder.astro';
+import ServiceCard from '@/components/ServiceCard.astro';
+import CaseCard from '@/components/CaseCard.astro';
+import { cores, pares, hex, tipos } from '@/data/tokens';
+import { contraste } from '@/lib/contraste';
+
+const servico = (await getEntry('servicos', 'loja-virtual'))!;
+const cases = (await getCollection('portfolio')).sort((a, b) => a.data.ordem - b.data.ordem);
+const erk = cases.find((c) => c.data.slug === 'erk-pratas')!;
+const voneis = cases.find((c) => c.data.slug === 'vo-neis-confeitaria')!;
+
+const linhas = pares.map((p) => {
+  const r = contraste(hex[p.texto], hex[p.fundo]);
+  return { ...p, r, normal: r >= 4.5, grande: r >= 3 };
+});
+
+const espacos = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32];
+const estados = [
+  { rotulo: 'Normal', classe: '' },
+  { rotulo: 'Hover', classe: 'is-hover' },
+  { rotulo: 'Focus', classe: 'is-focus' },
+  { rotulo: 'Active', classe: 'is-active' },
+];
+const variantes = ['primary', 'secondary', 'ghost', 'whatsapp'] as const;
+const nav = [
+  ['cores', 'Cores'],
+  ['contraste', 'Contraste'],
+  ['tipografia', 'Tipografia'],
+  ['espaco', 'Espaço e forma'],
+  ['movimento', 'Movimento'],
+  ['grid', 'Grid'],
+  ['botoes', 'Botões'],
+  ['campos', 'Campos'],
+  ['cards', 'Cards'],
+  ['mockups', 'Mockups'],
+  ['outros', 'Outros'],
+];
+---
+
+<Base
+  title="Design system"
+  description="Tokens e componentes do site da Vera Group: cores, contraste, tipografia, espaço, movimento e componentes com todos os estados."
+  noindex
+  semFlutuante
+>
+  <section class="tema-escuro">
+    <div class="wrap py-16 md:py-24">
+      <p class="eyebrow">Uso interno · não indexado</p>
+      <h1 class="mt-3 text-display-2xl">Design system</h1>
+      <p class="mt-4 max-w-[40rem] text-body-lg text-muted">
+        Tudo o que o site usa, num lugar só. Os tokens vivem em <code class="text-paper">src/styles/tokens.css</code>; os contrastes desta página são calculados no build.
+      </p>
+      <nav aria-label="Seções do design system" class="mt-8">
+        <ul class="flex flex-wrap gap-2">
+          {
+            nav.map(([id, rotulo]) => (
+              <li>
+                <a href={`#${id}`} class="chip no-underline">
+                  {rotulo}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </section>
+
+  <!-- CORES -->
+  <section id="cores" class="secao-curta">
+    <div class="wrap">
+      <h2 class="text-display-xl">Cores</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">A paleta proposta foi mantida. As variantes “strong” e “on-ink” existem para o texto passar no AA.</p>
+      <ul class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        {
+          cores.map((c) => (
+            <li class="card overflow-hidden">
+              <div class="h-20 border-b border-line" style={`background:${c.hex}`} />
+              <div class="p-4">
+                <p class="font-display font-semibold">{c.nome}</p>
+                <p class="text-small tabular-nums text-muted">{c.hex}</p>
+                <p class="mt-1 text-[0.8125rem] leading-snug text-muted">{c.uso}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- CONTRASTE -->
+  <section id="contraste" class="secao-curta tema-areia">
+    <div class="wrap">
+      <h2 class="text-display-xl">Pares de contraste</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">
+        AA exige 4,5:1 para texto normal e 3:1 para texto grande (24 px, ou 19 px em negrito) e elementos de interface.
+      </p>
+      <div class="mt-8 overflow-x-auto rounded-md bg-white shadow-1" tabindex="0" role="region" aria-label="Tabela de contraste">
+        <table class="w-full min-w-[40rem] text-left text-small">
+          <thead class="border-b border-line">
+            <tr>
+              <th scope="col" class="p-4">Amostra</th>
+              <th scope="col" class="p-4">Texto / fundo</th>
+              <th scope="col" class="p-4">Uso</th>
+              <th scope="col" class="p-4 text-right">Contraste</th>
+              <th scope="col" class="p-4">AA normal</th>
+              <th scope="col" class="p-4">AA grande</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line">
+            {
+              linhas.map((l) => (
+                <tr>
+                  <td class="p-3">
+                    <span class="inline-block rounded-sm px-3 py-1.5 font-semibold whitespace-nowrap" style={`color:${hex[l.texto]};background:${hex[l.fundo]}`}>
+                      Aa Vender mais
+                    </span>
+                  </td>
+                  <td class="p-4 whitespace-nowrap">
+                    {l.texto} / {l.fundo}
+                  </td>
+                  <td class="p-4 text-stone">{l.uso}</td>
+                  <td class="p-4 text-right font-semibold tabular-nums">{l.r.toFixed(2).replace('.', ',')}:1</td>
+                  <td class="p-4">{l.normal ? <Badge tone="sucesso">Aprovado</Badge> : <Badge tone="alerta">Reprovado</Badge>}</td>
+                  <td class="p-4">{l.grande ? <Badge tone="sucesso">Aprovado</Badge> : <Badge tone="alerta">Reprovado</Badge>}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIPOGRAFIA -->
+  <section id="tipografia" class="secao-curta">
+    <div class="wrap">
+      <h2 class="text-display-xl">Tipografia</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">
+        Sora nos títulos e Inter no texto. Duas famílias, no próprio site, woff2 latin com font-display: swap. Tamanhos fluidos com clamp().
+      </p>
+      <dl class="mt-8 divide-y divide-line border-y border-line">
+        {
+          tipos.map((t) => (
+            <div class="grid gap-3 py-6 lg:grid-cols-[14rem_1fr]">
+              <dt class="text-small">
+                <span class="font-display font-semibold">{t.token}</span>
+                <span class="block text-stone">
+                  {t.fonte} · {t.tamanho}
+                </span>
+                <span class="block text-stone">{t.uso}</span>
+              </dt>
+              <dd class:list={[t.classe, t.token.startsWith('display') && 'font-display font-[650]']}>{t.exemplo}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <!-- ESPAÇO E FORMA -->
+  <section id="espaco" class="secao-curta tema-areia">
+    <div class="wrap grid gap-12 lg:grid-cols-2">
+      <div>
+        <h2 class="text-display-xl">Espaço</h2>
+        <p class="mt-3 text-muted">Escala de 4 px. Classes do Tailwind: p-4 = 16 px, gap-6 = 24 px.</p>
+        <ul class="mt-6 grid gap-2">
+          {
+            espacos.map((n) => (
+              <li class="flex items-center gap-4 text-small">
+                <span class="w-16 tabular-nums text-stone">{n * 4} px</span>
+                <span class="h-3 rounded-sm bg-accent" style={`width:${n * 4}px`} />
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div>
+        <h2 class="text-display-xl">Raios e sombras</h2>
+        <div class="mt-6 grid grid-cols-2 gap-4 xs:grid-cols-4">
+          <div class="grid aspect-square place-items-center rounded-sm bg-white text-small shadow-1">sm · 8</div>
+          <div class="grid aspect-square place-items-center rounded-md bg-white text-small shadow-1">md · 16</div>
+          <div class="grid aspect-square place-items-center rounded-lg bg-white text-small shadow-1">lg · 24</div>
+          <div class="grid aspect-square place-items-center rounded-pill bg-white text-small shadow-1">pill</div>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-4">
+          <div class="rounded-md bg-white p-6 shadow-1">
+            <p class="font-display font-semibold">shadow-1</p>
+            <p class="text-small text-stone">Cards em repouso</p>
+          </div>
+          <div class="rounded-md bg-white p-6 shadow-2">
+            <p class="font-display font-semibold">shadow-2</p>
+            <p class="text-small text-stone">Hover e elementos flutuantes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOVIMENTO -->
+  <section id="movimento" class="secao-curta">
+    <div class="wrap">
+      <h2 class="text-display-xl">Movimento</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">
+        Easing cubic-bezier(0.22, 1, 0.36, 1). Durações: 200 ms (fast), 320 ms (base), 600 ms (slow). Revelar ao rolar: fade + 16 px, 60 ms entre irmãos.
+        Com “reduzir movimento” ligado no aparelho, tudo vira troca instantânea.
+      </p>
+      <div class="mt-8 grid gap-4 md:grid-cols-3" data-ds-movimento>
+        {
+          ['fast · 200 ms', 'base · 320 ms', 'slow · 600 ms'].map((d, i) => (
+            <div class="card p-6">
+              <p class="font-display font-semibold">{d}</p>
+              <div class="mt-4 h-2 overflow-hidden rounded-pill bg-paper-2">
+                <div class="ds-barra h-full w-1/4 rounded-pill bg-accent-strong" style={`--d:${[200, 320, 600][i]}ms`} />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <Button variant="secondary" class="mt-6" data-ds-animar icon="repetir">Tocar animação</Button>
+      <div class="mt-10 grid gap-4 md:grid-cols-3">
+        {
+          [1, 2, 3].map((n) => (
+            <div class="card p-6" data-reveal>
+              <p class="font-display font-semibold">Revelar {n}</p>
+              <p class="text-small text-stone">Entra com atraso de {(n - 1) * 60} ms.</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <section id="grid" class="secao-curta tema-areia">
+    <div class="wrap">
+      <h2 class="text-display-xl">Grid</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">
+        4 colunas no celular (margem 20 px, gutter 16), 8 no tablet (margem 32, gutter 24) e 12 a partir de 1024 px (margem 40). Conteúdo até 1200 px.
+      </p>
+      <div class="grid-site mt-8">
+        {
+          Array.from({ length: 12 }, (_, i) => (
+            <div class:list={['h-24 rounded-sm bg-accent/15 text-center text-small leading-[6rem] text-accent-deep', i >= 4 && 'hidden md:block', i >= 8 && 'md:hidden lg:block']}>
+              {i + 1}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTÕES -->
+  <section id="botoes" class="secao-curta">
+    <div class="wrap">
+      <h2 class="text-display-xl">Botões</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">Altura mínima de 48 px (44 no pequeno). O WhatsApp usa verde com texto escuro, porque branco sobre verde reprova.</p>
+      <div class="mt-8 overflow-x-auto" tabindex="0" role="region" aria-label="Botões em todos os estados">
+        <table class="min-w-[52rem] text-left text-small">
+          <thead>
+            <tr>
+              <th scope="col" class="pb-3 pr-4">Variante</th>
+              {estados.map((e) => <th scope="col" class="pb-3 pr-4">{e.rotulo}</th>)}
+              <th scope="col" class="pb-3">Disabled</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              variantes.map((v) => (
+                <tr>
+                  <th scope="row" class="py-3 pr-4 font-display font-semibold">{v}</th>
+                  {estados.map((e) => (
+                    <td class="py-3 pr-4">
+                      <Button variant={v} class={e.classe} tabindex="-1">
+                        {v === 'whatsapp' ? 'WhatsApp' : 'Diagnóstico'}
+                      </Button>
+                    </td>
+                  ))}
+                  <td class="py-3">
+                    <Button variant={v} disabled>
+                      {v === 'whatsapp' ? 'WhatsApp' : 'Diagnóstico'}
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <Button size="sm">Pequeno</Button>
+        <Button>Médio</Button>
+        <Button size="lg" iconRight="seta">Grande com ícone</Button>
+        <Button variant="whatsapp" size="lg" whatsapp="Olá! Estou testando o botão do design system.">Falar no WhatsApp</Button>
+      </div>
+    </div>
+    <div class="tema-escuro mt-12 py-10">
+      <div class="wrap">
+        <p class="eyebrow">Sobre ink</p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          {variantes.map((v) => <Button variant={v}>{v === 'whatsapp' ? 'WhatsApp' : v}</Button>)}
+          <Button variant="secondary" class="is-focus" tabindex="-1">Focus</Button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMPOS -->
+  <section id="campos" class="secao-curta tema-areia">
+    <div class="wrap">
+      <h2 class="text-display-xl">Campos, chips e slider</h2>
+      <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Field label="Nome" name="ds-nome" placeholder="Como você se chama" hint="Normal" />
+        <Field label="Negócio" name="ds-negocio" value="Vó Neis" inputClass="is-hover" hint="Hover" />
+        <Field label="WhatsApp" name="ds-tel" value="(11) 9" inputClass="is-focus" hint="Focus" />
+        <Field label="Cidade" name="ds-cidade" error="Escolha uma cidade para continuar." hint="Erro" />
+        <Field label="Ticket médio" name="ds-ticket" prefix="R$" value="45" inputmode="numeric" hint="Com prefixo" />
+        <Field label="Desabilitado" name="ds-off" value="Não editável" disabled hint="Disabled" />
+        <Field
+          as="select"
+          label="Cidade"
+          name="ds-select"
+          options={[
+            { value: 'itu', label: 'Itu' },
+            { value: 'salto', label: 'Salto' },
+            { value: 'sorocaba', label: 'Sorocaba' },
+            { value: 'indaiatuba', label: 'Indaiatuba' },
+          ]}
+        />
+        <Field as="textarea" label="Mensagem" name="ds-msg" placeholder="Conte o que o seu negócio precisa" class="md:col-span-2" />
+      </div>
+      <div class="mt-10 grid gap-8 lg:grid-cols-2">
+        <ChipGroup
+          legend="Segmento"
+          name="ds-seg"
+          value="confeitaria"
+          options={[
+            { value: 'confeitaria', label: 'Confeitaria' },
+            { value: 'loja', label: 'Loja' },
+            { value: 'clinica', label: 'Clínica' },
+            { value: 'servicos', label: 'Serviços' },
+          ]}
+        />
+        <div class="grid gap-6">
+          <Slider label="Clientes por dia" name="ds-slider" min={1} max={200} value={40} hint="Arraste ou use as setas do teclado." />
+          <Slider label="Desabilitado" name="ds-slider-off" min={0} max={100} value={30} suffix="%" disabled />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARDS -->
+  <section id="cards" class="secao-curta">
+    <div class="wrap">
+      <h2 class="text-display-xl">Cards</h2>
+      <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ServiceCard
+          titulo={servico.data.titulo}
+          resumo={servico.data.resumo}
+          icone={servico.data.icone as never}
+          href={`/servicos/${servico.id}`}
+          whatsapp={servico.data.whatsapp}
+        />
+        <div class="card card-interativo is-hover p-6">
+          <p class="eyebrow">Estado hover</p>
+          <p class="mt-2 text-muted">Sombra 2 e sobe 2 px.</p>
+        </div>
+        <CaseCard
+          nome={erk.data.nome}
+          segmento={erk.data.segmento}
+          cidade={erk.data.cidade}
+          resumo={erk.data.resumo}
+          href={`/portfolio/${erk.data.slug}`}
+          status={erk.data.status}
+          servicos={erk.data.servicos}
+          desktop={erk.data.capa.desktop}
+          mobile={erk.data.capa.mobile}
+          altDesktop={erk.data.capa.altDesktop}
+          altMobile={erk.data.capa.altMobile}
+        />
+      </div>
+      <div class="tema-escuro mt-10 rounded-lg p-6 md:p-10">
+        <div class="grid gap-6 md:grid-cols-2">
+          {
+            cases.slice(1).map((c) => (
+              <CaseCard
+                nome={c.data.nome}
+                segmento={c.data.segmento}
+                cidade={c.data.cidade}
+                resumo={c.data.resumo}
+                href={`/portfolio/${c.data.slug}`}
+                status={c.data.status}
+                servicos={c.data.servicos}
+                desktop={c.data.capa.desktop}
+                mobile={c.data.capa.mobile}
+                altDesktop={c.data.capa.altDesktop}
+                altMobile={c.data.capa.altMobile}
+              />
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOCKUPS -->
+  <section id="mockups" class="secao-curta tema-areia">
+    <div class="wrap">
+      <h2 class="text-display-xl">Device mockups</h2>
+      <p class="mt-3 max-w-[40rem] text-muted">Moldura desenhada em CSS. A tela recebe a imagem real do projeto.</p>
+      <div class="mt-10 grid items-end gap-10 md:grid-cols-[1fr_1.1fr] lg:grid-cols-[14rem_18rem_1fr]">
+        <DeviceMockup type="phone" class="mx-auto w-[14rem]">
+          <Img src={voneis.data.capa.mobile!} alt="Cardápio da Vó Neis no celular." widths={[240, 480]} sizes="224px" />
+        </DeviceMockup>
+        <DeviceMockup type="tablet" class="mx-auto w-full max-w-[18rem]">
+          <Placeholder label="tela de tablet" />
+        </DeviceMockup>
+        <DeviceMockup type="laptop" url="erkpratas · início" class="md:col-span-2 lg:col-span-1">
+          <Img src={erk.data.capa.desktop!} alt="Loja ERK Pratas no computador." widths={[640, 960, 1280]} sizes="(min-width: 1024px) 560px, 90vw" />
+        </DeviceMockup>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTROS -->
+  <section id="outros" class="secao-curta">
+    <div class="wrap grid gap-16">
+      <div>
+        <h2 class="text-display-xl">Badges</h2>
+        <div class="mt-6 flex flex-wrap gap-2">
+          <Badge>Neutro</Badge>
+          <Badge tone="servico">Loja virtual</Badge>
+          <Badge tone="sucesso" dot>No ar</Badge>
+          <Badge tone="alerta" dot>Em desenvolvimento</Badge>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-display-xl">Section header</h2>
+        <div class="mt-6 rounded-lg border border-line p-6 md:p-10">
+          <SectionHeader eyebrow="O potencial" title="Com o digital arrumado, o cliente chega até você." sub="Subtítulo curto, no máximo duas linhas." />
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-display-xl">Stat / contador</h2>
+        <div class="mt-6 grid gap-6 xs:grid-cols-3">
+          <Stat value={10} label="dias para o site ir ao ar (no máximo)" />
+          <Stat value={60} label="dias de garantia de correção de erros" />
+          <Stat value={4} label="cidades atendidas" />
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-display-xl">Accordion</h2>
+        <Accordion
+          class="mt-6"
+          name="ds-faq"
+          items={[
+            { pergunta: 'Preciso entender de tecnologia?', resposta: 'Não. A gente cuida de tudo e explica o que for seu de mexer.' },
+            { pergunta: 'Funciona para o meu tipo de negócio?', resposta: 'Se o seu cliente pesquisa no celular antes de comprar, funciona.' },
+          ]}
+        />
+      </div>
+
+      <div>
+        <h2 class="text-display-xl">Carousel</h2>
+        <Carousel label="Exemplo de carrossel" total={4} size="estreito" class="mt-6">
+          {
+            [1, 2, 3, 4].map((n) => (
+              <li class="carousel-item">
+                <div class="card grid aspect-[4/5] place-items-center font-display text-display-lg">{n}</div>
+              </li>
+            ))
+          }
+        </Carousel>
+      </div>
+
+      <div>
+        <h2 class="text-display-xl">Ícones</h2>
+        <ul class="mt-6 flex flex-wrap gap-3">
+          {
+            (['site', 'loja', 'cardapio', 'painel', 'mapa', 'anuncio', 'video', 'nfc', 'whatsapp', 'instagram', 'lupa', 'estrela', 'mensagem', 'escudo', 'calculadora'] as const).map((n) => (
+              <li class="grid size-16 place-items-center rounded-md bg-white shadow-1" title={n}>
+                <Icon name={n} label={n} />
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-display-xl">Nav e footer</h2>
+        <p class="mt-3 text-muted">Estão no topo e no rodapé desta página. Role para ver o header encolher; no celular, abra o menu.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .ds-barra {
+    transition: transform var(--d) var(--ease-out);
+  }
+  [data-ds-movimento].tocando .ds-barra {
+    transform: translateX(300%);
+  }
+</style>
+
+<script>
+  const grupo = document.querySelector('[data-ds-movimento]');
+  document.querySelector('[data-ds-animar]')?.addEventListener('click', () => {
+    grupo?.classList.toggle('tocando');
+  });
+</script>

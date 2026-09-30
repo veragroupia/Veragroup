@@ -1,0 +1,31 @@
+---
+import Icon, { type IconName } from './ui/Icon.astro';
+import Button from './ui/Button.astro';
+
+interface Props {
+  titulo: string;
+  resumo: string;
+  icone: IconName;
+  href: string;
+  whatsapp: string;
+  headingLevel?: 'h3' | 'h2';
+  class?: string;
+}
+const { titulo, resumo, icone, href, whatsapp, headingLevel: H = 'h3', class: className } = Astro.props;
+---
+
+<article class:list={['card card-interativo flex h-full flex-col p-6', className]}>
+  <span class="grid size-12 place-items-center rounded-md bg-accent-tint text-accent-strong">
+    <Icon name={icone} size={24} />
+  </span>
+  <H class="mt-5 text-title font-semibold">
+    <a href={href} class="link-cobre no-underline">{titulo}</a>
+  </H>
+  <p class="mt-2 text-small text-muted">{resumo}</p>
+  <p class="mt-4 inline-flex items-center gap-1 text-small font-semibold text-link" aria-hidden="true">
+    Ver detalhes <Icon name="seta" size={16} />
+  </p>
+  <div class="acima-do-link mt-auto pt-6">
+    <Button variant="secondary" size="sm" block whatsapp={whatsapp}>Quero um diagnóstico gratuito</Button>
+  </div>
+</article>

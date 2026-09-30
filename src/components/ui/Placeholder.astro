@@ -1,0 +1,45 @@
+---
+/**
+ * Espaço reservado para imagem que ainda não existe.
+ * Neutro de propósito e marcado como TODO: nunca finge ser o projeto.
+ */
+interface Props {
+  label: string;
+  class?: string;
+}
+const { label, class: className } = Astro.props;
+---
+
+<div class:list={['placeholder', className]} role="img" aria-label={`Imagem pendente: ${label}`}>
+  <span>TODO · {label}</span>
+</div>
+
+<style>
+  .placeholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    min-height: 8rem;
+    padding: 1rem;
+    background:
+      repeating-linear-gradient(135deg, transparent 0 10px, rgb(127 130 140 / 0.12) 10px 11px),
+      #e9e6df;
+    color: #4b515c;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  :global(.tema-escuro) .placeholder {
+    background:
+      repeating-linear-gradient(135deg, transparent 0 10px, rgb(163 169 180 / 0.12) 10px 11px),
+      #1a1f27;
+    color: #a3a9b4;
+  }
+  .placeholder span {
+    padding: 0.25rem 0.625rem;
+    border: 1px dashed currentColor;
+    border-radius: 999px;
+  }
+</style>

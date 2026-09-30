@@ -1,0 +1,110 @@
+---
+import { getCollection } from 'astro:content';
+import { site } from '@/config/site';
+import { linkWhatsApp } from '@/lib/whatsapp';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  whatsapp?: string;
+}
+const { whatsapp = site.whatsapp.mensagem } = Astro.props;
+const servicos = (await getCollection('servicos')).sort((a, b) => a.data.ordem - b.data.ordem);
+const ano = new Date().getFullYear();
+---
+
+<footer class="tema-escuro border-t border-ink-3" data-sem-flutuante>
+  <div class="wrap-wide grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+    <div class="lg:col-span-4">
+      <p class="font-display text-[1.75rem] font-bold tracking-[-0.03em]">Vera Group</p>
+      <p class="mt-3 max-w-[22rem] text-muted">
+        Sites, lojas, Google e WhatsApp para o comércio de {site.cidades.slice(0, -1).join(', ')} e {site.cidades.at(-1)}.
+      </p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <Button variant="whatsapp" whatsapp={whatsapp}>Falar no WhatsApp</Button>
+      </div>
+    </div>
+
+    <nav aria-labelledby="rodape-servicos" class="lg:col-span-3">
+      <h2 id="rodape-servicos" class="eyebrow">Serviços</h2>
+      <ul class="mt-4 grid gap-1">
+        {
+          servicos.map((s) => (
+            <li>
+              <a href={`/servicos/${s.id}`} class="rodape-link">
+                {s.data.tituloCurto}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="rodape-empresa" class="lg:col-span-2">
+      <h2 id="rodape-empresa" class="eyebrow">Vera Group</h2>
+      <ul class="mt-4 grid gap-1">
+        <li><a href="/portfolio" class="rodape-link">Portfólio</a></li>
+        <li><a href="/sobre" class="rodape-link">Quem somos</a></li>
+        <li><a href="/diagnostico" class="rodape-link">Diagnóstico gratuito</a></li>
+        <li><a href="/contato" class="rodape-link">Contato</a></li>
+      </ul>
+    </nav>
+
+    <div class="lg:col-span-3">
+      <h2 class="eyebrow">Fale com a gente</h2>
+      <ul class="mt-4 grid gap-1">
+        <li>
+          <a href={linkWhatsApp(whatsapp)} class="rodape-link" target="_blank" rel="noopener" data-wa={whatsapp}>
+            <Icon name="whatsapp" size={18} /> {site.whatsapp.exibicao}
+          </a>
+        </li>
+        <li>
+          <a href={site.instagram.url} class="rodape-link" target="_blank" rel="noopener">
+            <Icon name="instagram" size={18} /> @{site.instagram.usuario}
+          </a>
+        </li>
+        {
+          site.email && (
+            <li>
+              <a href={`mailto:${site.email}`} class="rodape-link">
+                <Icon name="email" size={18} /> {site.email}
+              </a>
+            </li>
+          )
+        }
+      </ul>
+      <h2 class="eyebrow mt-8">Onde atendemos</h2>
+      <p class="mt-3 text-muted">{site.cidades.join(' · ')}</p>
+      <p class="mt-1 text-small text-muted">A gente vai até a sua loja.</p>
+    </div>
+  </div>
+
+  <div class="border-t border-ink-3">
+    <div class="wrap-wide flex flex-col gap-3 py-6 text-small text-muted md:flex-row md:items-center md:justify-between">
+      <p>
+        © {ano} {site.nome}{site.cnpj && ` · CNPJ ${site.cnpj}`}
+      </p>
+      <ul class="flex flex-wrap gap-x-6 gap-y-1">
+        <li><a href="/politica-de-privacidade" class="rodape-link">Política de privacidade</a></li>
+        <li><button type="button" class="rodape-link cursor-pointer" data-cookies-abrir>Preferências de cookies</button></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .rodape-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    color: var(--color-paper);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .rodape-link:hover {
+    color: var(--color-accent-on-ink);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

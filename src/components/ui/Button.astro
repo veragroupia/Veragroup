@@ -1,0 +1,74 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import Icon, { type IconName } from './Icon.astro';
+import { linkWhatsApp } from '@/lib/whatsapp';
+
+type Variant = 'primary' | 'secondary' | 'ghost' | 'whatsapp';
+
+interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
+  variant?: Variant;
+  size?: 'sm' | 'md' | 'lg';
+  /** Link comum. */
+  href?: string;
+  /** Mensagem do WhatsApp: vira um link wa.me com o texto pronto. */
+  whatsapp?: string;
+  icon?: IconName;
+  iconRight?: IconName;
+  block?: boolean;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  external?: boolean;
+  class?: string;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  whatsapp,
+  icon,
+  iconRight,
+  block = false,
+  disabled = false,
+  type = 'button',
+  external = false,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const classes = [
+  'btn',
+  `btn-${variant}`,
+  size !== 'md' && `btn-${size}`,
+  block && 'btn-block',
+  className,
+];
+
+const finalHref = whatsapp !== undefined ? linkWhatsApp(whatsapp) : href;
+const abreFora = external || whatsapp !== undefined;
+const iconeInicial = icon ?? (variant === 'whatsapp' ? 'whatsapp' : undefined);
+---
+
+{
+  finalHref ? (
+    <a
+      href={disabled ? undefined : finalHref}
+      class:list={classes}
+      aria-disabled={disabled ? 'true' : undefined}
+      target={abreFora ? '_blank' : undefined}
+      rel={abreFora ? 'noopener' : undefined}
+      data-wa={whatsapp}
+      {...rest}
+    >
+      {iconeInicial && <Icon name={iconeInicial} />}
+      <span><slot /></span>
+      {iconRight && <Icon name={iconRight} />}
+    </a>
+  ) : (
+    <button type={type} class:list={classes} disabled={disabled} {...(rest as HTMLAttributes<'button'>)}>
+      {iconeInicial && <Icon name={iconeInicial} />}
+      <span><slot /></span>
+      {iconRight && <Icon name={iconRight} />}
+    </button>
+  )
+}

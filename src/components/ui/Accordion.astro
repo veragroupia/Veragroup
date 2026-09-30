@@ -1,0 +1,58 @@
+---
+/**
+ * Accordion com <details> nativo: abre e fecha sem JavaScript,
+ * funciona no teclado e é lido pelo Google.
+ */
+interface Item {
+  pergunta: string;
+  resposta: string;
+}
+interface Props {
+  items: Item[];
+  name?: string;
+  class?: string;
+}
+const { items, name, class: className } = Astro.props;
+---
+
+<div class:list={['accordion divide-y divide-rule border-y border-rule', className]}>
+  {
+    items.map((item) => (
+      <details name={name} class="group">
+        <summary class="flex min-h-14 items-center justify-between gap-4 py-4 font-display text-title font-semibold">
+          <span>{item.pergunta}</span>
+          <span class="accordion-icone grid size-9 flex-none place-items-center rounded-pill bg-fg/5 transition-transform duration-[320ms] ease-out group-open:rotate-45">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          </span>
+        </summary>
+        <div class="accordion-corpo pb-5 pr-12 text-muted">
+          <p>{item.resposta}</p>
+        </div>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  summary:hover span:first-child {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  /* Abertura suave onde o navegador permite. */
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size var(--duration-base) var(--ease-out),
+      content-visibility var(--duration-base) allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+  }
+  @supports not (interpolate-size: allow-keywords) {
+    details::details-content {
+      block-size: auto;
+    }
+  }
+</style>
