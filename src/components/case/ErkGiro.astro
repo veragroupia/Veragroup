@@ -1,0 +1,124 @@
+---
+/**
+ * O visualizador 3D da loja da ERK Pratas, rodando aqui.
+ * O three.js (640 KB) só baixa quando a pessoa toca em "Girar a peça".
+ */
+import { getEntry } from 'astro:content';
+import Img from '../ui/Img.astro';
+import Icon from '../ui/Icon.astro';
+
+const erk = (await getEntry('portfolio', 'erk-pratas'))!.data;
+const montar = erk.galeria.find((g) => g.imagem?.src.includes('/montar.'))?.imagem ?? erk.capa.desktop!;
+
+const elos = ['cubano', 'grumet', 'veneziana', 'cartier', 'baiana'];
+const acabamentos = ['polido', 'escovado', 'oxidado'];
+---
+
+<div class="giro tema-escuro" data-giro>
+  <div class="giro-texto">
+    <p class="eyebrow">Rodando aqui</p>
+    <h3 class="mt-2 text-display-lg">Gire a peça.</h3>
+    <p class="mt-3 text-muted">Não é vídeo nem foto. Cada elo é desenhado na hora, na medida certa, como no montador da loja.</p>
+
+    <fieldset class="mt-6" data-giro-grupo="elo" disabled>
+      <legend class="field-label mb-2">Elo</legend>
+      <div class="flex flex-wrap gap-2">
+        {elos.map((e, i) => <button type="button" class="chip capitalize" data-valor={e} aria-pressed={i === 0 ? 'true' : 'false'}>{e}</button>)}
+      </div>
+    </fieldset>
+    <fieldset class="mt-4" data-giro-grupo="acabamento" disabled>
+      <legend class="field-label mb-2">Acabamento</legend>
+      <div class="flex flex-wrap gap-2">
+        {acabamentos.map((a, i) => <button type="button" class="chip capitalize" data-valor={a} aria-pressed={i === 0 ? 'true' : 'false'}>{a}</button>)}
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="giro-palco">
+    <div class="giro-capa" data-giro-capa>
+      <Img src={montar} alt="Montador de peças da ERK Pratas, com a corrente em 3D." widths={[480, 720, 960]} sizes="(min-width: 1024px) 560px, 90vw" class="h-full w-full object-cover object-top opacity-40" />
+      <button type="button" class="btn btn-primary btn-lg giro-iniciar" data-giro-iniciar>
+        <Icon name="cubo" /> Girar a peça em 3D
+      </button>
+      <p class="giro-aviso">O 3D baixa cerca de 170 KB.</p>
+    </div>
+    <canvas class="giro-canvas" data-giro-canvas hidden aria-label="Corrente de prata em 3D. Arraste para girar."></canvas>
+    <p class="giro-legenda" data-giro-legenda hidden>Elo cubano · 6 mm · 50 cm · polido</p>
+  </div>
+</div>
+
+<style>
+  .giro {
+    display: grid;
+    gap: 2rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-ink-3);
+  }
+  @media (width >= 64rem) {
+    .giro {
+      grid-template-columns: 1fr 1.3fr;
+      align-items: center;
+      padding: 2.5rem;
+    }
+  }
+  .giro .chip {
+    background: transparent;
+    color: var(--color-paper);
+    border-color: var(--color-ink-3);
+  }
+  .giro .chip[aria-pressed='true'] {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    border-color: var(--color-paper);
+  }
+  .giro fieldset:disabled .chip {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .giro-palco {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, #232935, #0e1116 70%);
+  }
+  .giro-capa {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+  .giro-capa :global(picture) {
+    position: absolute;
+    inset: 0;
+  }
+  .giro-iniciar {
+    position: relative;
+  }
+  .giro-aviso {
+    position: absolute;
+    bottom: 1rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--color-stone-on-ink);
+  }
+  .giro-canvas {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+  }
+  .giro-legenda {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    font-size: 0.8125rem;
+    color: var(--color-stone-on-ink);
+  }
+</style>
+
+<!-- Fora do bundle do Vite de propósito: o import() dinâmico do three.js precisa ficar intacto. -->
+<script is:inline type="module" src="/vendor/erk-giro.js"></script>

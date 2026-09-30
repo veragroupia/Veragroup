@@ -10,7 +10,7 @@ seo:
   title: "Criação de sites em Itu e região"
   description: "Criação de sites e landing pages para o comércio de Itu, Salto, Sorocaba e Indaiatuba. Rápidos no celular, prontos para o Google e com WhatsApp."
 h1: "Criação de sites em Itu que trazem cliente pelo WhatsApp"
-sub: "Seu site no ar em até 10 dias. Rápido no celular, fácil de achar no Google e com um botão que abre a conversa com você."
+sub: "Seu site no ar em até 10 dias. Rápido no celular, fácil de achar no Google e com WhatsApp em um toque."
 whatsapp: "Olá! Vim pelo site e quero saber sobre criação de site para o meu negócio."
 dores:
   - titulo: "Quem não te conhece, desconfia"
@@ -45,13 +45,15 @@ faq:
   - pergunta: "Quanto tempo leva para ficar pronto?"
     resposta: "Sites e landing pages ficam no ar em até 10 dias."
   - pergunta: "Qual a diferença entre site e landing page?"
-    resposta: "Landing page é uma página só, focada em uma ação, como chamar no WhatsApp. Site tem várias páginas, para quem precisa mostrar mais."
+    resposta: "Landing page é uma página só, focada em uma ação, como chamar no WhatsApp.\n\nSite tem várias páginas, para quem precisa mostrar mais."
   - pergunta: "Consigo mudar alguma coisa depois?"
-    resposta: "Sim. Nas páginas mais simples, você manda a mudança no WhatsApp e a gente ajusta. Se precisar mexer sozinho sempre, dá para ter um painel."
+    resposta: "Sim. Nas páginas mais simples, você manda a mudança no WhatsApp e a gente ajusta.\n\nSe precisar mexer sozinho sempre, dá para ter um painel."
   - pergunta: "Preciso ter fotos profissionais?"
     resposta: "Não. A gente ajuda a escolher as melhores fotos que você já tem e mostra o que vale refazer."
 ---
 
-Em Itu, Salto, Sorocaba e Indaiatuba, muita venda começa no celular. A pessoa pesquisa, compara e chama quem passa confiança.
+Em Itu e região, muita venda começa no celular.
 
-O site é a sua vitrine aberta o dia inteiro. Ele não substitui o Instagram: responde o que o Instagram não responde.
+A pessoa pesquisa, compara e chama quem passa confiança.
+
+O site é a sua vitrine aberta o dia inteiro. Responde o que o Instagram não responde.

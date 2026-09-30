@@ -51,6 +51,8 @@ faq:
     resposta: "Pode. A loja aceita pedido de qualquer lugar. Você decide para onde entrega."
 ---
 
-Salto e a região têm muito comércio bom que só vende no balcão. Quem abre uma loja virtual passa a vender também à noite, no domingo e para quem mora longe.
+Salto tem muito comércio bom que só vende no balcão.
+
+Com loja virtual, você vende também à noite, no domingo e para quem mora longe.
 
 A loja é sua: o cliente, o histórico e a margem ficam com você.

@@ -5,13 +5,15 @@
  */
 interface Props {
   label: string;
+  /** Espaço pequeno (ex.: tela de celular): mostra só "TODO". */
+  compacto?: boolean;
   class?: string;
 }
-const { label, class: className } = Astro.props;
+const { label, compacto = false, class: className } = Astro.props;
 ---
 
 <div class:list={['placeholder', className]} role="img" aria-label={`Imagem pendente: ${label}`}>
-  <span>TODO · {label}</span>
+  <span>{compacto ? 'TODO' : `TODO · ${label}`}</span>
 </div>
 
 <style>

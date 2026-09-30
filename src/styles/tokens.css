@@ -47,6 +47,10 @@
   --text-display-2xl: clamp(2.25rem, 1.58rem + 2.96vw, 4.25rem);
   --text-display-2xl--line-height: 1.05;
   --text-display-2xl--letter-spacing: -0.03em;
+  /* H1 longo (páginas de serviço e de case): 32 → 52 px */
+  --text-display-page: clamp(2rem, 1.58rem + 1.85vw, 3.25rem);
+  --text-display-page--line-height: 1.08;
+  --text-display-page--letter-spacing: -0.028em;
   --text-display-xl: clamp(1.75rem, 1.33rem + 1.85vw, 3rem);
   --text-display-xl--line-height: 1.1;
   --text-display-xl--letter-spacing: -0.025em;

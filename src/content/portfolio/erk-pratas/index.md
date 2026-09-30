@@ -34,7 +34,8 @@ ficha:
     valor: "No ar"
 problema:
   - "A ERK tem oficina própria e trabalha com prata 925 com punção. O cuidado da bancada precisava aparecer na tela."
-  - "Joia é compra de confiança. O cliente quer ver a peça de perto, saber a medida e entender o preço antes de pagar."
+  - "Joia é compra de confiança."
+  - "O cliente quer ver a peça de perto, saber a medida e entender o preço antes de pagar."
   - "E o dono precisava de um lugar só para pedidos, custos e margem, sem depender de planilha."
 oQueFizemos:
   - titulo: "Loja completa"

@@ -18,7 +18,7 @@ dores:
   - titulo: "Estoque que só aparece quando falta"
     texto: "Você descobre que acabou quando o cliente já pediu."
   - titulo: "Sistema pronto que não encaixa"
-    texto: "Programa de prateleira pede para você mudar o seu jeito de trabalhar. E vem cheio de tela que ninguém usa."
+    texto: "Programa pronto pede para você mudar o seu jeito. E vem cheio de tela que ninguém usa."
 entregas:
   - titulo: "Vendas do dia e do mês"
     texto: "O que vendeu hoje, na semana e no mês, sem somar nada na mão."
@@ -49,6 +49,8 @@ faq:
     resposta: "A gente constrói. É por isso que é sob medida: o sistema cresce junto com o negócio."
 ---
 
-Em Indaiatuba e região, muita loja boa ainda roda no caderno e na memória do dono. Funciona, até o dia em que não funciona mais.
+Em Indaiatuba e região, muita loja boa ainda roda no caderno e na memória do dono.
 
-Um painel feito sob medida mostra o que importa em segundos: o que fazer hoje e quanto sobrou no mês.
+Funciona, até o dia em que não funciona mais.
+
+Um painel sob medida mostra o que importa: o que fazer hoje e quanto sobrou no mês.

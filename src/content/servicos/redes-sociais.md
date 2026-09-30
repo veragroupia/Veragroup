@@ -39,13 +39,15 @@ paraQuem: ["Lojas de roupa e acessórios", "Confeitarias e restaurantes", "Salõ
 cases: []
 faq:
   - pergunta: "Preciso aparecer nos vídeos?"
-    resposta: "Não é obrigatório. Dá para mostrar produto, bastidor e mãos trabalhando. Mas o rosto do dono passa confiança."
+    resposta: "Não é obrigatório. Dá para mostrar produto, bastidor e mãos trabalhando.\n\nMas o rosto do dono passa confiança."
   - pergunta: "Quem aprova os posts?"
     resposta: "Você. O calendário vem antes, e nada é publicado sem o seu ok."
   - pergunta: "Serve para quem já posta?"
     resposta: "Serve. A gente organiza o que já funciona e completa o que está faltando."
 ---
 
-Em Salto e região, o Instagram é a primeira vitrine de muita loja. Perfil parado passa a impressão de loja parada.
+Em Salto e região, o Instagram é a primeira vitrine de muita loja.
 
-Com um calendário simples e vídeos curtos, o perfil ganha ritmo sem roubar o seu tempo de balcão.
+Perfil parado passa a impressão de loja parada.
+
+Com calendário e vídeos curtos, o perfil ganha ritmo sem roubar o seu tempo.

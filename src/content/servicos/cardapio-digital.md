@@ -49,6 +49,8 @@ faq:
     resposta: "Sim, pelo painel. A mudança aparece no cardápio na hora."
 ---
 
-Em Sorocaba e região, muita confeitaria, lanchonete e loja já vende pelo WhatsApp. O que falta é o pedido chegar organizado.
+Em Sorocaba e região, muita loja já vende pelo WhatsApp.
 
-Com o cardápio digital, o cliente escolhe sozinho e você só confirma. Menos mensagem, menos erro, mais pedido fechado.
+O que falta é o pedido chegar organizado.
+
+Com o cardápio digital, o cliente escolhe sozinho e você só confirma. Menos mensagem, menos erro.

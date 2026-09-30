@@ -1,0 +1,265 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import Button from '@/components/ui/Button.astro';
+import Badge from '@/components/ui/Badge.astro';
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+import Img from '@/components/ui/Img.astro';
+import Accordion from '@/components/ui/Accordion.astro';
+import CaseCard from '@/components/CaseCard.astro';
+import ComoTrabalhamos from '@/components/ComoTrabalhamos.astro';
+import CtaFinal from '@/components/home/CtaFinal.astro';
+import { breadcrumbs, faq, servico as schemaServico } from '@/lib/schema';
+import { site } from '@/config/site';
+
+export async function getStaticPaths() {
+  const servicos = await getCollection('servicos');
+  return servicos.map((s) => ({ params: { slug: s.id }, props: { entrada: s } }));
+}
+
+const { entrada } = Astro.props;
+const s = entrada.data;
+const { Content } = await render(entrada);
+const path = `/servicos/${entrada.id}`;
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Serviços', path: '/servicos' },
+  { nome: s.tituloCurto, path },
+];
+
+const cases = (await Promise.all(s.cases.map((slug) => getEntry('portfolio', slug)))).filter((c) => !!c);
+const destaque = cases[0]?.data;
+const outros = (await getCollection('servicos'))
+  .filter((o) => o.id !== entrada.id)
+  .sort((a, b) => (a.data.grupo === s.grupo ? -1 : 1) - (b.data.grupo === s.grupo ? -1 : 1) || a.data.ordem - b.data.ordem)
+  .slice(0, 3);
+const outrasCidades = site.cidades.filter((c) => c !== s.cidadeFoco);
+---
+
+<Base
+  title={s.seo.title}
+  description={s.seo.description}
+  path={path}
+  whatsapp={s.whatsapp}
+  jsonLd={[
+    schemaServico({ nome: s.titulo, descricao: s.seo.description, path, tipo: s.titulo }),
+    breadcrumbs(trilha),
+    faq(s.faq),
+  ]}
+>
+  <!-- Topo -->
+  <section class="secao-curta">
+    <div class="wrap">
+      <Breadcrumb itens={trilha} />
+      <div class="mt-6 grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
+        <div class="lg:col-span-7">
+          <p class="eyebrow">{s.tituloCurto} · {s.cidadeFoco} e região</p>
+          <h1 class="mt-3 text-display-page">{s.h1}</h1>
+          <p class="mt-5 max-w-[36rem] text-body-lg text-muted">{s.sub}</p>
+          <div class="mt-8 flex flex-col gap-3 md:flex-row">
+            <Button variant="whatsapp" size="lg" whatsapp={s.whatsapp}>Quero um diagnóstico gratuito</Button>
+            <Button variant="secondary" size="lg" href="/diagnostico" icon="calculadora">Fazer a conta</Button>
+          </div>
+          {s.prazo && <p class="mt-6 inline-flex items-center gap-2 text-small font-medium"><Icon name="relogio" size={18} class="text-accent-strong" />{s.prazo}</p>}
+        </div>
+
+        <div class="lg:col-span-5">
+          {
+            destaque?.capa.mobile ? (
+              <figure class="servico-visual">
+                <a href={`/portfolio/${destaque.slug}`} class="servico-celular" aria-label={`Ver o case ${destaque.nome}`}>
+                  <Img src={destaque.capa.mobile} alt={destaque.capa.altMobile ?? ''} widths={[240, 390, 480]} sizes="240px" eager class="h-full w-full object-cover object-top" />
+                </a>
+                <figcaption class="mt-4 text-center text-small text-muted">
+                  Exemplo real: <a href={`/portfolio/${destaque.slug}`} class="link">{destaque.nome}</a>
+                </figcaption>
+              </figure>
+            ) : (
+              <div class="card p-6 md:p-8">
+                <span class="grid size-14 place-items-center rounded-md bg-accent-tint text-accent-strong">
+                  <Icon name={s.icone as IconName} size={28} />
+                </span>
+                <p class="mt-5 font-display text-title font-semibold">O essencial do serviço</p>
+                <ul class="mt-4 grid gap-3">
+                  {s.entregas.slice(0, 3).map((e) => (
+                    <li class="flex gap-3">
+                      <Icon name="check" size={20} class="mt-0.5 flex-none text-accent-2-strong" />
+                      <span>{e.titulo}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dor -->
+  <section class="tema-escuro secao" aria-labelledby="dores-titulo">
+    <div class="wrap">
+      <header class="max-w-[40rem]" data-reveal>
+        <p class="eyebrow text-warn">Se isso acontece com você</p>
+        <h2 id="dores-titulo" class="mt-3 text-display-xl">Você está perdendo venda sem perceber.</h2>
+      </header>
+      <ul class="mt-10 grid gap-5 md:grid-cols-3 md:gap-6">
+        {
+          s.dores.map((d) => (
+            <li class="rounded-lg border border-ink-3 bg-ink-2 p-6" data-reveal>
+              <Icon name="mensagem-alerta" size={26} class="text-warn" />
+              <h3 class="mt-4 text-title font-semibold">{d.titulo}</h3>
+              <p class="mt-2 text-muted">{d.texto}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Entregas -->
+  <section class="secao" aria-labelledby="entregas-titulo">
+    <div class="wrap">
+      <header class="max-w-[40rem]" data-reveal>
+        <p class="eyebrow">O que você recebe</p>
+        <h2 id="entregas-titulo" class="mt-3 text-display-xl">{s.titulo} do jeito certo.</h2>
+      </header>
+      <ul class="mt-10 grid gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {
+          s.entregas.map((e) => (
+            <li class="card p-6" data-reveal>
+              <span class="grid size-12 place-items-center rounded-md bg-accent-2-tint text-accent-2-strong">
+                <Icon name={e.icone as IconName} size={24} />
+              </span>
+              <h3 class="mt-4 text-title font-semibold">{e.titulo}</h3>
+              <p class="mt-2 text-muted">{e.texto}</p>
+            </li>
+          ))
+        }
+      </ul>
+      {
+        s.nota && (
+          <p class="mt-8 flex max-w-[40rem] gap-3 rounded-md bg-warn-tint p-5 text-warn-strong" data-reveal>
+            <Icon name="lampada" size={22} class="mt-0.5 flex-none" />
+            <span class="font-medium">{s.nota}</span>
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  <!-- Para quem / local -->
+  <section class="tema-areia secao" aria-labelledby="paraquem-titulo">
+    <div class="wrap grid gap-10 lg:grid-cols-2 lg:gap-16">
+      <div data-reveal>
+        <p class="eyebrow">Para quem é</p>
+        <h2 id="paraquem-titulo" class="mt-3 text-display-xl">Feito para o comércio daqui.</h2>
+        <ul class="mt-6 flex flex-wrap gap-2">
+          {s.paraQuem.map((p) => <li class="badge min-h-10 bg-white px-4 text-small">{p}</li>)}
+        </ul>
+      </div>
+      <div class="prose-site text-body-lg text-muted" data-reveal>
+        <Content />
+        <p>
+          Atendemos {s.cidadeFoco}, {outrasCidades.slice(0, -1).join(', ')} e {outrasCidades.at(-1)}. <a href="/contato">A gente vai até a sua loja</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Case -->
+  {
+    cases.length > 0 && (
+      <section class="tema-escuro secao" aria-labelledby="case-titulo">
+        <div class="wrap">
+          <header class="max-w-[40rem]" data-reveal>
+            <p class="eyebrow">Na prática</p>
+            <h2 id="case-titulo" class="mt-3 text-display-xl">
+              {cases.length > 1 ? 'Projetos nossos que usam este serviço.' : 'Um projeto nosso que usa este serviço.'}
+            </h2>
+          </header>
+          <ul class="mt-10 grid gap-6 md:grid-cols-2">
+            {cases.map((c) => (
+              <li data-reveal>
+                <CaseCard
+                  nome={c!.data.nome}
+                  segmento={c!.data.segmento}
+                  cidade={c!.data.cidade}
+                  resumo={c!.data.resumo}
+                  href={`/portfolio/${c!.data.slug}`}
+                  status={c!.data.status}
+                  servicos={c!.data.servicos}
+                  desktop={c!.data.capa.desktop}
+                  mobile={c!.data.capa.mobile}
+                  altDesktop={c!.data.capa.altDesktop}
+                  altMobile={c!.data.capa.altMobile}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <ComoTrabalhamos titulo="Como funciona, do primeiro oi à entrega." />
+
+  <!-- FAQ -->
+  <section class="tema-areia secao" aria-labelledby="faq-servico-titulo">
+    <div class="wrap grid gap-10 lg:grid-cols-12 lg:gap-16">
+      <div class="lg:col-span-5" data-reveal>
+        <p class="eyebrow">Perguntas frequentes</p>
+        <h2 id="faq-servico-titulo" class="mt-3 text-display-xl">Dúvidas sobre {s.tituloCurto.toLowerCase()}.</h2>
+      </div>
+      <div class="lg:col-span-7" data-reveal>
+        <Accordion items={s.faq} name="faq-servico" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Outros serviços -->
+  <section class="secao-curta" aria-labelledby="outros-titulo">
+    <div class="wrap">
+      <h2 id="outros-titulo" class="text-display-lg">Também pode ajudar o seu negócio</h2>
+      <ul class="mt-6 grid gap-4 md:grid-cols-3">
+        {
+          outros.map((o) => (
+            <li>
+              <a href={`/servicos/${o.id}`} class="card card-interativo flex min-h-full items-center gap-4 p-5 no-underline">
+                <span class="grid size-11 flex-none place-items-center rounded-md bg-accent-tint text-accent-strong">
+                  <Icon name={o.data.icone as IconName} size={22} />
+                </span>
+                <span class="font-display font-semibold">{o.data.titulo}</span>
+                <Icon name="seta" size={18} class="ml-auto flex-none text-muted" />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaFinal titulo={`Vamos ver se ${s.tituloCurto.toLowerCase()} é o próximo passo do seu negócio?`} whatsapp={s.whatsapp} />
+</Base>
+
+<style>
+  .servico-visual {
+    display: grid;
+    justify-items: center;
+  }
+  .servico-celular {
+    display: block;
+    width: 15rem;
+    aspect-ratio: 390 / 844;
+    overflow: hidden;
+    border: 8px solid #0b0d11;
+    border-radius: 34px;
+    background: var(--color-ink-2);
+    box-shadow: var(--shadow-2);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  .servico-celular:hover {
+    transform: translateY(-4px);
+  }
+</style>

@@ -40,6 +40,8 @@ faq:
     resposta: "Não. A placa não tem bateria. Quem abre o link é o celular do cliente, com a internet dele."
 ---
 
-Em Indaiatuba e região, a avaliação no Google pesa na hora de escolher onde comprar. E quem sai satisfeito quase nunca lembra de avaliar sozinho.
+Em Indaiatuba e região, a nota no Google pesa na hora de escolher onde comprar.
+
+E quem sai satisfeito quase nunca lembra de avaliar sozinho.
 
 A plaquinha transforma o "depois eu avalio" em um toque, na hora em que o cliente ainda está feliz.

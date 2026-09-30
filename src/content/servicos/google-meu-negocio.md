@@ -17,7 +17,7 @@ dores:
   - titulo: "Perfil abandonado"
     texto: "Horário errado, telefone antigo e três fotos escuras. O cliente passa direto."
   - titulo: "O concorrente aparece, você não"
-    texto: "Perfil completo e avaliações recentes ajudam o Google a mostrar a loja. Sem isso, você some do mapa."
+    texto: "Perfil completo e avaliações recentes ajudam a aparecer no mapa. Sem isso, você some."
   - titulo: "Avaliação sem resposta"
     texto: "Elogio sem agradecimento e reclamação sem resposta. E todo mundo que chega lê."
 entregas:
@@ -40,13 +40,15 @@ paraQuem: ["Clínicas e consultórios", "Restaurantes", "Oficinas", "Salões e b
 cases: []
 faq:
   - pergunta: "Vocês garantem primeiro lugar no Google?"
-    resposta: "Não. Ninguém pode garantir isso com honestidade. A gente deixa o perfil completo e certo para você disputar de igual para igual."
+    resposta: "Não. Ninguém pode garantir isso com honestidade.\n\nA gente deixa o perfil completo e certo para você disputar de igual para igual."
   - pergunta: "Atendo na casa do cliente. Posso ter perfil?"
     resposta: "Pode. O Google permite mostrar só a área de atendimento, sem mostrar o seu endereço."
   - pergunta: "Já tenho perfil. Vocês mexem nele?"
     resposta: "Sim. A gente revisa o que já existe e arruma o que está faltando ou errado."
 ---
 
-Em Sorocaba, a concorrência no mapa é grande. Quem pesquisa "perto de mim" escolhe pelas fotos, pelas estrelas e pelo horário.
+Em Sorocaba, a concorrência no mapa é grande.
+
+Quem pesquisa "perto de mim" escolhe pela foto, pela nota e pelo horário.
 
 Um perfil bem cuidado é o jeito mais direto de ser encontrado por quem já está procurando.

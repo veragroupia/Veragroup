@@ -54,6 +54,7 @@ export { hex };
 
 export const tipos = [
   { token: 'display-2xl', classe: 'text-display-2xl', fonte: 'Sora 650', tamanho: '36 → 68 px', uso: 'H1', exemplo: 'Seu cliente procurou no Google.' },
+  { token: 'display-page', classe: 'text-display-page', fonte: 'Sora 650', tamanho: '32 → 52 px', uso: 'H1 longo (serviço, case)', exemplo: 'Loja virtual em Salto para vender até com a porta fechada' },
   { token: 'display-xl', classe: 'text-display-xl', fonte: 'Sora 650', tamanho: '28 → 48 px', uso: 'H2', exemplo: 'Todo dia tem cliente indo embora.' },
   { token: 'display-lg', classe: 'text-display-lg', fonte: 'Sora 650', tamanho: '22 → 28 px', uso: 'H3', exemplo: 'Pedido pronto no WhatsApp' },
   { token: 'title', classe: 'text-title font-display font-semibold', fonte: 'Sora 600', tamanho: '18 → 20 px', uso: 'Título de card', exemplo: 'Lojas virtuais' },

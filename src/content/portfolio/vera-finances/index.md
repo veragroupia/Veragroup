@@ -8,7 +8,7 @@ status: em-desenvolvimento
 tema: claro
 resumo: "App de finanças pessoais que junta as contas do banco num lugar só."
 h1: "Vera Finances: finanças pessoais organizadas sem planilha"
-sub: "Um produto da própria Vera Group, em desenvolvimento. A mesma forma de construir que usamos nos sistemas dos clientes."
+sub: "Produto da própria Vera Group, em desenvolvimento. Feito do mesmo jeito que os sistemas dos clientes."
 seo:
   title: "Vera Finances: app de finanças"
   description: "Vera Finances, produto próprio da Vera Group em desenvolvimento: finanças pessoais conectadas ao banco por Open Finance, com gastos por categoria e metas."
