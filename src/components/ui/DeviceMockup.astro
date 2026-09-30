@@ -1,0 +1,156 @@
+---
+/**
+ * Moldura de aparelho desenhada em CSS (sem imagem extra).
+ * O conteúdo da tela entra pelo <slot />, normalmente um <Picture>.
+ */
+interface Props {
+  type?: 'phone' | 'tablet' | 'laptop';
+  class?: string;
+  /** Texto de barra de endereço do notebook. */
+  url?: string;
+}
+const { type = 'phone', class: className, url } = Astro.props;
+---
+
+{
+  type === 'laptop' ? (
+    <div class:list={['device device-laptop', className]}>
+      <div class="device-laptop-tampa">
+        <div class="device-laptop-barra" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          {url && <span>{url}</span>}
+        </div>
+        <div class="device-tela">
+          <slot />
+        </div>
+      </div>
+      <div class="device-laptop-base" aria-hidden="true" />
+    </div>
+  ) : (
+    <div class:list={['device', `device-${type}`, className]}>
+      <div class="device-tela">
+        <slot />
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .device {
+    position: relative;
+  }
+  .device-tela {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-ink-2);
+  }
+  .device-tela :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  /* Celular */
+  .device-phone {
+    aspect-ratio: 390 / 844;
+    padding: 3.2%;
+    border-radius: 13% / 6%;
+    background: #0b0d11;
+    box-shadow:
+      inset 0 0 0 1.5px #2e3440,
+      0 2px 6px rgb(14 17 22 / 0.12),
+      0 24px 48px -12px rgb(14 17 22 / 0.35);
+  }
+  .device-phone .device-tela {
+    height: 100%;
+    border-radius: 10% / 4.7%;
+  }
+  .device-phone::before {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    top: 4.6%;
+    left: 50%;
+    width: 30%;
+    height: 3.4%;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: #0b0d11;
+  }
+
+  /* Tablet */
+  .device-tablet {
+    aspect-ratio: 3 / 4;
+    padding: 3.5%;
+    border-radius: 6%;
+    background: #0b0d11;
+    box-shadow:
+      inset 0 0 0 1.5px #2e3440,
+      0 24px 48px -12px rgb(14 17 22 / 0.35);
+  }
+  .device-tablet .device-tela {
+    height: 100%;
+    border-radius: 3%;
+  }
+
+  /* Notebook */
+  .device-laptop-tampa {
+    margin-inline: 5.5%;
+    padding: 2.2% 2.2% 0;
+    border-radius: 3% 3% 0 0 / 4.5% 4.5% 0 0;
+    background: #0b0d11;
+    box-shadow:
+      inset 0 0 0 1.5px #2e3440,
+      0 24px 48px -16px rgb(14 17 22 / 0.35);
+  }
+  .device-laptop-barra {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: clamp(18px, 2.4vw, 26px);
+    padding: 0 10px;
+    border-radius: 6px 6px 0 0;
+    background: #1f242d;
+  }
+  .device-laptop-barra i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3a414d;
+  }
+  .device-laptop-barra span {
+    margin-left: 10px;
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: #2a303a;
+    color: #a3a9b4;
+    font-size: 10px;
+    line-height: 1.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .device-laptop .device-tela {
+    aspect-ratio: 16 / 10;
+  }
+  .device-laptop-base {
+    position: relative;
+    height: clamp(8px, 1.4vw, 16px);
+    border-radius: 0 0 14px 14px / 0 0 100% 100%;
+    background: linear-gradient(#c9ccd2, #9ca1aa);
+  }
+  .device-laptop-base::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 16%;
+    height: 45%;
+    transform: translateX(-50%);
+    border-radius: 0 0 8px 8px;
+    background: #8a8f98;
+  }
+</style>

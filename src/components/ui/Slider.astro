@@ -1,0 +1,62 @@
+---
+/**
+ * Slider: range nativo estilizado, com o valor espelhado em texto.
+ * O trilho preenchido usa a variável --valor (atualizada por src/scripts/slider.ts).
+ */
+interface Props {
+  label: string;
+  name: string;
+  id?: string;
+  min: number;
+  max: number;
+  step?: number;
+  value: number;
+  /** Texto antes e depois do número exibido. */
+  prefix?: string;
+  suffix?: string;
+  hint?: string;
+  disabled?: boolean;
+  class?: string;
+}
+const { label, name, id = name, min, max, step = 1, value, prefix = '', suffix = '', hint, disabled, class: className } = Astro.props;
+const pct = ((value - min) / (max - min)) * 100;
+---
+
+<div class:list={['field', className]} data-slider>
+  <div class="flex items-baseline justify-between gap-3">
+    <label class="field-label" for={id}>{label}</label>
+    <output for={id} class="font-display text-title font-semibold tabular-nums" data-slider-saida data-prefixo={prefix} data-sufixo={suffix}>
+      {prefix}{value.toLocaleString('pt-BR')}{suffix}
+    </output>
+  </div>
+  <input
+    class="slider"
+    type="range"
+    id={id}
+    name={name}
+    min={min}
+    max={max}
+    step={step}
+    value={value}
+    disabled={disabled}
+    style={`--valor:${pct}`}
+    aria-describedby={hint ? `${id}-ajuda` : undefined}
+  />
+  {hint && <p class="field-hint" id={`${id}-ajuda`}>{hint}</p>}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-slider]').forEach((raiz) => {
+    const input = raiz.querySelector<HTMLInputElement>('input[type=range]')!;
+    const saida = raiz.querySelector<HTMLOutputElement>('[data-slider-saida]');
+    const atualizar = () => {
+      const min = Number(input.min);
+      const max = Number(input.max);
+      const v = Number(input.value);
+      input.style.setProperty('--valor', String(((v - min) / (max - min)) * 100));
+      if (saida) saida.textContent = `${saida.dataset.prefixo ?? ''}${v.toLocaleString('pt-BR')}${saida.dataset.sufixo ?? ''}`;
+    };
+    input.addEventListener('input', atualizar);
+    atualizar();
+  });
+</script>

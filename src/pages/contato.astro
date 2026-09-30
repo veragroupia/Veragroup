@@ -1,0 +1,66 @@
+---
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import FormContato from '@/components/FormContato.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { breadcrumbs, negocioLocal } from '@/lib/schema';
+import { site } from '@/config/site';
+
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Contato', path: '/contato' },
+];
+const mensagem = 'Olá! Vim pelo site da Vera Group e quero conversar sobre o meu negócio.';
+---
+
+<Base
+  title="Contato: fale com a Vera Group no WhatsApp"
+  description="Fale com a Vera Group pelo WhatsApp (11) 94072-3507 ou pelo formulário. Atendemos lojas de Itu, Salto, Sorocaba e Indaiatuba, e vamos até a sua loja."
+  path="/contato"
+  whatsapp={mensagem}
+  jsonLd={[negocioLocal(), breadcrumbs(trilha)]}
+>
+  <section class="secao-curta tema-areia">
+    <div class="wrap">
+      <Breadcrumb itens={trilha} />
+      <div class="mt-6 grid gap-10 lg:grid-cols-12 lg:gap-16">
+        <div class="lg:col-span-5">
+          <h1 class="text-display-page">Conta pra gente o que o seu negócio precisa.</h1>
+          <p class="mt-5 text-body-lg text-muted">O jeito mais rápido é o WhatsApp. Se preferir, preencha o formulário e a mensagem sai pronta.</p>
+
+          <ul class="mt-8 grid gap-3" data-sem-flutuante>
+            <li>
+              <Button variant="whatsapp" size="lg" block whatsapp={mensagem}>{site.whatsapp.exibicao}</Button>
+            </li>
+            <li>
+              <Button variant="secondary" size="lg" block href={site.instagram.url} external icon="instagram">@{site.instagram.usuario}</Button>
+            </li>
+            {
+              site.email && (
+                <li>
+                  <Button variant="secondary" size="lg" block href={`mailto:${site.email}`} icon="email">{site.email}</Button>
+                </li>
+              )
+            }
+          </ul>
+
+          <div class="mt-10 flex gap-4">
+            <span class="grid size-12 flex-none place-items-center rounded-md bg-white text-accent-strong shadow-1">
+              <Icon name="mapa" />
+            </span>
+            <div>
+              <h2 class="text-title font-semibold">A gente vai até a sua loja</h2>
+              <p class="mt-1 text-muted">Atendemos {site.cidades.slice(0, -1).join(', ')} e {site.cidades.at(-1)}.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7">
+          <h2 class="sr-only">Formulário de contato</h2>
+          <FormContato />
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

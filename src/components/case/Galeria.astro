@@ -1,0 +1,233 @@
+---
+/**
+ * Galeria do case: carrossel com telas em moldura de aparelho.
+ * Tocar numa tela abre a imagem grande num <dialog> nativo.
+ */
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+import Carousel from '../ui/Carousel.astro';
+import Img from '../ui/Img.astro';
+import Placeholder from '../ui/Placeholder.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Item {
+  imagem?: ImageMetadata;
+  alt: string;
+  legenda?: string;
+  tipo: 'celular' | 'desktop' | 'foto';
+}
+interface Props {
+  itens: Item[];
+  nome: string;
+}
+const { itens, nome } = Astro.props;
+
+const preparados = await Promise.all(
+  itens.map(async (item) => ({
+    ...item,
+    grande: item.imagem ? (await getImage({ src: item.imagem, width: Math.min(1440, item.imagem.width), format: 'webp' })).src : undefined,
+  })),
+);
+---
+
+<Carousel label={`Telas do projeto ${nome}`} total={preparados.length} size="tela">
+  {
+    preparados.map((item) => (
+      <li class:list={['carousel-item', `galeria-li-${item.tipo}`]}>
+        <figure class="galeria-item">
+          <div class:list={['galeria-moldura', `galeria-${item.tipo}`]}>
+            {item.imagem ? (
+              <button type="button" class="galeria-botao" data-ampliar={item.grande} data-alt={item.alt} aria-label={`Ampliar: ${item.alt}`}>
+                <Img
+                  src={item.imagem}
+                  alt={item.alt}
+                  widths={item.tipo === 'desktop' ? [480, 720, 960] : [240, 360, 480]}
+                  sizes={item.tipo === 'desktop' ? '(min-width: 1024px) 600px, 88vw' : '(min-width: 1024px) 260px, 60vw'}
+                  class="h-full w-full object-cover object-top"
+                />
+                <span class="galeria-lupa" aria-hidden="true">
+                  <Icon name="ampliar" size={18} />
+                </span>
+              </button>
+            ) : (
+              <Placeholder label={item.alt.replace(/\s*\(pendente\)\.?$/, '')} />
+            )}
+          </div>
+          {item.legenda && <figcaption class="mt-3 text-small text-muted">{item.legenda}</figcaption>}
+        </figure>
+      </li>
+    ))
+  }
+</Carousel>
+
+<dialog class="lightbox" data-lightbox aria-label="Imagem ampliada">
+  <form method="dialog" class="lightbox-barra">
+    <button class="lightbox-fechar" aria-label="Fechar imagem ampliada">
+      <Icon name="x" size={24} />
+    </button>
+  </form>
+  <img alt="" data-lightbox-img decoding="async" />
+</dialog>
+
+<style>
+  /* Telas de computador ocupam mais largura; celulares e fotos, menos. */
+  :global(.carousel-item).galeria-li-desktop {
+    --item: 92%;
+  }
+  :global(.carousel-item).galeria-li-celular,
+  :global(.carousel-item).galeria-li-foto {
+    --item: 64%;
+  }
+  @media (width >= 48rem) {
+    :global(.carousel-item).galeria-li-desktop {
+      --item: 62%;
+    }
+    :global(.carousel-item).galeria-li-celular,
+    :global(.carousel-item).galeria-li-foto {
+      --item: 32%;
+    }
+  }
+  @media (width >= 64rem) {
+    :global(.carousel-item).galeria-li-desktop {
+      --item: 52%;
+    }
+    :global(.carousel-item).galeria-li-celular,
+    :global(.carousel-item).galeria-li-foto {
+      --item: 22%;
+    }
+  }
+  .galeria-moldura {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 0.75rem;
+    border-radius: var(--radius-lg);
+    background: var(--tema-surface);
+    border: 1px solid var(--tema-rule);
+  }
+  @media (width >= 48rem) {
+    .galeria-moldura {
+      padding: 1.25rem;
+    }
+  }
+  .galeria-botao {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    cursor: zoom-in;
+    background: var(--color-ink-2);
+  }
+  .galeria-celular .galeria-botao,
+  .galeria-celular :global(.placeholder) {
+    width: 100%;
+    aspect-ratio: 390 / 844;
+    border: 6px solid #0b0d11;
+    border-radius: 28px;
+    box-shadow: var(--shadow-2);
+  }
+  .galeria-desktop .galeria-botao,
+  .galeria-desktop :global(.placeholder) {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border: 6px solid #0b0d11;
+    border-top-width: 18px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-2);
+  }
+  .galeria-foto .galeria-botao {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-2);
+  }
+  .galeria-botao :global(img) {
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+  .galeria-botao:hover :global(img) {
+    transform: scale(1.02);
+  }
+  .galeria-lupa {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: rgb(14 17 22 / 0.72);
+    color: var(--color-paper);
+  }
+
+  .lightbox {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgb(14 17 22 / 0.94);
+    opacity: 0;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+  .lightbox[open] {
+    display: grid;
+    place-items: center;
+    opacity: 1;
+  }
+  @starting-style {
+    .lightbox[open] {
+      opacity: 0;
+    }
+  }
+  .lightbox::backdrop {
+    background: transparent;
+  }
+  .lightbox img {
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 6rem);
+    width: auto;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+  .lightbox-barra {
+    position: fixed;
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: 0.75rem;
+  }
+  .lightbox-fechar {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgb(246 244 239 / 0.12);
+    color: var(--color-paper);
+    cursor: pointer;
+  }
+  .lightbox-fechar:hover {
+    background: rgb(246 244 239 / 0.22);
+  }
+</style>
+
+<script>
+  const caixa = document.querySelector<HTMLDialogElement>('[data-lightbox]');
+  const img = caixa?.querySelector<HTMLImageElement>('[data-lightbox-img]');
+  let origem: HTMLElement | null = null;
+  document.querySelectorAll<HTMLButtonElement>('[data-ampliar]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (!caixa || !img) return;
+      origem = b;
+      img.src = b.dataset.ampliar!;
+      img.alt = b.dataset.alt || '';
+      caixa.showModal();
+    }),
+  );
+  // Toque fora da imagem fecha.
+  caixa?.addEventListener('click', (e) => e.target === caixa && caixa.close());
+  caixa?.addEventListener('close', () => origem?.focus());
+</script>

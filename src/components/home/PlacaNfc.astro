@@ -1,0 +1,354 @@
+---
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+---
+
+<section class="secao overflow-hidden" aria-labelledby="nfc-titulo">
+  <div class="wrap grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+    <div data-reveal>
+      <p class="eyebrow">Plaquinha NFC</p>
+      <h2 id="nfc-titulo" class="mt-3 text-display-xl">Avaliação no Google com um toque.</h2>
+      <p class="mt-4 text-body-lg text-muted">O cliente aproxima o celular da plaquinha e já cai na tela de avaliar a sua loja.</p>
+      <ul class="mt-6 grid gap-3">
+        <li class="flex items-center gap-3"><Icon name="check" size={20} class="text-accent-2-strong" /> Sem aplicativo e sem digitar nada</li>
+        <li class="flex items-center gap-3"><Icon name="check" size={20} class="text-accent-2-strong" /> Fica no balcão, na hora em que o cliente está feliz</li>
+        <li class="flex items-center gap-3"><Icon name="check" size={20} class="text-accent-2-strong" /> Sem bateria e sem manutenção</li>
+      </ul>
+      <div class="mt-8 flex flex-col gap-3 md:flex-row md:items-center" data-sem-flutuante>
+        <Button variant="whatsapp" size="lg" whatsapp="Olá! Vim pelo site e quero plaquinhas NFC de avaliação para a minha loja.">Quero plaquinhas para minha loja</Button>
+        <Button variant="ghost" href="/servicos/placa-nfc-avaliacao" iconRight="seta">Como funciona</Button>
+      </div>
+    </div>
+
+    <figure class="nfc-figura" data-reveal>
+      <div class="nfc-palco" data-nfc role="img" aria-label="Animação: um celular se aproxima da plaquinha no balcão e abre a tela de avaliação com cinco estrelas.">
+        <div class="nfc-balcao" aria-hidden="true"></div>
+        <div class="nfc-placa" aria-hidden="true">
+          <span class="nfc-ondas"><i></i><i></i><i></i></span>
+          <span class="nfc-placa-icone"><Icon name="nfc" size={26} /></span>
+          <strong>Avalie a gente no Google</strong>
+          <span class="nfc-placa-estrelas">★★★★★</span>
+          <small>Aproxime o celular</small>
+        </div>
+        <div class="nfc-celular" aria-hidden="true">
+          <div class="nfc-tela">
+            <div class="nfc-bloqueio">
+              <span class="nfc-hora">12:30</span>
+              <span class="nfc-dica"><Icon name="nfc" size={16} /> Aproxime da placa</span>
+            </div>
+            <div class="nfc-avaliacao">
+              <span class="nfc-loja-avatar"><Icon name="loja2" size={18} /></span>
+              <strong>Sua loja</strong>
+              <span class="nfc-avaliar">Avalie sua experiência</span>
+              <span class="nfc-estrelas"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+              <span class="nfc-campo"></span>
+              <span class="nfc-publicar">Publicar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="mt-4 flex items-center justify-between gap-3 text-small text-muted">
+        <span>Ilustração. A plaquinha real é gravada com o link da sua loja.</span>
+        <button type="button" class="btn btn-ghost btn-sm flex-none" data-nfc-repetir>
+          <Icon name="repetir" size={18} /> Ver de novo
+        </button>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .nfc-palco {
+    position: relative;
+    aspect-ratio: 5 / 4;
+    border-radius: var(--radius-lg);
+    background: radial-gradient(120% 90% at 30% 20%, #ffffff 0%, var(--color-paper-2) 70%);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+  }
+  .nfc-balcao {
+    position: absolute;
+    inset: auto 0 0;
+    height: 24%;
+    background: linear-gradient(#d9d3c8, #cbc4b7);
+    border-top: 1px solid #c2bbad;
+  }
+
+  /* Placa */
+  .nfc-placa {
+    position: absolute;
+    left: 12%;
+    bottom: 16%;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 0.35rem;
+    width: 38%;
+    aspect-ratio: 3 / 4;
+    padding: 6%;
+    border-radius: 18px;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    text-align: center;
+    box-shadow:
+      0 2px 0 #000,
+      0 24px 40px -16px rgb(14 17 22 / 0.55);
+  }
+  .nfc-placa strong {
+    font-family: var(--font-display);
+    font-size: clamp(0.75rem, 0.55rem + 0.9vw, 1rem);
+    line-height: 1.2;
+  }
+  .nfc-placa small {
+    font-size: clamp(0.625rem, 0.5rem + 0.5vw, 0.75rem);
+    color: var(--color-stone-on-ink);
+  }
+  .nfc-placa-estrelas {
+    color: var(--color-warn);
+    letter-spacing: 2px;
+    font-size: clamp(0.75rem, 0.6rem + 0.6vw, 0.9375rem);
+  }
+  .nfc-placa-icone {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: rgb(127 162 255 / 0.18);
+    color: var(--color-accent-on-ink);
+  }
+  .nfc-ondas {
+    position: absolute;
+    top: 24%;
+    right: -10%;
+    width: 40%;
+    aspect-ratio: 1;
+    pointer-events: none;
+  }
+  .nfc-ondas i {
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    opacity: 0;
+  }
+
+  /* Celular */
+  .nfc-celular {
+    position: absolute;
+    right: 14%;
+    bottom: 12%;
+    width: 30%;
+    aspect-ratio: 390 / 844;
+    padding: 2.4%;
+    border-radius: 16% / 7.5%;
+    background: #0b0d11;
+    box-shadow:
+      inset 0 0 0 1.5px #2e3440,
+      0 30px 50px -18px rgb(14 17 22 / 0.55);
+    transform: rotate(-6deg);
+    transform-origin: bottom center;
+  }
+  .nfc-tela {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 13% / 6%;
+    background: var(--color-white);
+  }
+  .nfc-bloqueio,
+  .nfc-avaliacao {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 0.4rem;
+    padding: 10%;
+    text-align: center;
+  }
+  .nfc-bloqueio {
+    background: linear-gradient(160deg, #2a3a6b, #111827);
+    color: var(--color-paper);
+    opacity: 0;
+  }
+  .nfc-hora {
+    font-family: var(--font-display);
+    font-size: clamp(1.125rem, 0.8rem + 1.4vw, 1.75rem);
+    font-weight: 600;
+  }
+  .nfc-dica {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: clamp(0.5rem, 0.4rem + 0.4vw, 0.6875rem);
+    color: var(--color-stone-on-ink);
+  }
+  .nfc-avaliacao {
+    color: var(--color-ink);
+    font-size: clamp(0.5625rem, 0.45rem + 0.45vw, 0.75rem);
+  }
+  .nfc-loja-avatar {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--color-accent-tint);
+    color: var(--color-accent-strong);
+  }
+  .nfc-avaliacao strong {
+    font-family: var(--font-display);
+    font-size: 1.2em;
+  }
+  .nfc-avaliar {
+    color: var(--color-stone);
+  }
+  .nfc-estrelas {
+    display: flex;
+    gap: 0.15rem;
+    font-size: 1.6em;
+    line-height: 1;
+  }
+  .nfc-estrelas i {
+    font-style: normal;
+    color: #f2b53a;
+  }
+  .nfc-campo {
+    width: 100%;
+    height: 2.4em;
+    margin-top: 0.3rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-line);
+  }
+  .nfc-publicar {
+    justify-self: end;
+    padding: 0.35em 0.9em;
+    border-radius: 999px;
+    background: var(--color-accent-strong);
+    color: var(--color-white);
+    font-weight: 600;
+  }
+
+  /* Estado inicial, só quando o JS vai tocar a animação. */
+  :global(.js) .nfc-palco[data-pronto]:not(.tocando) .nfc-celular {
+    transform: translate(38%, 16%) rotate(10deg);
+  }
+  :global(.js) .nfc-palco[data-pronto]:not(.tocando) .nfc-bloqueio {
+    opacity: 1;
+  }
+  :global(.js) .nfc-palco[data-pronto]:not(.tocando) .nfc-estrelas i {
+    color: var(--color-line);
+  }
+
+  /* Sequência: aproxima (600 ms) → ondas → tela de avaliar → estrelas. */
+  .nfc-palco.tocando .nfc-celular {
+    animation: nfc-aproxima 600ms var(--ease-out) both;
+  }
+  .nfc-palco.tocando .nfc-ondas i {
+    animation: nfc-onda 600ms var(--ease-out) both;
+  }
+  .nfc-palco.tocando .nfc-ondas i:nth-child(1) {
+    animation-delay: 520ms;
+  }
+  .nfc-palco.tocando .nfc-ondas i:nth-child(2) {
+    animation-delay: 660ms;
+  }
+  .nfc-palco.tocando .nfc-ondas i:nth-child(3) {
+    animation-delay: 800ms;
+  }
+  .nfc-palco.tocando .nfc-bloqueio {
+    animation: nfc-sai 300ms var(--ease-out) 900ms both;
+  }
+  .nfc-palco.tocando .nfc-estrelas i {
+    animation: nfc-estrela 300ms var(--ease-out) both;
+    animation-delay: calc(1200ms + var(--n, 0) * 90ms);
+  }
+  .nfc-estrelas i:nth-child(2) {
+    --n: 1;
+  }
+  .nfc-estrelas i:nth-child(3) {
+    --n: 2;
+  }
+  .nfc-estrelas i:nth-child(4) {
+    --n: 3;
+  }
+  .nfc-estrelas i:nth-child(5) {
+    --n: 4;
+  }
+  .nfc-palco.tocando .nfc-publicar {
+    animation: nfc-pulso 400ms var(--ease-out) 1750ms both;
+  }
+  @keyframes nfc-aproxima {
+    from {
+      transform: translate(38%, 16%) rotate(10deg);
+    }
+    to {
+      transform: rotate(-6deg);
+    }
+  }
+  @keyframes nfc-onda {
+    from {
+      opacity: 0.9;
+      transform: scale(0.2);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.1);
+    }
+  }
+  @keyframes nfc-sai {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes nfc-estrela {
+    from {
+      color: var(--color-line);
+      transform: scale(0.6);
+    }
+    60% {
+      transform: scale(1.2);
+    }
+    to {
+      color: #f2b53a;
+      transform: scale(1);
+    }
+  }
+  @keyframes nfc-pulso {
+    50% {
+      transform: scale(1.08);
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-nfc]').forEach((palco) => {
+    const semMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const repetir = palco.closest('figure')?.querySelector<HTMLButtonElement>('[data-nfc-repetir]');
+    if (semMovimento) {
+      // Mostra direto o estado final; o botão não tem o que repetir.
+      if (repetir) repetir.hidden = true;
+      return;
+    }
+    palco.setAttribute('data-pronto', '');
+    const tocar = () => {
+      palco.classList.remove('tocando');
+      void palco.offsetWidth; // reinicia as animações
+      palco.classList.add('tocando');
+    };
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        window.setTimeout(tocar, 250);
+      },
+      { threshold: 0.55 },
+    );
+    io.observe(palco);
+    repetir?.addEventListener('click', tocar);
+  });
+</script>

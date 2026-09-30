@@ -1,0 +1,53 @@
+---
+/** Três telas de celular lado a lado, contando um fluxo (ex.: do cardápio ao WhatsApp). */
+import type { ImageMetadata } from 'astro';
+import Img from '../ui/Img.astro';
+
+interface Props {
+  titulo: string;
+  passos: { imagem: ImageMetadata; alt: string; legenda?: string }[];
+}
+const { titulo, passos } = Astro.props;
+---
+
+<div>
+  <h3 class="text-display-lg">{titulo}</h3>
+  <ol class="fluxo mt-8">
+    {
+      passos.map((p) => (
+        <li class="fluxo-passo" data-reveal>
+          <div class="fluxo-celular">
+            <Img src={p.imagem} alt={p.alt} widths={[240, 360, 480]} sizes="(min-width: 768px) 220px, 60vw" class="h-full w-full object-cover object-top" />
+          </div>
+          {p.legenda && <p class="mt-4 text-center text-small font-medium">{p.legenda}</p>}
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .fluxo {
+    display: grid;
+    gap: 2rem;
+    justify-items: center;
+  }
+  @media (width >= 48rem) {
+    .fluxo {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+  }
+  .fluxo-passo {
+    width: 100%;
+    max-width: min(15rem, 70vw);
+  }
+  .fluxo-celular {
+    aspect-ratio: 390 / 844;
+    overflow: hidden;
+    border: 7px solid #0b0d11;
+    border-radius: 30px;
+    background: var(--color-ink-2);
+    box-shadow: var(--shadow-2);
+  }
+</style>

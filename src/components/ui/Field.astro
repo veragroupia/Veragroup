@@ -1,0 +1,45 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'input'> {
+  label: string;
+  name: string;
+  id?: string;
+  as?: 'input' | 'textarea' | 'select';
+  hint?: string;
+  error?: string;
+  prefix?: string;
+  options?: { value: string; label: string }[];
+  /** Classe extra no campo em si (o /design-system usa para mostrar estados). */
+  inputClass?: string;
+  class?: string;
+}
+
+const { label, name, id = name, as = 'input', hint, error, prefix, options = [], inputClass, class: className, ...rest } = Astro.props;
+const inputClasses = ['input', inputClass].filter(Boolean).join(' ');
+const hintId = hint ? `${id}-ajuda` : undefined;
+const errorId = `${id}-erro`;
+const describedBy = [hintId, errorId].filter(Boolean).join(' ');
+---
+
+<div class:list={['field', className]}>
+  <label class="field-label" for={id}>{label}</label>
+  {hint && <p class="field-hint" id={hintId}>{hint}</p>}
+  {
+    as === 'textarea' ? (
+      <textarea class={inputClasses} id={id} name={name} aria-describedby={describedBy} aria-invalid={error ? 'true' : undefined} {...(rest as HTMLAttributes<'textarea'>)} />
+    ) : as === 'select' ? (
+      <select class={inputClasses} id={id} name={name} aria-describedby={describedBy} aria-invalid={error ? 'true' : undefined} {...(rest as HTMLAttributes<'select'>)}>
+        {options.map((o) => <option value={o.value}>{o.label}</option>)}
+      </select>
+    ) : prefix ? (
+      <div class="input-prefixo">
+        <span aria-hidden="true">{prefix}</span>
+        <input class={inputClasses} id={id} name={name} aria-describedby={describedBy} aria-invalid={error ? 'true' : undefined} {...rest} />
+      </div>
+    ) : (
+      <input class={inputClasses} id={id} name={name} aria-describedby={describedBy} aria-invalid={error ? 'true' : undefined} {...rest} />
+    )
+  }
+  <p class="field-error" id={errorId} role="alert" hidden={!error}>{error}</p>
+</div>

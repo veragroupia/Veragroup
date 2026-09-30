@@ -1,0 +1,48 @@
+---
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import ServicosGrid from '@/components/ServicosGrid.astro';
+import ComoTrabalhamos from '@/components/ComoTrabalhamos.astro';
+import CtaFinal from '@/components/home/CtaFinal.astro';
+import Button from '@/components/ui/Button.astro';
+import { breadcrumbs } from '@/lib/schema';
+import { site } from '@/config/site';
+
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Serviços', path: '/servicos' },
+];
+const mensagem = 'Olá! Vim pelo site e quero saber quais serviços fazem sentido para o meu negócio.';
+---
+
+<Base
+  title="Sites, Google e anúncios em Itu e região"
+  description="Sites, lojas virtuais, cardápios, sistemas, Google Meu Negócio, anúncios, redes sociais e plaquinhas NFC para lojas de Itu, Salto, Sorocaba e Indaiatuba."
+  path="/servicos"
+  whatsapp={mensagem}
+  jsonLd={[breadcrumbs(trilha)]}
+>
+  <section class="secao-curta">
+    <div class="wrap">
+      <Breadcrumb itens={trilha} />
+      <div class="mt-6 max-w-[46rem]">
+        <h1 class="text-display-2xl">Tudo para o seu negócio vender no digital.</h1>
+        <p class="mt-5 text-body-lg text-muted">Do site ao Google, do cardápio ao anúncio. Para o comércio de {site.cidades.slice(0, -1).join(', ')} e {site.cidades.at(-1)}.</p>
+        <p class="mt-3 text-muted">Não sabe por onde começar? O diagnóstico gratuito mostra o que dá mais resultado primeiro.</p>
+        <div class="mt-8 flex flex-col gap-3 md:flex-row">
+          <Button variant="whatsapp" size="lg" whatsapp={mensagem}>Quero um diagnóstico gratuito</Button>
+          <Button variant="secondary" size="lg" href="/diagnostico" icon="calculadora">Fazer a conta</Button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tema-areia secao" aria-label="Lista de serviços">
+    <div class="wrap">
+      <ServicosGrid nivel="h2" />
+    </div>
+  </section>
+
+  <ComoTrabalhamos titulo="Qualquer serviço começa do mesmo jeito." />
+  <CtaFinal whatsapp={mensagem} />
+</Base>

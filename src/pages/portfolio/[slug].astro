@@ -1,0 +1,276 @@
+---
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import Button from '@/components/ui/Button.astro';
+import Badge from '@/components/ui/Badge.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Img from '@/components/ui/Img.astro';
+import Placeholder from '@/components/ui/Placeholder.astro';
+import Galeria from '@/components/case/Galeria.astro';
+import ErkGiro from '@/components/case/ErkGiro.astro';
+import FluxoCelulares from '@/components/case/FluxoCelulares.astro';
+import CtaFinal from '@/components/home/CtaFinal.astro';
+import { breadcrumbs, trabalho } from '@/lib/schema';
+
+export async function getStaticPaths() {
+  const cases = (await getCollection('portfolio')).sort((a, b) => a.data.ordem - b.data.ordem);
+  return cases.map((c, i) => ({
+    params: { slug: c.data.slug },
+    props: { entrada: c, proximo: cases[(i + 1) % cases.length] },
+  }));
+}
+
+const { entrada, proximo } = Astro.props;
+const c = entrada.data;
+const path = `/portfolio/${c.slug}`;
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Portfólio', path: '/portfolio' },
+  { nome: c.nome, path },
+];
+const escuro = c.tema === 'escuro';
+const imagemSchema = c.capa.desktop ? (await getImage({ src: c.capa.desktop, width: 1200, format: 'webp' })).src : undefined;
+
+// Fluxo em 3 telas quando o case tem pelo menos 3 telas de celular (ex.: Vó Neis).
+const celulares = c.galeria.filter((g) => g.tipo === 'celular' && g.imagem);
+const fluxo = c.slug !== 'erk-pratas' && celulares.length >= 3 ? celulares.slice(0, 3) : [];
+const galeria = fluxo.length ? c.galeria.filter((g) => !fluxo.includes(g)) : c.galeria;
+let secao = 0;
+const num = () => String(++secao).padStart(2, '0');
+---
+
+<Base
+  title={c.seo.title}
+  description={c.seo.description}
+  path={path}
+  whatsapp={c.whatsapp}
+  type="article"
+  jsonLd={[
+    trabalho({ nome: c.h1, descricao: c.seo.description, path, imagem: imagemSchema, cliente: c.nome, cidade: c.cidade.replace(', SP', '') }),
+    breadcrumbs(trilha),
+  ]}
+>
+  <!-- Topo do case -->
+  <section class:list={['case-topo secao-curta', escuro ? 'tema-escuro' : 'tema-claro']}>
+    <div class="wrap">
+      <Breadcrumb itens={trilha} />
+      <div class="mt-6 grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
+        <div class="lg:col-span-6">
+          <p class="eyebrow">{c.segmento} · {c.cidade}</p>
+          <h1 class="mt-3 text-display-page">{c.h1}</h1>
+          <p class="mt-5 max-w-[34rem] text-body-lg text-muted">{c.sub}</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            {c.status === 'no-ar' ? <Badge tone="sucesso" dot>No ar</Badge> : <Badge tone="alerta" dot>Em desenvolvimento</Badge>}
+            {c.servicos.map((sv) => <Badge tone="servico">{sv}</Badge>)}
+          </div>
+          <div class="mt-8 flex flex-col gap-3 md:flex-row">
+            {c.link && (
+              <Button variant="primary" size="lg" href={c.link} external iconRight="seta-externa">
+                {c.linkRotulo ?? 'Ver no ar'}
+              </Button>
+            )}
+            <Button variant="whatsapp" size="lg" whatsapp={c.whatsapp}>Quero algo assim</Button>
+          </div>
+        </div>
+        <div class="case-aparelhos lg:col-span-6">
+          <div class="case-notebook">
+            <div class="case-notebook-tela">
+              {c.capa.desktop ? (
+                <Img src={c.capa.desktop} alt={c.capa.altDesktop ?? ''} widths={[640, 960, 1280]} sizes="(min-width: 1024px) 560px, 90vw" priority class="h-full w-full object-cover object-top" />
+              ) : (
+                <Placeholder label="tela no computador" />
+              )}
+            </div>
+          </div>
+          <div class="case-celular">
+            {c.capa.mobile ? (
+              <Img src={c.capa.mobile} alt={c.capa.altMobile ?? ''} widths={[240, 390, 480]} sizes="180px" eager class="h-full w-full object-cover object-top" />
+            ) : (
+              <Placeholder label={`tela do ${c.nome} no celular`} compacto />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ficha -->
+  <section class="border-b border-line" aria-label="Ficha do projeto">
+    <div class="wrap">
+      <dl class="ficha-case">
+        {
+          c.ficha.map((f) => (
+            <div>
+              <dt class="eyebrow">{f.rotulo}</dt>
+              <dd class="mt-1 font-medium">{f.valor}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <!-- Problema -->
+  <section class="secao" aria-labelledby="problema-titulo">
+    <div class="wrap grid gap-8 lg:grid-cols-12">
+      <header class="lg:col-span-4" data-reveal>
+        <p class="eyebrow">{num()} · O problema</p>
+        <h2 id="problema-titulo" class="mt-3 text-display-xl">O ponto de partida.</h2>
+      </header>
+      <div class="grid gap-4 text-body-lg lg:col-span-7 lg:col-start-6" data-reveal>
+        {c.problema.map((p) => <p>{p}</p>)}
+      </div>
+    </div>
+  </section>
+
+  <!-- O que fizemos -->
+  <section class="tema-areia secao" aria-labelledby="fizemos-titulo">
+    <div class="wrap">
+      <header class="max-w-[40rem]" data-reveal>
+        <p class="eyebrow">{num()} · O que fizemos</p>
+        <h2 id="fizemos-titulo" class="mt-3 text-display-xl">{c.status === 'no-ar' ? 'O que entregamos.' : 'O que estamos construindo.'}</h2>
+      </header>
+      <ul class="mt-10 grid gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {
+          c.oQueFizemos.map((f, i) => (
+            <li class="card p-6" data-reveal>
+              <span class="font-display text-small font-bold text-accent-strong">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="mt-2 text-title font-semibold">{f.titulo}</h3>
+              <p class="mt-2 text-muted">{f.texto}</p>
+            </li>
+          ))
+        }
+      </ul>
+      {c.slug === 'erk-pratas' && <div class="mt-12"><ErkGiro /></div>}
+      {fluxo.length > 0 && (
+        <div class="mt-16">
+          <FluxoCelulares titulo="Do cardápio ao WhatsApp em três telas." passos={fluxo.map((f) => ({ imagem: f.imagem!, alt: f.alt, legenda: f.legenda }))} />
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Resultado -->
+  <section class="secao" aria-labelledby="resultado-titulo">
+    <div class="wrap grid gap-8 lg:grid-cols-12">
+      <header class="lg:col-span-4" data-reveal>
+        <p class="eyebrow">{num()} · {c.resultadoTitulo}</p>
+        <h2 id="resultado-titulo" class="mt-3 text-display-xl">{c.status === 'no-ar' ? 'O que mudou.' : 'Onde está agora.'}</h2>
+      </header>
+      <ul class="grid gap-4 lg:col-span-7 lg:col-start-6">
+        {
+          c.resultado.map((r) => (
+            <li class="flex gap-3 text-body-lg" data-reveal>
+              <Icon name={c.status === 'no-ar' ? 'check' : 'relogio'} size={24} class="mt-0.5 flex-none text-accent-2-strong" />
+              <span>{r}</span>
+            </li>
+          ))
+        }
+      </ul>
+      {/* TODO: números reais de resultado, só com autorização do cliente. */}
+    </div>
+  </section>
+
+  {
+    c.depoimento && (
+      <section class="tema-areia secao-curta">
+        <figure class="wrap max-w-[46rem]">
+          <blockquote class="font-display text-display-lg">“{c.depoimento.texto}”</blockquote>
+          <figcaption class="mt-4 text-muted">
+            {c.depoimento.autor}, {c.depoimento.cargo}
+          </figcaption>
+        </figure>
+      </section>
+    )
+  }
+
+  <!-- Galeria -->
+  {
+    galeria.length > 0 && (
+      <section class:list={['secao', escuro ? 'tema-escuro' : 'tema-areia']} aria-labelledby="galeria-titulo">
+        <div class="wrap">
+          <header class="max-w-[40rem]" data-reveal>
+            <p class="eyebrow">{num()} · Galeria</p>
+            <h2 id="galeria-titulo" class="mt-3 text-display-xl">{c.status === 'no-ar' ? 'As telas de verdade.' : 'Telas em breve.'}</h2>
+          </header>
+          <div class="mt-10">
+            <Galeria itens={galeria} nome={c.nome} />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Próximo -->
+  <section class="secao-curta" aria-label="Próximo trabalho">
+    <div class="wrap">
+      <a href={`/portfolio/${proximo.data.slug}`} class="card card-interativo flex items-center justify-between gap-6 p-6 no-underline md:p-8">
+        <span>
+          <span class="eyebrow block">Próximo trabalho</span>
+          <span class="mt-2 block font-display text-display-lg font-semibold">{proximo.data.nome}</span>
+          <span class="mt-1 block text-muted">{proximo.data.resumo}</span>
+        </span>
+        <span class="grid size-12 flex-none place-items-center rounded-pill bg-ink text-paper">
+          <Icon name="seta" />
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <CtaFinal titulo={`Quer um projeto assim para o seu negócio?`} whatsapp={c.whatsapp} />
+</Base>
+
+<style>
+  .case-aparelhos {
+    position: relative;
+    padding-right: 12%;
+    padding-bottom: 8%;
+  }
+  .case-notebook {
+    padding: 2.2% 2.2% 0;
+    border-radius: 16px 16px 0 0;
+    background: #0b0d11;
+    box-shadow:
+      inset 0 0 0 1.5px #2e3440,
+      0 30px 60px -20px rgb(14 17 22 / 0.45);
+  }
+  .case-notebook::after {
+    content: '';
+    display: block;
+    height: 12px;
+    margin: 0 -4%;
+    border-radius: 0 0 12px 12px / 0 0 100% 100%;
+    background: linear-gradient(#c9ccd2, #9ca1aa);
+  }
+  .case-notebook-tela {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 6px 6px 0 0;
+    background: var(--color-ink-2);
+  }
+  .case-celular {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 27%;
+    aspect-ratio: 390 / 844;
+    overflow: hidden;
+    border: 5px solid #0b0d11;
+    border-radius: 22px;
+    background: var(--color-ink-2);
+    box-shadow: 0 24px 40px -12px rgb(14 17 22 / 0.5);
+  }
+  .ficha-case {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
+    padding-block: 2rem;
+  }
+  @media (width >= 64rem) {
+    .ficha-case {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+</style>

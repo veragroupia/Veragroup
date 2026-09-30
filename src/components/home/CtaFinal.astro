@@ -1,0 +1,25 @@
+---
+import Button from '../ui/Button.astro';
+
+interface Props {
+  titulo?: string;
+  sub?: string;
+  whatsapp?: string;
+}
+const {
+  titulo = 'Vamos ver quanto a sua loja pode vender a mais?',
+  sub = 'O diagnóstico é gratuito. A gente olha o seu negócio com você e mostra o que dá para melhorar primeiro.',
+  whatsapp = 'Olá! Vim pelo site da Vera Group e quero agendar o diagnóstico gratuito.',
+} = Astro.props;
+---
+
+<section class="tema-escuro secao border-b border-ink-3" aria-labelledby="cta-final-titulo" data-sem-flutuante>
+  <div class="wrap text-center">
+    <h2 id="cta-final-titulo" class="mx-auto max-w-[40rem] text-display-xl" data-reveal>{titulo}</h2>
+    <p class="mx-auto mt-4 max-w-[34rem] text-body-lg text-muted" data-reveal>{sub}</p>
+    <div class="mt-10 flex flex-col justify-center gap-3 md:flex-row" data-reveal>
+      <Button variant="whatsapp" size="lg" whatsapp={whatsapp}>Falar no WhatsApp</Button>
+      <Button variant="secondary" size="lg" href="/diagnostico" icon="calculadora">Fazer o diagnóstico</Button>
+    </div>
+  </div>
+</section>

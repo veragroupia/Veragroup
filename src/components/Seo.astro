@@ -1,0 +1,51 @@
+---
+import { site } from '@/config/site';
+import type { JsonLd } from '@/lib/schema';
+
+export interface SeoProps {
+  title: string;
+  description: string;
+  /** Caminho da página, ex.: /servicos/loja-virtual */
+  path?: string;
+  /** Caminho da imagem de prévia (1200×630). */
+  image?: string;
+  imageAlt?: string;
+  noindex?: boolean;
+  type?: 'website' | 'article';
+  jsonLd?: JsonLd[];
+}
+
+const { title, description, path = Astro.url.pathname, image, imageAlt, noindex = false, type = 'website', jsonLd = [] } = Astro.props as SeoProps;
+
+const semHtml = path.replace(/\.html$/, '').replace(/\/index$/, '/');
+const limpo = semHtml === '/' ? '' : semHtml.replace(/\/$/, '');
+const canonical = `${site.url}${limpo}`;
+const slugOg = limpo === '' ? 'home' : limpo.slice(1);
+// Páginas fora do Google (404, apresentação, design system) usam a prévia da home.
+const ogImage = new URL(image ?? (noindex ? '/og/home.png' : `/og/${slugOg}.png`), site.url).href;
+const tituloCompleto = title.includes(site.nome) ? title : `${title} | ${site.nome}`;
+---
+
+<title>{tituloCompleto}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<link rel="alternate" hreflang="pt-BR" href={canonical} />
+<link rel="alternate" hreflang="x-default" href={canonical} />
+{noindex ? <meta name="robots" content="noindex, nofollow" /> : <meta name="robots" content="index, follow, max-image-preview:large" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:site_name" content={site.nome} />
+<meta property="og:title" content={tituloCompleto} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={imageAlt ?? tituloCompleto} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={tituloCompleto} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+{jsonLd.map((dado) => <script type="application/ld+json" set:html={JSON.stringify(dado)} />)}

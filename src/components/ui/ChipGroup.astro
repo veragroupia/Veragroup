@@ -1,0 +1,26 @@
+---
+/** Grupo de chips de escolha única (radio nativo, acessível no teclado). */
+interface Props {
+  legend: string;
+  name: string;
+  options: { value: string; label: string }[];
+  value?: string;
+  hideLegend?: boolean;
+  class?: string;
+}
+const { legend, name, options, value, hideLegend = false, class: className } = Astro.props;
+---
+
+<fieldset class:list={['min-w-0', className]}>
+  <legend class:list={['field-label mb-2', hideLegend && 'sr-only']}>{legend}</legend>
+  <div class="flex flex-wrap gap-2">
+    {
+      options.map((o) => (
+        <label class="chip">
+          <input type="radio" name={name} value={o.value} checked={o.value === value} />
+          {o.label}
+        </label>
+      ))
+    }
+  </div>
+</fieldset>

@@ -1,0 +1,511 @@
+---
+import { getEntry } from 'astro:content';
+import { site } from '@/config/site';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+import Img from '../ui/Img.astro';
+
+const erk = (await getEntry('portfolio', 'erk-pratas'))!.data;
+const voneis = (await getEntry('portfolio', 'vo-neis-confeitaria'))!.data;
+const voneisProdutos = voneis.galeria.find((g) => g.imagem?.src.includes('mobile-produtos'))?.imagem ?? voneis.capa.mobile!;
+
+const slides = [
+  {
+    nome: 'ERK Pratas',
+    legenda: 'Loja virtual no ar',
+    href: `/portfolio/${erk.slug}`,
+    celular: erk.capa.mobile!,
+    altCelular: 'Loja virtual da ERK Pratas aberta no celular, com a corrente de prata em destaque.',
+    computador: erk.capa.desktop!,
+    altComputador: 'A mesma loja da ERK Pratas no computador.',
+    chip: 'Checkout com Pix e Mercado Pago',
+    chipIcone: 'pix' as const,
+  },
+  {
+    nome: 'Vó Neis',
+    legenda: 'Cardápio digital no ar',
+    href: `/portfolio/${voneis.slug}`,
+    celular: voneisProdutos,
+    altCelular: 'Cardápio digital da Vó Neis no celular, com fatias de bolo, fotos e preços.',
+    computador: voneis.capa.desktop!,
+    altComputador: 'O cardápio da Vó Neis no computador.',
+    chip: 'Pedido chega pronto no WhatsApp',
+    chipIcone: 'whatsapp' as const,
+  },
+];
+---
+
+<section class="hero" data-hero aria-labelledby="hero-titulo">
+  <div class="wrap-wide grid items-center gap-12 pb-16 pt-8 md:pb-20 md:pt-12 lg:grid-cols-12 lg:gap-8 lg:pb-24 lg:pt-16">
+    <div class="lg:col-span-6">
+      <p class="hero-local">
+        <span class="hero-ponto" aria-hidden="true"></span>
+        <span data-p-preparado hidden>Preparado para <strong data-p-empresa></strong> · </span>
+        <span>{site.cidades.join(' · ')}</span>
+      </p>
+      <h1 id="hero-titulo" class="mt-5 text-display-2xl">
+        Seu cliente procurou no Google. <span class="hero-marca">Achou o concorrente.</span>
+      </h1>
+      <p class="mt-5 max-w-[34rem] text-body-lg text-muted">
+        Colocamos sua loja no Google, no WhatsApp e no celular do cliente. Para você parar de perder venda.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 md:flex-row">
+        <Button variant="whatsapp" size="lg" whatsapp="Olá! Vim pelo site da Vera Group e quero um diagnóstico gratuito para o meu negócio.">Falar no WhatsApp</Button>
+        <Button variant="secondary" size="lg" href="#trabalhos" iconRight="seta">Ver trabalhos</Button>
+      </div>
+      <ul class="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-small text-muted">
+        <li class="inline-flex items-center gap-1.5"><Icon name="check" size={18} class="text-accent-2-strong" /> Site no ar em até {site.prazoSiteDias} dias</li>
+        <li class="inline-flex items-center gap-1.5"><Icon name="check" size={18} class="text-accent-2-strong" /> {site.garantiaDias} dias de garantia</li>
+        <li class="inline-flex items-center gap-1.5"><Icon name="check" size={18} class="text-accent-2-strong" /> A gente vai até a sua loja</li>
+      </ul>
+    </div>
+
+    <div class="hero-palco lg:col-span-6" data-hero-palco>
+      <div class="hero-camada hero-laptop" style="--prof:0.35" aria-hidden="true">
+        <div class="device device-laptop-simples">
+          <div class="hero-laptop-tela">
+            {
+              slides.map((s, i) => (
+                <div class="hero-slide" data-slide={i} data-ativo={i === 0 ? '' : undefined}>
+                  <Img src={s.computador} alt="" widths={[640, 960, 1280]} sizes="(min-width: 1024px) 44vw, 1px" class="h-full w-full object-cover object-top" />
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-camada hero-celular" style="--prof:1">
+        <div class="hero-celular-moldura">
+          <div class="hero-celular-tela">
+            {
+              slides.map((s, i) => (
+                <div class="hero-slide" data-slide={i} data-ativo={i === 0 ? '' : undefined} aria-hidden={i === 0 ? undefined : 'true'}>
+                  <Img
+                    src={s.celular}
+                    alt={s.altCelular}
+                    widths={[240, 390, 480]}
+                    sizes="(min-width: 1024px) 220px, 232px"
+                    priority={i === 0}
+                    class="h-full w-full object-cover object-top"
+                  />
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-camada hero-chip-camada" style="--prof:1.7" aria-hidden="true">
+        {
+          slides.map((s, i) => (
+            <p class="hero-chip hero-slide" data-slide={i} data-ativo={i === 0 ? '' : undefined}>
+              <span class="hero-chip-icone">
+                <Icon name={s.chipIcone} size={18} />
+              </span>
+              {s.chip}
+            </p>
+          ))
+        }
+      </div>
+
+      <div class="hero-controles">
+        <p class="hero-legenda" aria-live="polite">
+          {
+            slides.map((s, i) => (
+              <a href={s.href} class="hero-slide hero-legenda-link" data-slide={i} data-ativo={i === 0 ? '' : undefined} tabindex={i === 0 ? undefined : -1} aria-hidden={i === 0 ? undefined : 'true'}>
+                <strong>{s.nome}</strong> · {s.legenda}
+                <Icon name="seta" size={16} />
+              </a>
+            ))
+          }
+        </p>
+        <div class="flex items-center gap-1" role="group" aria-label="Trabalhos em destaque">
+          {
+            slides.map((s, i) => (
+              <button type="button" class="hero-ponto-botao" data-ir={i} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Mostrar ${s.nome}`}>
+                <span />
+              </button>
+            ))
+          }
+          <button type="button" class="hero-pausa" data-pausa aria-label="Pausar troca automática" aria-pressed="false">
+            <Icon name="pausar" size={18} class="icone-pausar" />
+            <Icon name="tocar" size={18} class="icone-tocar" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-local {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+    min-height: 2.25rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-white);
+    box-shadow: var(--shadow-1);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .hero-ponto {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-accent-2);
+    box-shadow: 0 0 0 3px rgb(25 195 125 / 0.2);
+  }
+  /* Marca-texto em warn atrás de "Achou o concorrente." */
+  .hero-marca {
+    background-image: linear-gradient(transparent 60%, rgb(242 163 58 / 0.5) 60%, rgb(242 163 58 / 0.5) 90%, transparent 90%);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    animation: marca var(--duration-slow) var(--ease-out) 350ms both;
+  }
+  @keyframes marca {
+    from {
+      background-size: 0% 100%;
+    }
+  }
+
+  /* Palco dos aparelhos */
+  .hero-palco {
+    --px: 0;
+    --py: 0;
+    position: relative;
+    display: grid;
+    justify-items: center;
+  }
+  .hero-camada {
+    transform: translate3d(calc(var(--px) * var(--prof) * 1px), calc(var(--py) * var(--prof) * 1px), 0);
+    transition: transform 500ms var(--ease-out);
+    will-change: transform;
+  }
+  .hero-laptop {
+    display: none;
+  }
+  .hero-celular {
+    position: relative;
+    z-index: 2;
+    width: min(232px, 62vw);
+  }
+  .hero-celular-moldura {
+    aspect-ratio: 390 / 844;
+    padding: 3.2%;
+    border-radius: 13% / 6%;
+    background: #0b0d11;
+    box-shadow:
+      inset 0 0 0 1.5px #2e3440,
+      0 2px 6px rgb(14 17 22 / 0.12),
+      0 30px 60px -16px rgb(14 17 22 / 0.4);
+  }
+  .hero-celular-tela {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 10% / 4.7%;
+    background: var(--color-ink-2);
+  }
+  .hero-celular-tela::before {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    top: 1.6%;
+    left: 50%;
+    width: 30%;
+    height: 3.4%;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: #0b0d11;
+  }
+  .hero-slide {
+    transition: opacity var(--duration-slow) var(--ease-out);
+  }
+  .hero-celular-tela .hero-slide,
+  .hero-laptop-tela .hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+  .hero-celular-tela .hero-slide[data-ativo],
+  .hero-laptop-tela .hero-slide[data-ativo] {
+    opacity: 1;
+  }
+
+  /* No celular o selo fica centralizado sobre a parte de baixo do aparelho. */
+  .hero-chip-camada {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    bottom: 6.5rem;
+    height: 0;
+  }
+  .hero-chip {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: max-content;
+    max-width: 13rem;
+    padding: 0.625rem 0.875rem 0.625rem 0.625rem;
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    box-shadow: var(--shadow-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity var(--duration-slow) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+  }
+  .hero-chip[data-ativo] {
+    opacity: 1;
+    transform: none;
+    transition-delay: 250ms;
+  }
+  .hero-chip-icone {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--color-accent-2-tint);
+    color: var(--color-accent-2-strong);
+  }
+
+  .hero-controles {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 22rem;
+    margin-top: 1.25rem;
+  }
+  .hero-legenda {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 2.75rem;
+  }
+  .hero-legenda-link {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    text-decoration: none;
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .hero-legenda-link[data-ativo] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .hero-legenda-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .hero-ponto-botao,
+  .hero-pausa {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .hero-ponto-botao:hover,
+  .hero-pausa:hover {
+    background: rgb(14 17 22 / 0.06);
+  }
+  .hero-ponto-botao span {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 999px;
+    background: var(--color-line-strong);
+    transition:
+      width var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out);
+  }
+  .hero-ponto-botao[aria-pressed='true'] span {
+    width: 1.5rem;
+    background: var(--color-ink);
+  }
+  .hero-pausa :global(.icone-tocar),
+  .hero-pausa[aria-pressed='true'] :global(.icone-pausar) {
+    display: none;
+  }
+  .hero-pausa[aria-pressed='true'] :global(.icone-tocar) {
+    display: block;
+  }
+
+  @media (width >= 64rem) {
+    .hero-palco {
+      display: block;
+      min-height: 34rem;
+    }
+    .hero-laptop {
+      display: block;
+      position: absolute;
+      top: 1.5rem;
+      left: 0;
+      width: 88%;
+    }
+    .device-laptop-simples {
+      padding: 2.2% 2.2% 0;
+      border-radius: 18px 18px 0 0;
+      background: #0b0d11;
+      box-shadow:
+        inset 0 0 0 1.5px #2e3440,
+        0 30px 60px -20px rgb(14 17 22 / 0.35);
+    }
+    .device-laptop-simples::after {
+      content: '';
+      display: block;
+      height: 14px;
+      margin: 0 -6.5%;
+      border-radius: 0 0 14px 14px / 0 0 100% 100%;
+      background: linear-gradient(#c9ccd2, #9ca1aa);
+    }
+    .hero-laptop-tela {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: 6px 6px 0 0;
+      background: var(--color-ink-2);
+    }
+    .hero-celular {
+      position: absolute;
+      right: 2%;
+      top: 7rem;
+      width: 13.75rem;
+    }
+    .hero-chip-camada {
+      left: auto;
+      bottom: auto;
+      right: calc(2% + 13.75rem - 1.5rem);
+      top: 23rem;
+      width: 0;
+    }
+    .hero-chip {
+      left: auto;
+      right: 0;
+      bottom: auto;
+      top: 0;
+      margin: 0;
+    }
+    .hero-controles {
+      position: absolute;
+      left: 0;
+      bottom: -1rem;
+      max-width: 60%;
+    }
+  }
+  @media (width >= 80rem) {
+    .hero-palco {
+      min-height: 36rem;
+    }
+  }
+</style>
+
+<script>
+  const palco = document.querySelector<HTMLElement>('[data-hero-palco]');
+  if (palco) {
+    const semMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slides = [...palco.querySelectorAll<HTMLElement>('[data-slide]')];
+    const pontos = [...palco.querySelectorAll<HTMLButtonElement>('[data-ir]')];
+    const pausa = palco.querySelector<HTMLButtonElement>('[data-pausa]')!;
+    const total = pontos.length;
+    let atual = 0;
+    let timer: number | undefined;
+    // Com movimento reduzido, começa parado: a troca só acontece no toque.
+    let pausado = semMovimento;
+    let visivel = true;
+
+    function mostrar(i: number) {
+      atual = (i + total) % total;
+      slides.forEach((s) => {
+        const ativo = Number(s.dataset.slide) === atual;
+        s.toggleAttribute('data-ativo', ativo);
+        if (s.matches('a')) {
+          s.tabIndex = ativo ? 0 : -1;
+          s.setAttribute('aria-hidden', String(!ativo));
+        } else if (s.closest('.hero-celular-tela')) {
+          s.setAttribute('aria-hidden', String(!ativo));
+        }
+      });
+      pontos.forEach((p, j) => p.setAttribute('aria-pressed', String(j === atual)));
+    }
+    function agendar() {
+      window.clearInterval(timer);
+      if (!pausado && visivel && !document.hidden) timer = window.setInterval(() => mostrar(atual + 1), 5000);
+    }
+    function atualizarPausa() {
+      pausa.setAttribute('aria-pressed', String(pausado));
+      pausa.setAttribute('aria-label', pausado ? 'Continuar troca automática' : 'Pausar troca automática');
+    }
+
+    pontos.forEach((p) =>
+      p.addEventListener('click', () => {
+        mostrar(Number(p.dataset.ir));
+        agendar();
+      }),
+    );
+    pausa.addEventListener('click', () => {
+      pausado = !pausado;
+      atualizarPausa();
+      agendar();
+    });
+    // Para quando o hero sai da tela ou a aba fica em segundo plano.
+    new IntersectionObserver(([e]) => {
+      visivel = e.isIntersecting;
+      agendar();
+    }).observe(palco);
+    document.addEventListener('visibilitychange', agendar);
+    atualizarPausa();
+    agendar();
+
+    // Parallax leve seguindo o mouse ou o dedo.
+    if (!semMovimento) {
+      const hero = palco.closest<HTMLElement>('[data-hero]')!;
+      let pendente = false;
+      let alvoX = 0;
+      let alvoY = 0;
+      const aplicar = () => {
+        palco.style.setProperty('--px', alvoX.toFixed(2));
+        palco.style.setProperty('--py', alvoY.toFixed(2));
+        pendente = false;
+      };
+      const mover = (x: number, y: number) => {
+        const r = hero.getBoundingClientRect();
+        alvoX = ((x - r.left) / r.width - 0.5) * -14;
+        alvoY = ((y - r.top) / r.height - 0.5) * -10;
+        if (!pendente) {
+          pendente = true;
+          requestAnimationFrame(aplicar);
+        }
+      };
+      hero.addEventListener('pointermove', (e) => e.pointerType === 'mouse' && mover(e.clientX, e.clientY));
+      hero.addEventListener('pointerleave', () => mover(hero.getBoundingClientRect().left + hero.clientWidth / 2, hero.getBoundingClientRect().top + hero.clientHeight / 2));
+      hero.addEventListener('touchmove', (e) => mover(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    }
+  }
+</script>

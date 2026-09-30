@@ -1,0 +1,90 @@
+---
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import ComoTrabalhamos from '@/components/ComoTrabalhamos.astro';
+import CtaFinal from '@/components/home/CtaFinal.astro';
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+import { breadcrumbs } from '@/lib/schema';
+import { site } from '@/config/site';
+
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Sobre', path: '/sobre' },
+];
+
+const motivos: { titulo: string; texto: string; icone: IconName }[] = [
+  { titulo: 'Perto de verdade', texto: 'A gente vai até a loja, vê o balcão e conversa com quem atende.', icone: 'mapa' },
+  { titulo: 'Linguagem de balcão', texto: 'Sem sigla e sem jargão. A conversa é sobre vender mais e parar de perder cliente.', icone: 'conversa' },
+  { titulo: 'Nada de modelo pronto', texto: 'Cada projeto é feito do zero, para o jeito de vender de cada negócio.', icone: 'ferramenta' },
+];
+---
+
+<Base
+  title="Sobre a Vera Group: agência do interior de SP"
+  description="A Vera Group é uma agência de sites, lojas, sistemas e marketing para o comércio de Itu, Salto, Sorocaba e Indaiatuba. Conheça os sócios e o jeito de trabalhar."
+  path="/sobre"
+  jsonLd={[breadcrumbs(trilha)]}
+>
+  <section class="secao-curta">
+    <div class="wrap">
+      <Breadcrumb itens={trilha} />
+      <div class="mt-6 max-w-[46rem]">
+        <p class="eyebrow">Quem somos</p>
+        <h1 class="mt-3 text-display-2xl">Uma agência do interior, para o comércio do interior.</h1>
+        <p class="mt-5 text-body-lg text-muted">A Vera Group faz sites, lojas, sistemas e marketing para lojas de {site.cidades.slice(0, -1).join(', ')} e {site.cidades.at(-1)}.</p>
+        <p class="mt-3 text-body-lg text-muted">A gente entende como o dono vende e constrói o que faz sentido para ele.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="tema-areia secao" aria-labelledby="socios-titulo">
+    <div class="wrap">
+      <header class="max-w-[40rem]" data-reveal>
+        <p class="eyebrow">Os sócios</p>
+        <h2 id="socios-titulo" class="mt-3 text-display-xl">Quem você vai encontrar na sua loja.</h2>
+      </header>
+      <ul class="mt-10 grid gap-5 md:grid-cols-3 md:gap-6">
+        {
+          site.socios.map((s) => (
+            <li class="card flex items-center gap-4 p-6" data-reveal>
+              {/* TODO: trocar as iniciais pela foto real de cada sócio (public/brand/socios/). */}
+              <span class="grid size-16 flex-none place-items-center rounded-pill bg-ink font-display text-title font-bold text-paper" aria-hidden="true">
+                {s.iniciais}
+              </span>
+              <div>
+                <h3 class="text-title font-semibold">{s.nome}</h3>
+                {s.papel && <p class="mt-1 text-small text-muted">{s.papel}</p>}
+                <p class="mt-1 text-small text-muted">Sócio da Vera Group</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="secao" aria-labelledby="interior-titulo">
+    <div class="wrap">
+      <header class="max-w-[40rem]" data-reveal>
+        <p class="eyebrow">Por que o interior</p>
+        <h2 id="interior-titulo" class="mt-3 text-display-xl">O comércio daqui merece o mesmo cuidado das grandes marcas.</h2>
+      </header>
+      <ul class="mt-10 grid gap-5 md:grid-cols-3 md:gap-6">
+        {
+          motivos.map((m) => (
+            <li class="card p-6" data-reveal>
+              <span class="grid size-12 place-items-center rounded-md bg-accent-tint text-accent-strong">
+                <Icon name={m.icone} size={24} />
+              </span>
+              <h3 class="mt-4 text-title font-semibold">{m.titulo}</h3>
+              <p class="mt-2 text-muted">{m.texto}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <ComoTrabalhamos />
+  <CtaFinal titulo="Vamos tomar um café na sua loja?" whatsapp="Olá! Vim pelo site e quero marcar uma conversa com a Vera Group na minha loja." />
+</Base>

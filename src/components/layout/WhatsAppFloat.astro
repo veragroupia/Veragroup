@@ -1,0 +1,96 @@
+---
+import { site } from '@/config/site';
+import { linkWhatsApp } from '@/lib/whatsapp';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  whatsapp?: string;
+}
+const { whatsapp = site.whatsapp.mensagem } = Astro.props;
+---
+
+<a
+  href={linkWhatsApp(whatsapp)}
+  class="wa-flutuante"
+  target="_blank"
+  rel="noopener"
+  data-wa={whatsapp}
+  data-wa-flutuante
+  aria-label="Conversar no WhatsApp"
+>
+  <Icon name="whatsapp" size={28} />
+</a>
+
+<style>
+  .wa-flutuante {
+    position: fixed;
+    z-index: 30;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: var(--color-accent-2);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-2);
+    opacity: 0;
+    transform: translateY(1rem) scale(0.9);
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+  .wa-flutuante[data-visivel] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .wa-flutuante:hover {
+    background: var(--color-accent-2-hover);
+  }
+  .wa-flutuante:active {
+    transform: scale(0.94);
+  }
+  @media (width >= 64rem) {
+    .wa-flutuante {
+      right: 1.5rem;
+      bottom: 1.5rem;
+    }
+  }
+</style>
+
+<script>
+  // Aparece depois da primeira dobra e some sempre que um bloco marcado com
+  // [data-sem-flutuante] (CTAs de WhatsApp, rodapé, banner de cookies) está na tela.
+  const botao = document.querySelector<HTMLElement>('[data-wa-flutuante]');
+  if (botao) {
+    const visiveis = new Set<Element>();
+    let passouDobra = false;
+    const atualizar = () => botao.toggleAttribute('data-visivel', passouDobra && visiveis.size === 0);
+
+    const bloqueios = new IntersectionObserver((entradas) => {
+      entradas.forEach((e) => (e.isIntersecting ? visiveis.add(e.target) : visiveis.delete(e.target)));
+      atualizar();
+    });
+    const observar = () => document.querySelectorAll('[data-sem-flutuante]').forEach((el) => bloqueios.observe(el));
+    observar();
+    document.addEventListener('vera:bloqueios', observar);
+
+    const aoRolar = () => {
+      const novo = window.scrollY > window.innerHeight * 0.6;
+      if (novo !== passouDobra) {
+        passouDobra = novo;
+        atualizar();
+      }
+    };
+    window.addEventListener('scroll', aoRolar, { passive: true });
+    aoRolar();
+  }
+</script>

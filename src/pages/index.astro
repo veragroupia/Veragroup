@@ -1,0 +1,36 @@
+---
+import Base from '@/layouts/Base.astro';
+import Hero from '@/components/home/Hero.astro';
+import Perda from '@/components/home/Perda.astro';
+import Potencial from '@/components/home/Potencial.astro';
+import Servicos from '@/components/home/Servicos.astro';
+import PortfolioDestaque from '@/components/home/PortfolioDestaque.astro';
+import ComoTrabalhamos from '@/components/ComoTrabalhamos.astro';
+import CalculadoraCompacta from '@/components/calc/CalculadoraCompacta.astro';
+import PlacaNfc from '@/components/home/PlacaNfc.astro';
+import AtendimentoLocal from '@/components/home/AtendimentoLocal.astro';
+import FaqHome from '@/components/home/FaqHome.astro';
+import CtaFinal from '@/components/home/CtaFinal.astro';
+import { website, negocioLocal, faq } from '@/lib/schema';
+import { faqHome } from '@/data/faq';
+---
+
+<Base
+  title="Vera Group: sites, lojas e Google em Itu e região"
+  description="Criação de sites, lojas virtuais, cardápios digitais, Google Meu Negócio e tráfego pago para o comércio de Itu, Salto, Sorocaba e Indaiatuba."
+  path="/"
+  whatsapp="Olá! Vim pelo site da Vera Group e quero um diagnóstico gratuito para o meu negócio."
+  jsonLd={[website(), negocioLocal(), faq(faqHome)]}
+>
+  <Hero />
+  <Perda />
+  <Potencial />
+  <Servicos />
+  <PortfolioDestaque />
+  <ComoTrabalhamos />
+  <CalculadoraCompacta />
+  <PlacaNfc />
+  <AtendimentoLocal />
+  <FaqHome />
+  <CtaFinal />
+</Base>

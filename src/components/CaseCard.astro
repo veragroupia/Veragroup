@@ -1,0 +1,101 @@
+---
+import type { ImageMetadata } from 'astro';
+import Img from './ui/Img.astro';
+import Badge from './ui/Badge.astro';
+import Placeholder from './ui/Placeholder.astro';
+
+interface Props {
+  nome: string;
+  segmento: string;
+  cidade: string;
+  resumo: string;
+  href: string;
+  status: 'no-ar' | 'em-desenvolvimento';
+  servicos: string[];
+  desktop?: ImageMetadata;
+  mobile?: ImageMetadata;
+  altDesktop?: string;
+  altMobile?: string;
+  headingLevel?: 'h2' | 'h3' | 'h4';
+  eager?: boolean;
+  class?: string;
+}
+const {
+  nome,
+  segmento,
+  cidade,
+  resumo,
+  href,
+  status,
+  servicos,
+  desktop,
+  mobile,
+  altDesktop = '',
+  altMobile = '',
+  headingLevel: H = 'h3',
+  eager = false,
+  class: className,
+} = Astro.props;
+---
+
+<article class:list={['card card-interativo flex h-full flex-col overflow-hidden', className]}>
+  <div class="case-visual relative aspect-[4/3] overflow-hidden bg-ink-2">
+    {
+      desktop ? (
+        <Img
+          src={desktop}
+          alt={altDesktop}
+          widths={[480, 720, 960]}
+          sizes="(min-width: 1024px) 520px, (min-width: 768px) 58vw, 86vw"
+          eager={eager}
+          class="absolute inset-0 h-full w-full object-cover object-top"
+        />
+      ) : (
+        <Placeholder label={`telas do ${nome}`} class="absolute inset-0" />
+      )
+    }
+    {
+      mobile && (
+        <div class="case-celular">
+          <Img src={mobile} alt={altMobile} widths={[160, 320]} sizes="160px" eager={eager} class="h-full w-full object-cover object-top" />
+        </div>
+      )
+    }
+  </div>
+  <div class="flex flex-1 flex-col p-6">
+    <p class="eyebrow">{segmento} · {cidade}</p>
+    <H class="mt-2 text-display-lg font-semibold">
+      <a href={href} class="link-cobre no-underline">{nome}</a>
+    </H>
+    <p class="mt-2 text-muted">{resumo}</p>
+    <div class="mt-auto flex flex-wrap gap-2 pt-5">
+      {status === 'no-ar' ? <Badge tone="sucesso" dot>No ar</Badge> : <Badge tone="alerta" dot>Em desenvolvimento</Badge>}
+      {servicos.map((s) => <Badge tone="servico">{s}</Badge>)}
+    </div>
+  </div>
+</article>
+
+<style>
+  .case-visual :global(img) {
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+  .card-interativo:hover .case-visual :global(img) {
+    transform: scale(1.02);
+  }
+  .case-celular {
+    position: absolute;
+    right: 6%;
+    bottom: -12%;
+    width: 26%;
+    aspect-ratio: 390 / 844;
+    padding: 1.5%;
+    border-radius: 14% / 6.5%;
+    background: #0b0d11;
+    overflow: hidden;
+    box-shadow: 0 18px 36px -10px rgb(0 0 0 / 0.5);
+  }
+  .case-celular :global(picture),
+  .case-celular :global(img) {
+    border-radius: 12% / 5.5%;
+  }
+</style>

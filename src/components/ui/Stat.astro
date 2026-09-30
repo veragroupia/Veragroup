@@ -1,0 +1,22 @@
+---
+/**
+ * Número com contador animado ao entrar na tela.
+ * O valor final já está no HTML: sem JS (ou com movimento reduzido) ele aparece direto.
+ */
+interface Props {
+  value: number;
+  label: string;
+  prefix?: string;
+  suffix?: string;
+  class?: string;
+}
+const { value, label, prefix = '', suffix = '', class: className } = Astro.props;
+const formatado = value.toLocaleString('pt-BR');
+---
+
+<div class:list={['stat', className]}>
+  <p class="font-display text-display-xl font-semibold tabular-nums">
+    {prefix}<span data-counter={value}>{formatado}</span>{suffix}
+  </p>
+  <p class="mt-1 text-small text-muted">{label}</p>
+</div>

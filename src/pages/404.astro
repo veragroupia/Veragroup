@@ -1,0 +1,23 @@
+---
+import Base from '@/layouts/Base.astro';
+import Button from '@/components/ui/Button.astro';
+---
+
+<Base title="Página não encontrada" description="Essa página não existe. Volte para o início ou fale com a Vera Group no WhatsApp." path="/404" noindex>
+  <section class="secao">
+    <div class="wrap max-w-[44rem]">
+      <p class="eyebrow">Erro 404</p>
+      <h1 class="mt-3 text-display-2xl">Essa página não existe.</h1>
+      <p class="mt-5 text-body-lg text-muted">Pode ter mudado de lugar ou o endereço veio com um erro de digitação.</p>
+      <p class="mt-3 text-body-lg text-muted">Chato, né? É o que o seu cliente sente quando procura a sua loja e não acha.</p>
+      <div class="mt-8 flex flex-col gap-3 md:flex-row">
+        <Button variant="primary" size="lg" href="/" icon="loja2">Voltar ao início</Button>
+        <Button variant="secondary" size="lg" href="/servicos">Ver serviços</Button>
+        <Button variant="ghost" size="lg" href="/portfolio">Ver trabalhos</Button>
+      </div>
+      <p class="mt-10 text-muted">
+        Procurava outra coisa? <a class="link" href="https://wa.me/5511940723507?text=Ol%C3%A1!%20Cheguei%20numa%20p%C3%A1gina%20que%20n%C3%A3o%20existe%20no%20site%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener" data-wa="Olá! Cheguei numa página que não existe no site e preciso de ajuda.">Pergunte no WhatsApp</a>.
+      </p>
+    </div>
+  </section>
+</Base>

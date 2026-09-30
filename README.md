@@ -1,69 +1,117 @@
-# Vera Group · site portfólio
+# Vera Group · site oficial
 
-Site de apresentação e prospecção da Vera Group. Mostra os trabalhos no ar (ERK Pratas e Vó Neis Confeitaria), os sistemas próprios, a tabela de preços e leva a conversa para o WhatsApp.
+Site da Vera Group, agência de sites, lojas, sistemas e marketing para o comércio de Itu, Salto, Sorocaba e Indaiatuba.
 
-O raciocínio por trás de cada decisão está em [`docs/DIAGNOSTICO.md`](docs/DIAGNOSTICO.md).
+Tem dois usos:
+
+1. **Site público** no Google, que leva o contato para o WhatsApp.
+2. **Ferramenta de visita:** o modo `/apresentacao` roda em tela cheia no celular ou tablet, dentro da loja do cliente, e funciona sem internet.
+
+Feito em **Astro** (páginas estáticas) + **TypeScript** + **Tailwind CSS v4**. Sem framework de JavaScript no navegador: a home manda cerca de 5 KB de JS.
 
 ## Como rodar
 
-É um site estático, sem etapa de build. Qualquer servidor serve:
+Precisa de Node 22 ou mais novo.
 
 ```bash
-python3 -m http.server 8080
-# ou
-npx serve .
+npm install
+npm run dev              # desenvolvimento em http://localhost:4321
+npm run build            # gera o site em dist/
+npm run preview          # serve o dist/ em http://localhost:4321
+npm run verificar        # checagens automáticas (com o preview rodando)
+npm run verificar:fotos  # checagens + screenshots em 390, 768 e 1440 px (pasta screenshots/)
 ```
 
-Abra `http://localhost:8080`.
+`npm run verificar` confere, em todas as páginas:
+- rolagem horizontal em 360, 390, 430, 768, 1024, 1280, 1440 e 1920 px;
+- um único `h1` e títulos sem pular nível;
+- title, description, canonical, hreflang, og:image e JSON-LD;
+- links de WhatsApp;
+- alvos de toque de 44 px;
+- parágrafos de no máximo 3 linhas no celular;
+- acessibilidade com axe-core (WCAG 2.1 AA);
+- erros no console.
 
-## Antes de publicar
+## Onde fica cada coisa
 
-1. **WhatsApp:** coloque o número comercial em `assets/js/config.js` (`whatsapp: '5511...'`). Sem ele, os botões levam para o formulário, e o formulário abre o WhatsApp para a pessoa escolher o contato.
-2. **Vídeos:** rode `sh scripts/baixar-videos.sh` para trazer os dois vídeos do Higgsfield para `assets/video/`. Enquanto isso não acontece, o site usa o endereço do CDN do Higgsfield.
-3. **Prévia do link:** o `<meta property="og:image">` do `index.html` aponta para `https://vera-group.vercel.app/assets/img/og.jpg`. Ao ligar o domínio próprio, troque esse endereço, porque o WhatsApp só mostra a imagem com endereço completo.
+| O que | Onde |
+|---|---|
+| WhatsApp, Instagram, e-mail, CNPJ, cidades, sócios | `src/config/site.ts` |
+| Cores, fontes, espaços, raios, sombras, animação | `src/styles/tokens.css` (veja em `/design-system`) |
+| Serviços (texto, SEO, FAQ) | `src/content/servicos/*.md` |
+| Cases do portfólio (texto + imagens) | `src/content/portfolio/[case]/` |
+| FAQ da home | `src/data/faq.ts` |
+| Premissas da calculadora | `src/lib/calc.ts` |
+| Seções da home | `src/components/home/` |
+| Páginas | `src/pages/` |
+| Modo apresentação offline | `src/pages/apresentacao.astro` + `public/sw.js` |
+| Imagens de prévia (1200×630) | geradas no build por `src/pages/og/[...slug].png.ts` |
 
-## Onde está no ar
+## Como trocar textos
 
-Projeto `vera-group` na Vercel, ligado a este repositório: **https://vera-group.vercel.app**
+- **Textos de um serviço:** abra o `.md` do serviço em `src/content/servicos/`. O topo do arquivo (entre os `---`) tem título, SEO, dores, entregas e FAQ. O texto abaixo dele aparece na seção "Para quem é".
+- **Textos da home:** cada seção é um arquivo em `src/components/home/`.
+- **Telefone, Instagram, e-mail:** só em `src/config/site.ts`. O site inteiro se atualiza.
+- **Regra da casa:** frases curtas, sem jargão, no máximo 3 linhas por parágrafo no celular. O `npm run verificar` avisa se algum passar disso.
+- **Parágrafos no FAQ:** separe com uma linha em branco (`\n\n`). Cada um vira um parágrafo curto.
 
-Sem framework e sem comando de build. O `vercel.json` cuida de cache e cabeçalhos.
+## Como adicionar um case novo
 
-## Link personalizado para prospecção
+1. Crie a pasta `src/content/portfolio/nome-do-case/`.
+2. Coloque as telas reais nela (`.webp`, `.png` ou `.jpg`). O ideal:
+   - uma tela de celular em 390 × 844 (ou o dobro);
+   - uma tela de computador em 1440 × 900.
+3. Copie o `index.md` de um case existente e ajuste os campos:
+   - `slug`: o endereço (`/portfolio/slug`);
+   - `ordem`: posição no carrossel;
+   - `status`: `no-ar` ou `em-desenvolvimento`;
+   - `tema`: `escuro` ou `claro` (cor do topo da página);
+   - `capa.desktop` e `capa.mobile`: caminhos das imagens, começando com `./`;
+   - `problema`, `oQueFizemos`, `resultado`: o texto do case;
+   - `galeria`: as telas, cada uma com `tipo` (`celular`, `desktop` ou `foto`) e `alt` (descrição da imagem);
+   - `depoimento`: só se for real e autorizado.
+4. Rode `npm run build`. O case entra sozinho na home, no `/portfolio`, no sitemap, no `llms.txt`, na apresentação e ganha a imagem de prévia.
 
-A página aceita três parâmetros. O Maestro pode montar esse link em cada mensagem:
+Sem imagem ainda? Deixe `capa` e `imagem` de fora. O site mostra um espaço neutro marcado como TODO, nunca uma foto que finge ser o projeto.
+
+## Como adicionar um serviço
+
+Copie um `.md` de `src/content/servicos/` com outro nome de arquivo. O nome vira o endereço (`/servicos/nome-do-arquivo`). Os campos obrigatórios são checados no build: se faltar algo, o build avisa qual é.
+
+## Link personalizado de prospecção
+
+A página aceita parâmetros que o Maestro pode usar nas mensagens:
 
 ```
 https://vera-group.vercel.app/?empresa=Clínica%20Sorriso&nicho=dentista&cidade=Itu
 ```
 
-O que muda:
+Com eles:
+- o topo mostra "Preparado para Clínica Sorriso";
+- a pesquisa de exemplo vira "dentista em Itu";
+- a calculadora já escolhe o segmento;
+- o formulário vem preenchido;
+- toda mensagem de WhatsApp cita a empresa.
 
-- o topo mostra "Preparado para Clínica Sorriso" e a data com a cidade;
-- a pesquisa do topo fica fixa em "dentista em Itu";
-- no teste, a linha "Seu negócio" vira "Clínica Sorriso";
-- o formulário já vem com o nome do negócio e a cidade;
-- a mensagem de WhatsApp cita a empresa.
+Vale também para `/apresentacao?empresa=...` nas visitas.
 
-Sem parâmetros, a pesquisa do topo alterna entre os nichos e cidades de `assets/js/config.js`.
+## Modo apresentação (visitas)
 
-## Estrutura
+`/apresentacao` fica fora do menu e fora do Google. Abra uma vez com internet (aparece "Pronto para usar sem internet"). Depois disso ele abre mesmo sem sinal. Para atualizar, basta abrir com internet: a versão nova é baixada em segundo plano.
 
-```
-index.html                 a página
-assets/css/site.css        estilo (papel, tinta, vermelho de sinal)
-assets/js/config.js        número de WhatsApp e pesquisas do topo
-assets/js/site.js          personalização, teste, prévia, vídeos, 3D, formulário
-assets/js/erk-3d.js        visualizador 3D do projeto ERK Pratas
-assets/vendor/             three.js (licença MIT em THREE-LICENSE.txt)
-assets/fonts/              Archivo e IBM Plex Mono (SIL Open Font License)
-assets/img/                telas reais dos projetos, fotos da Vó Neis e og.jpg
-assets/video/              vídeos locais (ver scripts/baixar-videos.sh)
-tools/og.html              molde da imagem de prévia; gere com node tools/gerar-og.mjs
-docs/DIAGNOSTICO.md        diagnóstico e perguntas em aberto
-```
+## Deploy
 
-## De onde vem cada imagem
+O projeto `vera-group` na Vercel está ligado a este repositório. O `vercel.json` define o build do Astro (`npm run build`, pasta `dist`), cache longo para arquivos com hash e cabeçalhos de segurança.
 
-- **ERK Pratas:** capturas do site no ar (`site-production-0686.up.railway.app`).
-- **Vó Neis:** o cardápio real (código do repositório do cliente) renderizado com os produtos e as fotos da própria loja, porque a versão no ar está temporariamente sem fotos cadastradas.
-- **Vídeos:** gerados no Higgsfield. O do topo é luz natural numa parede, sem produto. O da Vó Neis parte da foto real do bolo Chocolatudo.
+Variável opcional: `PUBLIC_FORM_WEBHOOK` (veja `.env.example`).
+
+## Documentos
+
+- [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md): o que depende da Vera Group (fotos, textos, dados).
+- [`docs/CHECKLIST.md`](docs/CHECKLIST.md): verificação final.
+- [`docs/lighthouse/`](docs/lighthouse/): relatório Lighthouse mobile e desktop.
+- [`docs/DIAGNOSTICO.md`](docs/DIAGNOSTICO.md): o raciocínio da primeira versão do site.
+
+## Licenças
+
+Fontes Sora e Inter: SIL Open Font License (`src/assets/fonts/`). three.js: MIT (`public/vendor/THREE-LICENSE.txt`). Ícones: Lucide (ISC) e Simple Icons (CC0).
