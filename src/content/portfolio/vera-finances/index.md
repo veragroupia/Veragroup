@@ -6,7 +6,7 @@ segmento: "Produto próprio"
 cidade: "Vera Group"
 status: em-desenvolvimento
 tema: claro
-resumo: "Aplicativo de finanças pessoais que conecta as contas do banco e organiza os gastos do mês."
+resumo: "App de finanças pessoais que junta as contas do banco num lugar só."
 h1: "Vera Finances: finanças pessoais organizadas sem planilha"
 sub: "Um produto da própria Vera Group, em desenvolvimento. A mesma forma de construir que usamos nos sistemas dos clientes."
 seo:

@@ -53,7 +53,7 @@ const portfolio = defineCollection({
       status: z.enum(['no-ar', 'em-desenvolvimento']),
       /** Cor da página do case: escuro (preto premium) ou claro (papel). */
       tema: z.enum(['escuro', 'claro']),
-      resumo: z.string().max(140),
+      resumo: z.string().max(80),
       h1: z.string(),
       sub: z.string(),
       seo: z.object({

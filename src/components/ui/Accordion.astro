@@ -26,7 +26,9 @@ const { items, name, class: className } = Astro.props;
           </span>
         </summary>
         <div class="accordion-corpo pb-5 pr-12 text-muted">
-          <p>{item.resposta}</p>
+          {item.resposta.split('\n\n').map((par, i) => (
+            <p class:list={[i > 0 && 'mt-3']}>{par}</p>
+          ))}
         </div>
       </details>
     ))

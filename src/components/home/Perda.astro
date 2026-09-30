@@ -1,0 +1,302 @@
+---
+import Icon from '../ui/Icon.astro';
+---
+
+<section class="tema-escuro secao" aria-labelledby="perda-titulo">
+  <div class="wrap">
+    <header class="max-w-[46rem]" data-reveal>
+      <p class="eyebrow text-warn">Onde o dinheiro escapa</p>
+      <h2 id="perda-titulo" class="mt-3 text-display-xl">Todo dia tem cliente indo embora sem você ver.</h2>
+    </header>
+
+    <ol class="mt-12 grid gap-5 md:gap-6 lg:grid-cols-3">
+      <!-- 1. Google -->
+      <li class="perda-card" data-reveal data-cena>
+        <div class="perda-cena" aria-hidden="true">
+          <div class="cena-busca">
+            <span class="cena-busca-barra">
+              <Icon name="lupa" size={16} />
+              <span data-p-busca>confeitaria em Salto</span>
+            </span>
+            <span class="cena-resultado cena-r1"><i></i><b></b><em>★★★★★</em></span>
+            <span class="cena-resultado cena-r2"><i></i><b></b><em>★★★★</em></span>
+            <span class="cena-resultado cena-voce"><i></i><b>Sua loja</b><small>não aparece</small></span>
+          </div>
+        </div>
+        <h3 class="mt-6 text-title font-semibold">Procuraram por você. Você não apareceu.</h3>
+        <p class="mt-2 text-muted">Sem foto, horário e rota no Google, a sua loja nem entra na disputa.</p>
+      </li>
+
+      <!-- 2. WhatsApp -->
+      <li class="perda-card" data-reveal data-cena>
+        <div class="perda-cena" aria-hidden="true">
+          <div class="cena-chat">
+            <span class="cena-balao">Oi! Ainda dá pra encomendar um bolo pra amanhã?<small>22:14 ✓✓</small></span>
+            <span class="cena-balao cena-balao-2">Alô? Vou ver em outro lugar.<small>22:41 ✓✓</small></span>
+            <span class="cena-sem-resposta">Sem resposta</span>
+          </div>
+        </div>
+        <h3 class="mt-6 text-title font-semibold">O pedido chegou às 22h. Ninguém respondeu.</h3>
+        <p class="mt-2 text-muted">Mensagem perdida no meio da conversa vira pedido na loja do concorrente.</p>
+      </li>
+
+      <!-- 3. Avaliação -->
+      <li class="perda-card" data-reveal data-cena>
+        <div class="perda-cena" aria-hidden="true">
+          <div class="cena-avaliacao">
+            <span class="cena-estrelas"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+            <span class="cena-avaliacao-texto">Avaliar sua loja</span>
+            <span class="cena-avaliacao-vazia">O cliente foi embora sem avaliar</span>
+          </div>
+        </div>
+        <h3 class="mt-6 text-title font-semibold">O cliente saiu feliz. Ninguém pediu avaliação.</h3>
+        <p class="mt-2 text-muted">Sem avaliação recente, quem pesquisa escolhe a loja do lado.</p>
+      </li>
+    </ol>
+
+    <p class="mt-12 max-w-[40rem] font-display text-display-lg font-semibold text-warn" data-reveal>
+      Nenhuma dessas perdas aparece no caixa. Mas acontecem todo dia.
+    </p>
+  </div>
+</section>
+
+<style>
+  .perda-card {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-ink-2);
+    border: 1px solid var(--color-ink-3);
+  }
+  @media (width >= 48rem) {
+    .perda-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr;
+      column-gap: 1.5rem;
+      align-items: start;
+      padding: 1.5rem;
+    }
+    .perda-cena {
+      grid-row: span 2;
+    }
+    .perda-card h3 {
+      margin-top: 0.5rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .perda-card {
+      display: block;
+    }
+    .perda-card h3 {
+      margin-top: 1.5rem;
+    }
+  }
+  .perda-cena {
+    display: grid;
+    place-items: center;
+    height: 12.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: #232935;
+    overflow: hidden;
+  }
+
+  /* 1. Busca */
+  .cena-busca {
+    display: grid;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 16rem;
+  }
+  .cena-busca-barra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .cena-resultado {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.625rem;
+    border-radius: 10px;
+    background: #2e3542;
+    font-size: 0.75rem;
+  }
+  .cena-resultado i {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 6px;
+    background: var(--color-stone-on-ink);
+    opacity: 0.5;
+  }
+  .cena-resultado b {
+    flex: 1;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-stone-on-ink);
+    opacity: 0.45;
+  }
+  .cena-resultado em {
+    font-style: normal;
+    color: var(--color-warn);
+    letter-spacing: 1px;
+  }
+  .cena-voce {
+    background: transparent;
+    border: 1px dashed var(--color-ink-3);
+  }
+  .cena-voce b {
+    height: auto;
+    background: none;
+    opacity: 0.5;
+    font-weight: 600;
+  }
+  .cena-voce small {
+    color: var(--color-warn);
+    font-weight: 600;
+  }
+
+  /* 2. Chat */
+  .cena-chat {
+    display: grid;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 16rem;
+  }
+  .cena-balao {
+    justify-self: start;
+    max-width: 90%;
+    padding: 0.5rem 0.75rem 0.375rem;
+    border-radius: 12px 12px 12px 4px;
+    background: #2e3542;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+  .cena-balao small {
+    display: block;
+    margin-top: 0.125rem;
+    text-align: right;
+    font-size: 0.6875rem;
+    color: var(--color-stone-on-ink);
+  }
+  .cena-sem-resposta {
+    justify-self: end;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: rgb(242 163 58 / 0.16);
+    color: var(--color-warn);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* 3. Avaliação */
+  .cena-avaliacao {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .cena-estrelas {
+    display: flex;
+    gap: 0.25rem;
+    font-size: 2rem;
+    line-height: 1;
+  }
+  .cena-estrelas i {
+    font-style: normal;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--color-stone-on-ink);
+  }
+  .cena-avaliacao-texto {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .cena-avaliacao-vazia {
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: rgb(242 163 58 / 0.16);
+    color: var(--color-warn);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Microanimações: tocam uma vez quando o card entra na tela. */
+  :global(.js) [data-cena] .cena-r1,
+  :global(.js) [data-cena] .cena-r2,
+  :global(.js) [data-cena] .cena-voce,
+  :global(.js) [data-cena] .cena-balao,
+  :global(.js) [data-cena] .cena-sem-resposta,
+  :global(.js) [data-cena] .cena-estrelas i,
+  :global(.js) [data-cena] .cena-avaliacao-vazia {
+    opacity: 0;
+  }
+  [data-cena]:global(.is-in) .cena-r1 {
+    animation: sobe 400ms var(--ease-out) 300ms both;
+  }
+  [data-cena]:global(.is-in) .cena-r2 {
+    animation: sobe 400ms var(--ease-out) 420ms both;
+  }
+  [data-cena]:global(.is-in) .cena-voce {
+    animation: some 600ms var(--ease-out) 620ms both;
+  }
+  [data-cena]:global(.is-in) .cena-balao {
+    animation: sobe 400ms var(--ease-out) 300ms both;
+  }
+  [data-cena]:global(.is-in) .cena-balao-2 {
+    animation-delay: 600ms;
+  }
+  [data-cena]:global(.is-in) .cena-sem-resposta {
+    animation: sobe 400ms var(--ease-out) 1000ms both;
+  }
+  [data-cena]:global(.is-in) .cena-estrelas i {
+    animation: sobe 300ms var(--ease-out) both;
+    animation-delay: calc(300ms + var(--n, 0) * 70ms);
+  }
+  .cena-estrelas i:nth-child(2) {
+    --n: 1;
+  }
+  .cena-estrelas i:nth-child(3) {
+    --n: 2;
+  }
+  .cena-estrelas i:nth-child(4) {
+    --n: 3;
+  }
+  .cena-estrelas i:nth-child(5) {
+    --n: 4;
+  }
+  [data-cena]:global(.is-in) .cena-avaliacao-vazia {
+    animation: sobe 400ms var(--ease-out) 800ms both;
+  }
+  @keyframes sobe {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes some {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.85;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) [data-cena] * {
+      opacity: 1 !important;
+      animation: none !important;
+    }
+  }
+</style>

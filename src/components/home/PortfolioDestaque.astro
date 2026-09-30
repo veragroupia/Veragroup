@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import Carousel from '../ui/Carousel.astro';
+import CaseCard from '../CaseCard.astro';
+import Button from '../ui/Button.astro';
+
+const cases = (await getCollection('portfolio')).sort((a, b) => a.data.ordem - b.data.ordem);
+---
+
+<section id="trabalhos" class="tema-escuro secao" aria-labelledby="trabalhos-titulo">
+  <div class="wrap">
+    <div class="flex flex-wrap items-end justify-between gap-6" data-reveal>
+      <header class="max-w-[40rem]">
+        <p class="eyebrow">Portfólio</p>
+        <h2 id="trabalhos-titulo" class="mt-3 text-display-xl">Trabalhos reais, de negócios daqui.</h2>
+        <p class="mt-4 text-body-lg text-muted">Arraste para o lado e toque para ver cada projeto por dentro.</p>
+      </header>
+      <Button variant="secondary" href="/portfolio" iconRight="seta" class="hidden md:inline-flex">Ver todos os trabalhos</Button>
+    </div>
+
+    <Carousel label="Trabalhos em destaque" total={cases.length} class="mt-10">
+      {
+        cases.map((c) => (
+          <li class="carousel-item">
+            <CaseCard
+              nome={c.data.nome}
+              segmento={c.data.segmento}
+              cidade={c.data.cidade}
+              resumo={c.data.resumo}
+              href={`/portfolio/${c.data.slug}`}
+              status={c.data.status}
+              servicos={c.data.servicos}
+              desktop={c.data.capa.desktop}
+              mobile={c.data.capa.mobile}
+              altDesktop={c.data.capa.altDesktop}
+              altMobile={c.data.capa.altMobile}
+            />
+          </li>
+        ))
+      }
+    </Carousel>
+
+    <Button variant="secondary" href="/portfolio" iconRight="seta" block class="mt-8 md:hidden">Ver todos os trabalhos</Button>
+  </div>
+</section>

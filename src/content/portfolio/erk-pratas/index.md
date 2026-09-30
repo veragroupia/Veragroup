@@ -6,7 +6,7 @@ segmento: "Joalheria em prata"
 cidade: "Salto, SP"
 status: no-ar
 tema: escuro
-resumo: "Loja virtual com as peças em 3D, checkout de verdade e painel do dono."
+resumo: "Loja virtual com peças em 3D, checkout de verdade e painel do dono."
 h1: "ERK Pratas: loja virtual com peças em 3D e checkout de verdade"
 sub: "Uma joalheria de Salto com oficina própria, agora vendendo na internet com o mesmo cuidado da bancada."
 seo:

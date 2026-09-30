@@ -6,7 +6,7 @@ segmento: "Confeitaria"
 cidade: "Salto, SP"
 status: no-ar
 tema: claro
-resumo: "Cardápio digital com pedido pelo WhatsApp e painel com vendas, estoque e produção do dia."
+resumo: "Cardápio digital com pedido no WhatsApp e o painel da loja."
 h1: "Vó Neis: cardápio digital com pedido direto no WhatsApp"
 sub: "Uma confeitaria de Salto com duas lojas. Por trás do cardápio, roda a gestão da loja inteira."
 seo:

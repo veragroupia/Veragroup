@@ -132,7 +132,25 @@ for (const rota of paginas) {
       })
       .slice(0, 6)
       .map((el) => `${el.tagName.toLowerCase()}("${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 24)}") ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`);
+    // Regra do briefing: nenhum parágrafo com mais de 3 linhas no celular.
+    document.querySelectorAll('main details').forEach((d) => (d.open = true));
+    const blocos = ['block', 'flex', 'grid', 'list-item', 'table', 'flow-root'];
+    const longos = [...document.querySelectorAll('main p, main li, main dd, main figcaption')]
+      .filter((el) => {
+        if (el.closest('[data-sem-limite],dialog:not([open]),[hidden]')) return false;
+        const temBloco = [...el.querySelectorAll('*')].some((c) => !c.closest('svg') && blocos.includes(getComputedStyle(c).display));
+        if (temBloco) return false;
+        const cs = getComputedStyle(el);
+        const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5;
+        const r = el.getBoundingClientRect();
+        if (r.height === 0 || cs.display === 'none') return false;
+        const linhas = Math.round((r.height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / lh);
+        return linhas > 3;
+      })
+      .slice(0, 8)
+      .map((el) => `"${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 50)}…"`);
     return {
+      longos,
       h1: document.querySelectorAll('h1').length,
       pulos,
       title: document.title,
@@ -159,6 +177,7 @@ for (const rota of paginas) {
   if (r.waRuins.length) anotar(rota, `links de WhatsApp inválidos: ${r.waRuins.slice(0, 3).join(' | ')}`);
   if (r.semAlt.length) anotar(rota, `imagens sem alt: ${r.semAlt.join(', ')}`);
   if (r.pequenos.length) anotar(rota, `alvos de toque < 44px: ${r.pequenos.join('; ')}`);
+  if (r.longos.length && rota !== '/design-system') anotar(rota, `parágrafos com mais de 3 linhas em 390px: ${r.longos.join(' | ')}`);
   const errosReais = erros.filter((e) => !(is404 && /404/.test(e)));
   if (errosReais.length) anotar(rota, `erros no console: ${errosReais.slice(0, 3).join(' | ')}`);
   console.log(`✓ ${rota.padEnd(46)} h1=${r.h1} wa=${r.wa} title="${r.title}"`);

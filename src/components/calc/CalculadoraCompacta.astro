@@ -1,0 +1,119 @@
+---
+import Field from '../ui/Field.astro';
+import Slider from '../ui/Slider.astro';
+import Button from '../ui/Button.astro';
+import { SEGMENTOS, EXEMPLO, PREMISSAS, calcular, reais } from '@/lib/calc';
+
+const r = calcular({ ticket: EXEMPLO.ticket, clientesDia: EXEMPLO.clientesDia, ...PREMISSAS });
+const linkInicial = `/diagnostico?seg=${EXEMPLO.segmento}&ticket=${EXEMPLO.ticket}&cli=${EXEMPLO.clientesDia}`;
+---
+
+<section class="tema-areia secao" aria-labelledby="calc-titulo">
+  <div class="wrap">
+    <header class="max-w-[40rem]" data-reveal>
+      <p class="eyebrow">Diagnóstico rápido</p>
+      <h2 id="calc-titulo" class="mt-3 text-display-xl">Quanto você está deixando na mesa?</h2>
+      <p class="mt-4 text-body-lg text-muted">Uma conta simples, com os seus números. As premissas ficam à vista, para o resultado ser honesto.</p>
+    </header>
+
+    <form class="calc mt-10" data-calc-compacta data-reveal onsubmit="return false">
+      <div class="calc-entradas">
+        <Field as="select" label="Seu segmento" name="seg" id="calc-seg" options={SEGMENTOS.map((s) => ({ value: s.value, label: s.label }))} />
+        <Field label="Ticket médio" name="ticket" id="calc-ticket" prefix="R$" type="number" inputmode="numeric" min="1" max="100000" step="1" value={String(EXEMPLO.ticket)} hint="Quanto cada cliente gasta, em média." />
+        <Slider label="Clientes por dia" name="cli" id="calc-cli" min={1} max={300} value={EXEMPLO.clientesDia} hint="Arraste até o número de clientes que você atende num dia normal." />
+      </div>
+
+      <div class="calc-resultado tema-escuro">
+        <p class="text-small text-muted">Você pode estar deixando na mesa cerca de</p>
+        <p class="mt-2 font-display text-display-xl font-bold tabular-nums text-accent-2" aria-hidden="true">
+          <span data-calc-mes>{reais(r.mes)}</span>
+        </p>
+        <p class="text-muted">por mês, ou <strong class="text-paper" data-calc-ano>{reais(r.ano)}</strong> por ano.</p>
+        <p class="sr-only" aria-live="polite" data-calc-leitura>Estimativa: {reais(r.mes)} por mês.</p>
+
+        <div class="mt-6 border-t border-ink-3 pt-5 text-small text-muted">
+          <p>Considerando que:</p>
+          <ul class="mt-2 grid gap-1.5">
+            <li class="flex gap-2"><span aria-hidden="true">·</span> a loja abre {PREMISSAS.diasMes} dias por mês;</li>
+            <li class="flex gap-2"><span aria-hidden="true">·</span> a cada 100 clientes, {PREMISSAS.naoAcham} procuraram e não te acharam;</li>
+            <li class="flex gap-2"><span aria-hidden="true">·</span> a cada 100 pedidos, {PREMISSAS.perdidos} se perderam no WhatsApp.</li>
+          </ul>
+          <p class="mt-2">São suposições, não estatística.</p>
+        </div>
+        <div class="mt-6 grid gap-3">
+          <Button variant="primary" href={linkInicial} iconRight="seta" block data-calc-link>Ver diagnóstico completo</Button>
+          <a href={linkInicial} class="link self-center text-center text-small" data-calc-link>Mudar as premissas</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<style>
+  .calc {
+    display: grid;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-2);
+  }
+  .calc-entradas {
+    display: grid;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    color: var(--color-ink);
+  }
+  .calc-resultado {
+    padding: 1.5rem;
+  }
+  @media (width >= 48rem) {
+    .calc-entradas,
+    .calc-resultado {
+      padding: 2rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .calc {
+      grid-template-columns: 1.1fr 1fr;
+    }
+    .calc-entradas,
+    .calc-resultado {
+      padding: 2.5rem;
+    }
+  }
+</style>
+
+<script>
+  import { calcular, reais, PREMISSAS, segmentoDoNicho } from '@/lib/calc';
+  import { animarNumero } from '@/scripts/numero';
+  import { lerProspect } from '@/scripts/prospect';
+
+  document.querySelectorAll<HTMLFormElement>('[data-calc-compacta]').forEach((form) => {
+    const seg = form.querySelector<HTMLSelectElement>('[name=seg]')!;
+    const ticket = form.querySelector<HTMLInputElement>('[name=ticket]')!;
+    const cli = form.querySelector<HTMLInputElement>('[name=cli]')!;
+    const mes = form.querySelector<HTMLElement>('[data-calc-mes]')!;
+    const ano = form.querySelector<HTMLElement>('[data-calc-ano]')!;
+    const leitura = form.querySelector<HTMLElement>('[data-calc-leitura]')!;
+    const links = form.querySelectorAll<HTMLAnchorElement>('[data-calc-link]');
+    let anterior = calcular({ ticket: Number(ticket.value), clientesDia: Number(cli.value), ...PREMISSAS }).mes;
+    let timer: number | undefined;
+
+    const prospect = lerProspect();
+    const doNicho = prospect.nicho ? segmentoDoNicho(prospect.nicho) : null;
+    if (doNicho) seg.value = doNicho;
+
+    function atualizar() {
+      const r = calcular({ ticket: Number(ticket.value), clientesDia: Number(cli.value), ...PREMISSAS });
+      animarNumero(mes, anterior, r.mes, reais);
+      anterior = r.mes;
+      ano.textContent = reais(r.ano);
+      const q = new URLSearchParams({ seg: seg.value, ticket: String(Number(ticket.value) || 0), cli: cli.value });
+      links.forEach((a) => (a.href = `/diagnostico?${q}`));
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => (leitura.textContent = `Estimativa: ${reais(r.mes)} por mês.`), 700);
+    }
+    form.addEventListener('input', atualizar);
+    atualizar();
+  });
+</script>

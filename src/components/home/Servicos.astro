@@ -1,0 +1,19 @@
+---
+import ServicosGrid from '../ServicosGrid.astro';
+import Button from '../ui/Button.astro';
+---
+
+<section class="tema-areia secao" aria-labelledby="servicos-titulo">
+  <div class="wrap">
+    <div class="flex flex-wrap items-end justify-between gap-6" data-reveal>
+      <header class="max-w-[42rem]">
+        <p class="eyebrow">O que a gente faz</p>
+        <h2 id="servicos-titulo" class="mt-3 text-display-xl">Tudo o que o seu negócio precisa para vender no digital.</h2>
+      </header>
+      <Button variant="ghost" href="/servicos" iconRight="seta">Ver todos os serviços</Button>
+    </div>
+    <div class="mt-12">
+      <ServicosGrid />
+    </div>
+  </div>
+</section>

@@ -1,0 +1,127 @@
+---
+import { site } from '@/config/site';
+import Icon from './ui/Icon.astro';
+
+interface Props {
+  id?: string;
+  titulo?: string;
+}
+const { id = 'como-trabalhamos', titulo = 'Do primeiro oi ao seu negócio no ar.' } = Astro.props;
+
+const passos = [
+  { nome: 'Diagnóstico', texto: 'A gente vai até a sua loja e vê como você aparece hoje. Sem custo.' },
+  { nome: 'Proposta', texto: 'Escopo, prazo e valor por escrito. Sem surpresa no meio do caminho.' },
+  { nome: 'Construção', texto: `Site no ar em até ${site.prazoSiteDias} dias. Você acompanha tudo por um link de prévia.` },
+  { nome: 'Acompanhamento', texto: 'Depois de publicar, a gente segue junto: ajustes, novidades e o próximo passo.' },
+];
+---
+
+<section id={id} class="secao" aria-labelledby={`${id}-titulo`}>
+  <div class="wrap">
+    <header class="max-w-[40rem]" data-reveal>
+      <p class="eyebrow">Como trabalhamos</p>
+      <h2 id={`${id}-titulo`} class="mt-3 text-display-xl">{titulo}</h2>
+    </header>
+
+    <ol class="passos mt-12">
+      {
+        passos.map((p, i) => (
+          <li class="passo" data-reveal>
+            <span class="passo-num" aria-hidden="true">
+              {i + 1}
+            </span>
+            <div>
+              <h3 class="text-title font-semibold">
+                <span class="sr-only">Passo {i + 1}: </span>
+                {p.nome}
+              </h3>
+              <p class="mt-2 text-muted">{p.texto}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="garantia mt-12" data-reveal>
+      <span class="grid size-14 flex-none place-items-center rounded-md bg-accent-2-tint text-accent-2-strong">
+        <Icon name="escudo" size={28} />
+      </span>
+      <div>
+        <p class="font-display text-title font-semibold">{site.garantiaDias} dias de garantia de correção de erros</p>
+        <p class="mt-1 text-muted">Apareceu erro depois da entrega? A gente corrige.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .passos {
+    display: grid;
+    gap: 0;
+  }
+  .passo {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+    padding-bottom: 2rem;
+  }
+  .passo:last-child {
+    padding-bottom: 0;
+  }
+  /* Linha que liga os passos */
+  .passo::before {
+    content: '';
+    position: absolute;
+    left: 1.5rem;
+    top: 3rem;
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+    background: var(--color-line);
+  }
+  .passo:last-child::before {
+    display: none;
+  }
+  .passo-num {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+  @media (width >= 64rem) {
+    .passos {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+    .passo {
+      grid-template-columns: 1fr;
+      padding-bottom: 0;
+    }
+    .passo::before {
+      left: 3.75rem;
+      right: -1.25rem;
+      top: 1.5rem;
+      bottom: auto;
+      width: auto;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+  }
+  .garantia {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 40rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-1);
+  }
+</style>

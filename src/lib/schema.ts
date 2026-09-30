@@ -123,7 +123,7 @@ export function faq(items: { pergunta: string; resposta: string }[]): JsonLd {
     mainEntity: items.map((i) => ({
       '@type': 'Question',
       name: i.pergunta,
-      acceptedAnswer: { '@type': 'Answer', text: i.resposta },
+      acceptedAnswer: { '@type': 'Answer', text: i.resposta.replace(/\n\n/g, ' ') },
     })),
   };
 }

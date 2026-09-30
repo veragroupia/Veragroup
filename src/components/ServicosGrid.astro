@@ -1,0 +1,48 @@
+---
+import { getCollection } from 'astro:content';
+import ServiceCard from './ServiceCard.astro';
+import type { IconName } from './ui/Icon.astro';
+
+interface Props {
+  /** Nível dos títulos dos grupos; os cards ficam um nível abaixo. */
+  nivel?: 'h2' | 'h3';
+}
+const { nivel = 'h3' } = Astro.props;
+const Grupo = nivel;
+const nivelCard = nivel === 'h2' ? 'h3' : 'h4';
+
+const servicos = (await getCollection('servicos')).sort((a, b) => a.data.ordem - b.data.ordem);
+const grupos = [
+  { id: 'vender', titulo: 'Para vender mais', sub: 'Onde o cliente compra e onde você controla.' },
+  { id: 'encontrado', titulo: 'Para ser encontrado', sub: 'Onde o cliente te acha e decide confiar.' },
+] as const;
+---
+
+<div class="grid gap-14">
+  {
+    grupos.map((g) => (
+      <div>
+        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1" data-reveal>
+          <Grupo class="text-display-lg font-semibold">{g.titulo}</Grupo>
+          <p class="text-muted">{g.sub}</p>
+        </div>
+        <ul class="mt-6 grid gap-4 md:grid-cols-2 md:gap-6">
+          {servicos
+            .filter((s) => s.data.grupo === g.id)
+            .map((s) => (
+              <li data-reveal>
+                <ServiceCard
+                  titulo={s.data.titulo}
+                  resumo={s.data.resumo}
+                  icone={s.data.icone as IconName}
+                  href={`/servicos/${s.id}`}
+                  whatsapp={s.data.whatsapp}
+                  headingLevel={nivelCard}
+                />
+              </li>
+            ))}
+        </ul>
+      </div>
+    ))
+  }
+</div>
