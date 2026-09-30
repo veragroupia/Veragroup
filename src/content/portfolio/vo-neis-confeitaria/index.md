@@ -1,4 +1,5 @@
 ---
+# TODO: autorização por escrito do cliente para uso no portfólio; números reais de resultado, se autorizados.
 slug: vo-neis-confeitaria
 nome: "Vó Neis Confeitaria"
 ordem: 2
@@ -12,7 +13,7 @@ sub: "Uma confeitaria de Salto com duas lojas. Por trás do cardápio, roda a ge
 seo:
   title: "Vó Neis: cardápio digital e painel"
   description: "Case Vó Neis Confeitaria, de Salto SP: cardápio digital com pedido pelo WhatsApp e painel com vendas, estoque e produção do dia, feito pela Vera Group."
-link: "https://cardapio-vo-neis.vercel.app"
+link: "https://cardapio-vo-neis.vercel.app" # TODO: confirmar se este endereço público pode aparecer no site
 linkRotulo: "Ver o cardápio no ar"
 servicos: ["Cardápio digital", "Sistema sob medida"]
 whatsapp: "Olá! Vi o trabalho da Vó Neis no site e quero um cardápio digital assim para o meu negócio."

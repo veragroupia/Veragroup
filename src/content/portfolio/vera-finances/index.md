@@ -1,5 +1,6 @@
 ---
 slug: vera-finances
+# TODO: confirmar o nome do produto ("Vera Finances" ou "vera.finance") e enviar as telas.
 nome: "Vera Finances"
 ordem: 3
 segmento: "Produto próprio"

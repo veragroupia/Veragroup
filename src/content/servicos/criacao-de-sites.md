@@ -1,4 +1,5 @@
 ---
+# TODO: confirmar com a Vera Group o escopo das entregas, o texto das dores e as respostas do FAQ.
 titulo: "Sites e landing pages"
 tituloCurto: "Sites e landing pages"
 ordem: 1

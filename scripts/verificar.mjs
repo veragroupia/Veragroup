@@ -52,6 +52,8 @@ function paginasDoBuild() {
 
 const paginas = args.paginas ? String(args.paginas).split(',') : paginasDoBuild();
 const problemas = [];
+const titulos = new Map();
+const descricoes = new Map();
 const anotar = (pagina, msg) => problemas.push(`${pagina}: ${msg}`);
 
 const navegador = await chromium.launch();
@@ -149,7 +151,17 @@ for (const rota of paginas) {
       })
       .slice(0, 8)
       .map((el) => `"${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 50)}…"`);
+    const jsonld = [...document.querySelectorAll('script[type="application/ld+json"]')].map((sc) => {
+      try {
+        const d = JSON.parse(sc.textContent);
+        return d['@type'];
+      } catch {
+        return 'JSON inválido';
+      }
+    });
     return {
+      jsonld,
+      robots: meta('meta[name="robots"]'),
       longos,
       h1: document.querySelectorAll('h1').length,
       pulos,
@@ -167,8 +179,23 @@ for (const rota of paginas) {
   }, NUMERO);
 
   if (r.h1 !== 1) anotar(rota, `${r.h1} h1 (esperado 1)`);
+  if (r.jsonld.includes('JSON inválido')) anotar(rota, 'JSON-LD inválido');
+  if (!r.jsonld.includes('Organization')) anotar(rota, 'sem JSON-LD de Organization');
+  // A imagem de prévia precisa existir (o endereço aponta para o domínio de produção).
+  if (r.og) {
+    const caminho = new URL(r.og).pathname;
+    const st = await fetch(BASE + caminho).then((x) => x.status).catch(() => 0);
+    if (st !== 200) anotar(rota, `og:image não encontrada (${caminho} → ${st})`);
+  }
+  const indexavel = !r.robots.includes('noindex');
+  if (indexavel) {
+    titulos.set(r.title, [...(titulos.get(r.title) || []), rota]);
+    descricoes.set(r.description, [...(descricoes.get(r.description) || []), rota]);
+  }
   if (r.pulos.length) anotar(rota, `títulos pulando nível: ${r.pulos.join(', ')}`);
   if (!r.title) anotar(rota, 'sem <title>');
+  else if (r.title.length > 62) anotar(rota, `title com ${r.title.length} caracteres (o Google corta perto de 60)`);
+  if (r.description && (r.description.length < 70 || r.description.length > 160)) anotar(rota, `description com ${r.description.length} caracteres (ideal 70 a 160)`);
   if (!r.description) anotar(rota, 'sem meta description');
   if (!r.canonical) anotar(rota, 'sem canonical');
   if (!r.og) anotar(rota, 'sem og:image');
@@ -178,9 +205,17 @@ for (const rota of paginas) {
   if (r.semAlt.length) anotar(rota, `imagens sem alt: ${r.semAlt.join(', ')}`);
   if (r.pequenos.length) anotar(rota, `alvos de toque < 44px: ${r.pequenos.join('; ')}`);
   if (r.longos.length && rota !== '/design-system') anotar(rota, `parágrafos com mais de 3 linhas em 390px: ${r.longos.join(' | ')}`);
+  // Acessibilidade: axe-core com as regras WCAG 2.1 A e AA.
+  await page.addScriptTag({ path: path.resolve('node_modules/axe-core/axe.min.js') });
+  const axe = await page.evaluate(async () => {
+    // [data-axe-ignorar]: amostras de pares reprovados no /design-system, mostradas de propósito.
+    const res = await window.axe.run({ exclude: [['[data-axe-ignorar]']] }, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } });
+    return res.violations.map((v) => `${v.id} (${v.nodes.length}): ${v.nodes[0]?.target?.join(' ')}`);
+  });
+  if (axe.length) anotar(rota, `axe: ${axe.join(' | ')}`);
   const errosReais = erros.filter((e) => !(is404 && /404/.test(e)));
   if (errosReais.length) anotar(rota, `erros no console: ${errosReais.slice(0, 3).join(' | ')}`);
-  console.log(`✓ ${rota.padEnd(46)} h1=${r.h1} wa=${r.wa} title="${r.title}"`);
+  console.log(`✓ ${rota.padEnd(46)} h1=${r.h1} wa=${r.wa} ld=[${r.jsonld.join(',')}] title="${r.title}"`);
   await ctx.close();
 
   // 3) Screenshots.
@@ -203,6 +238,9 @@ for (const rota of paginas) {
 }
 
 await navegador.close();
+
+for (const [t, rotas] of titulos) if (rotas.length > 1) problemas.push(`title repetido "${t}": ${rotas.join(', ')}`);
+for (const [, rotas] of descricoes) if (rotas.length > 1) problemas.push(`description repetida: ${rotas.join(', ')}`);
 
 console.log(`\n${paginas.length} páginas × ${LARGURAS.length} larguras verificadas.`);
 if (problemas.length) {

@@ -626,11 +626,13 @@
     box-shadow: var(--shadow-2);
     transform: translateY(-2px);
   }
-  .card-interativo:has(a:focus-visible) {
+  /* Foco no link do título: o contorno vai para o card inteiro.
+     Os botões dentro do card mantêm o próprio contorno. */
+  .card-interativo:has(.link-cobre:focus-visible) {
     outline: 3px solid var(--tema-focus);
     outline-offset: 3px;
   }
-  .card-interativo:has(a:focus-visible) a:focus-visible {
+  .link-cobre:focus-visible {
     outline: none;
   }
   /* Link que cobre o card inteiro, sem aninhar elementos interativos. */

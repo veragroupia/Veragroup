@@ -1,4 +1,5 @@
 ---
+# TODO: autorização por escrito do cliente para uso no portfólio; números reais de resultado, se autorizados.
 slug: erk-pratas
 nome: "ERK Pratas"
 ordem: 1

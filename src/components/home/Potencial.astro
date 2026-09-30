@@ -209,8 +209,8 @@ const mudancas: { titulo: string; texto: string; icone: IconName }[] = [
     font-size: 0.8125rem;
     font-weight: 600;
     transition:
-      opacity var(--duration-base) var(--ease-out),
-      filter var(--duration-base) var(--ease-out);
+      background-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out);
   }
   .ficha-acoes .ficha-acao-wa {
     background: var(--color-accent-2-tint);
@@ -238,12 +238,12 @@ const mudancas: { titulo: string; texto: string; icone: IconName }[] = [
     color: var(--color-line-strong);
     opacity: 0.6;
   }
-  [data-estado='hoje'] .ficha-acoes span:not(:first-child) {
-    opacity: 0.35;
-    filter: grayscale(1);
-  }
-  [data-estado='hoje'] .ficha-acoes span:first-child {
-    opacity: 0.6;
+  /* "Hoje": botões apagados, mas com texto ainda legível (contraste AA). */
+  [data-estado='hoje'] .ficha-acoes span {
+    background: transparent;
+    color: var(--color-stone);
+    outline: 1.5px dashed var(--color-line-strong);
+    outline-offset: -1.5px;
   }
   .ficha-item {
     transition: transform var(--duration-base) var(--ease-out);

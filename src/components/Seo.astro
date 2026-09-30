@@ -21,7 +21,8 @@ const semHtml = path.replace(/\.html$/, '').replace(/\/index$/, '/');
 const limpo = semHtml === '/' ? '' : semHtml.replace(/\/$/, '');
 const canonical = `${site.url}${limpo}`;
 const slugOg = limpo === '' ? 'home' : limpo.slice(1);
-const ogImage = new URL(image ?? `/og/${slugOg}.png`, site.url).href;
+// Páginas fora do Google (404, apresentação, design system) usam a prévia da home.
+const ogImage = new URL(image ?? (noindex ? '/og/home.png' : `/og/${slugOg}.png`), site.url).href;
 const tituloCompleto = title.includes(site.nome) ? title : `${title} | ${site.nome}`;
 ---
 

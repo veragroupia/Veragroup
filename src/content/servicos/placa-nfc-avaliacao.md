@@ -1,4 +1,5 @@
 ---
+# TODO: confirmar com a Vera Group o escopo das entregas, o texto das dores e as respostas do FAQ.
 titulo: "Plaquinhas NFC de avaliação"
 tituloCurto: "Plaquinha NFC"
 ordem: 8

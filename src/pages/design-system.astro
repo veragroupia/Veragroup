@@ -125,7 +125,7 @@ const nav = [
           <tbody class="divide-y divide-line">
             {
               linhas.map((l) => (
-                <tr>
+                <tr data-axe-ignorar={l.normal ? undefined : ''}>
                   <td class="p-3">
                     <span class="inline-block rounded-sm px-3 py-1.5 font-semibold whitespace-nowrap" style={`color:${hex[l.texto]};background:${hex[l.fundo]}`}>
                       Aa Vender mais
