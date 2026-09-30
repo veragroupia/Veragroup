@@ -1,0 +1,194 @@
+---
+/**
+ * Formulário de contato.
+ * Envio: monta a mensagem e abre o WhatsApp da Vera Group.
+ * Se PUBLIC_FORM_WEBHOOK estiver definido (ex.: webhook do n8n), também manda os dados para lá.
+ * Anti-spam: campo "site" escondido (honeypot). Robô que preenche é ignorado em silêncio.
+ */
+import { getCollection } from 'astro:content';
+import Field from './ui/Field.astro';
+import Icon from './ui/Icon.astro';
+import { site } from '@/config/site';
+
+const servicos = (await getCollection('servicos')).sort((a, b) => a.data.ordem - b.data.ordem);
+---
+
+<form class="form-contato" action={`https://wa.me/${site.whatsapp.numero}`} method="get" target="_blank" novalidate data-form-contato>
+  <div class="grid gap-5 md:grid-cols-2">
+    <Field label="Seu nome" name="nome" id="f-nome" required autocomplete="name" maxlength="60" />
+    <Field label="Nome do negócio" name="negocio" id="f-negocio" required autocomplete="organization" maxlength="60" data-p-campo="empresa" />
+    <Field
+      as="select"
+      label="Cidade"
+      name="cidade"
+      id="f-cidade"
+      required
+      options={[{ value: '', label: 'Escolha a cidade' }, ...site.cidades.map((c) => ({ value: c, label: c })), { value: 'Outra', label: 'Outra cidade' }]}
+    />
+    <Field label="Seu WhatsApp (opcional)" name="telefone" id="f-telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 90000-0000" maxlength="20" />
+  </div>
+
+  <fieldset class="mt-6">
+    <legend class="field-label mb-2">O que você precisa? (pode marcar mais de um)</legend>
+    <div class="flex flex-wrap gap-2">
+      {
+        servicos.map((s) => (
+          <label class="chip chip-check">
+            <input type="checkbox" name="interesse" value={s.data.tituloCurto} />
+            {s.data.tituloCurto}
+          </label>
+        ))
+      }
+      <label class="chip chip-check">
+        <input type="checkbox" name="interesse" value="Ainda não sei" />
+        Ainda não sei
+      </label>
+    </div>
+  </fieldset>
+
+  <Field as="textarea" label="Conte um pouco do seu negócio (opcional)" name="mensagem" id="f-mensagem" maxlength="600" class="mt-6" />
+
+  <!-- Honeypot: pessoas não veem este campo; robôs costumam preencher. -->
+  <div class="hp" aria-hidden="true">
+    <label for="f-site">Não preencha este campo</label>
+    <input type="text" id="f-site" name="site" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <p class="mt-6 text-small text-muted">
+    Ao enviar, abrimos o WhatsApp com a sua mensagem pronta. Veja a <a href="/politica-de-privacidade" class="link">política de privacidade</a>.
+  </p>
+
+  <button type="submit" class="btn btn-whatsapp btn-lg btn-block mt-4 md:w-auto">
+    <Icon name="whatsapp" />
+    <span>Enviar pelo WhatsApp</span>
+  </button>
+
+  <div class="form-sucesso" role="status" hidden data-form-sucesso>
+    <Icon name="check" size={22} />
+    <p>Pronto! Abrimos o WhatsApp com a sua mensagem. Se não abriu, <a href="#" class="link" data-form-link>toque aqui</a>.</p>
+  </div>
+</form>
+
+<style>
+  .form-contato {
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-1);
+    color: var(--color-ink);
+  }
+  @media (width >= 48rem) {
+    .form-contato {
+      padding: 2.5rem;
+    }
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .form-sucesso {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    background: var(--color-accent-2-tint);
+    color: var(--color-accent-2-strong);
+    font-weight: 500;
+  }
+  .form-sucesso[hidden] {
+    display: none;
+  }
+</style>
+
+<script>
+  import { site } from '@/config/site';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form-contato]');
+  if (form) {
+    const WEBHOOK = import.meta.env.PUBLIC_FORM_WEBHOOK as string | undefined;
+    const sucesso = form.querySelector<HTMLElement>('[data-form-sucesso]')!;
+    const linkSucesso = form.querySelector<HTMLAnchorElement>('[data-form-link]')!;
+    const mensagens: Record<string, string> = {
+      nome: 'Conta pra gente o seu nome.',
+      negocio: 'Qual é o nome do seu negócio?',
+      cidade: 'Escolha a cidade.',
+    };
+
+    const erroDe = (campo: HTMLInputElement | HTMLSelectElement) => document.getElementById(`${campo.id}-erro`);
+    function marcar(campo: HTMLInputElement | HTMLSelectElement, texto: string | null) {
+      const erro = erroDe(campo);
+      campo.setAttribute('aria-invalid', texto ? 'true' : 'false');
+      if (erro) {
+        erro.textContent = texto ?? '';
+        erro.hidden = !texto;
+      }
+    }
+    function validar() {
+      let primeiro: HTMLElement | null = null;
+      for (const nome of Object.keys(mensagens)) {
+        const campo = form!.elements.namedItem(nome) as HTMLInputElement | HTMLSelectElement;
+        const vazio = !campo.value.trim();
+        marcar(campo, vazio ? mensagens[nome] : null);
+        if (vazio && !primeiro) primeiro = campo;
+      }
+      const tel = form!.elements.namedItem('telefone') as HTMLInputElement;
+      const digitos = tel.value.replace(/\D/g, '');
+      const telRuim = tel.value.trim() !== '' && (digitos.length < 10 || digitos.length > 13);
+      marcar(tel, telRuim ? 'Confere o número? Use DDD + número.' : null);
+      if (telRuim && !primeiro) primeiro = tel;
+      return primeiro;
+    }
+    // Tira o erro assim que a pessoa corrige.
+    form.addEventListener('input', (e) => {
+      const alvo = e.target as HTMLInputElement;
+      if (alvo.getAttribute('aria-invalid') === 'true' && alvo.value.trim()) marcar(alvo, null);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const dados = new FormData(form);
+      // Honeypot preenchido: finge que deu certo e não faz nada.
+      if ((dados.get('site') as string)?.trim()) {
+        sucesso.hidden = false;
+        return;
+      }
+      const invalido = validar();
+      if (invalido) {
+        invalido.focus();
+        return;
+      }
+      const interesses = dados.getAll('interesse').join(', ');
+      const linhas = [
+        'Olá! Vim pelo site da Vera Group.',
+        `Nome: ${dados.get('nome')}`,
+        `Negócio: ${dados.get('negocio')}`,
+        `Cidade: ${dados.get('cidade')}`,
+        dados.get('telefone') ? `WhatsApp: ${dados.get('telefone')}` : null,
+        interesses ? `Interesse: ${interesses}` : null,
+        (dados.get('mensagem') as string)?.trim() ? `Mensagem: ${(dados.get('mensagem') as string).trim()}` : null,
+      ].filter(Boolean);
+      const url = `https://wa.me/${site.whatsapp.numero}?text=${encodeURIComponent(linhas.join('\n'))}`;
+
+      if (WEBHOOK) {
+        const corpo = Object.fromEntries([...dados.entries()].filter(([k]) => k !== 'site' && k !== 'interesse'));
+        fetch(WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...corpo, interesse: interesses, origem: location.pathname }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+
+      linkSucesso.href = url;
+      sucesso.hidden = false;
+      // Sem 'noopener' no window.open: com ele o retorno é sempre null.
+      const aberta = window.open(url, '_blank');
+      if (aberta) aberta.opener = null;
+      else window.location.href = url;
+    });
+  }
+</script>

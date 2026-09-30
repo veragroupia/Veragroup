@@ -16,9 +16,11 @@
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.5",
     "lucide-static": "^1.49.0",
+    "qrcode": "^1.5.4",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.6",
     "lighthouse": "^12.8.2",
     "playwright": "1.56"
   }

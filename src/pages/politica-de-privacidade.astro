@@ -1,0 +1,85 @@
+---
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import { breadcrumbs } from '@/lib/schema';
+import { linkWhatsApp } from '@/lib/whatsapp';
+import { site } from '@/config/site';
+
+// TODO: revisar este texto com um advogado antes de publicar no domínio próprio.
+const atualizado = '30 de setembro de 2026';
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Política de privacidade', path: '/politica-de-privacidade' },
+];
+const wa = linkWhatsApp('Olá! Tenho uma dúvida sobre os meus dados (LGPD).');
+---
+
+<Base
+  title="Política de privacidade"
+  description="Como a Vera Group trata os seus dados no site: o que coletamos, para quê, com quem compartilhamos e como exercer os seus direitos pela LGPD."
+  path="/politica-de-privacidade"
+  jsonLd={[breadcrumbs(trilha)]}
+>
+  <section class="secao-curta">
+    <div class="wrap max-w-[44rem]">
+      <Breadcrumb itens={trilha} />
+      <h1 class="mt-6 text-display-page">Política de privacidade</h1>
+      <p class="mt-4 text-muted">Atualizada em {atualizado}.</p>
+
+      <div class="prose-site mt-10">
+        <p>Esta política explica, em linguagem simples, como a {site.nome} trata os seus dados neste site.</p>
+        <p>Ela segue a Lei Geral de Proteção de Dados (Lei 13.709/2018, a LGPD).</p>
+
+        <h2>Quem cuida dos seus dados</h2>
+        <p>{site.nome}{site.cnpj && `, CNPJ ${site.cnpj}`}, agência que atende {site.cidades.join(', ')}.</p>
+        <p>Canal para falar sobre dados: <a href={wa} target="_blank" rel="noopener">WhatsApp {site.whatsapp.exibicao}</a>{site.email && <>{' '}ou <a href={`mailto:${site.email}`}>{site.email}</a></>}.</p>
+
+        <h2>O que coletamos</h2>
+        <ul>
+          <li><strong>Formulário de contato:</strong> nome, negócio, cidade e, se você quiser, telefone e mensagem.</li>
+          <li><strong>Calculadora:</strong> os números que você digita ficam só no seu navegador. Nada vai para um servidor.</li>
+          <li><strong>Visitas ao site:</strong> só se você aceitar os cookies. São dados agregados, sem identificar você.</li>
+        </ul>
+
+        <h2>Para que usamos</h2>
+        <ul>
+          <li>Responder o seu contato e preparar o diagnóstico que você pediu.</li>
+          <li>Entender quais páginas ajudam mais, para melhorar o site.</li>
+        </ul>
+        <p>Não vendemos os seus dados. Não enviamos propaganda sem você pedir.</p>
+
+        <h2>Com quem compartilhamos</h2>
+        <ul>
+          <li><strong>WhatsApp (Meta):</strong> quando você envia o formulário ou toca num botão de WhatsApp, a conversa acontece lá.</li>
+          <li><strong>Vercel:</strong> empresa que hospeda o site e, com o seu aceite, mede as visitas.</li>
+        </ul>
+
+        <h2>Cookies e armazenamento no navegador</h2>
+        <ul>
+          <li>Guardamos a sua escolha sobre cookies, para não perguntar de novo.</li>
+          <li>Se você chegou por um link personalizado, o nome do negócio fica salvo só durante a visita.</li>
+          <li>A medição de visitas só liga depois do seu “Aceitar”.</li>
+        </ul>
+        <p>Você pode mudar a escolha quando quiser.</p>
+        <p><button type="button" class="btn btn-secondary btn-sm" data-cookies-abrir>Preferências de cookies</button></p>
+
+        <h2>Por quanto tempo</h2>
+        <p>Guardamos as conversas enquanto houver relação comercial ou até você pedir para apagar, salvo obrigação legal.</p>
+
+        <h2>Os seus direitos</h2>
+        <p>Pela LGPD, você pode pedir, a qualquer momento:</p>
+        <ul>
+          <li>confirmação e acesso aos seus dados;</li>
+          <li>correção de dados errados ou desatualizados;</li>
+          <li>anonimização, bloqueio ou exclusão;</li>
+          <li>portabilidade e informação sobre compartilhamento;</li>
+          <li>revogação do consentimento.</li>
+        </ul>
+        <p>É só chamar no <a href={wa} target="_blank" rel="noopener">WhatsApp</a>. A gente responde o quanto antes.</p>
+
+        <h2>Mudanças nesta política</h2>
+        <p>Se algo mudar, atualizamos esta página e a data lá em cima.</p>
+      </div>
+    </div>
+  </section>
+</Base>

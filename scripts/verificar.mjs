@@ -127,7 +127,7 @@ for (const rota of paginas) {
       .filter((el) => {
         const r = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
-        if (r.width === 0 || r.height === 0 || cs.visibility === 'hidden' || el.closest('[hidden],dialog:not([open])')) return false;
+        if (r.width === 0 || r.height === 0 || cs.visibility === 'hidden' || el.closest('[hidden],dialog:not([open]),[aria-hidden="true"]') || r.right < 0) return false;
         return r.height < 43.5 || r.width < 43.5;
       })
       .slice(0, 6)

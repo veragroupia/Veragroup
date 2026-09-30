@@ -1,0 +1,73 @@
+---
+import Base from '@/layouts/Base.astro';
+import Breadcrumb from '@/components/Breadcrumb.astro';
+import CalculadoraCompleta from '@/components/calc/CalculadoraCompleta.astro';
+import CtaFinal from '@/components/home/CtaFinal.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { breadcrumbs } from '@/lib/schema';
+
+const trilha = [
+  { nome: 'Início', path: '/' },
+  { nome: 'Diagnóstico', path: '/diagnostico' },
+];
+---
+
+<Base
+  title="Quanto seu negócio deixa na mesa? Diagnóstico grátis"
+  description="Calculadora gratuita para lojas de Itu, Salto, Sorocaba e Indaiatuba: descubra quanto você deixa de vender sem Google, sem site e com pedido perdido no WhatsApp."
+  path="/diagnostico"
+  whatsapp="Olá! Vim pelo site e quero o diagnóstico gratuito para o meu negócio."
+  jsonLd={[breadcrumbs(trilha)]}
+>
+  <section class="secao-curta tema-areia">
+    <div class="wrap">
+      <Breadcrumb itens={trilha} />
+      <div class="mt-6 max-w-[44rem]">
+        <p class="eyebrow">Diagnóstico gratuito</p>
+        <h1 class="mt-3 text-display-page">Quanto você está deixando na mesa?</h1>
+        <p class="mt-5 text-body-lg text-muted">Uma conta honesta, com os seus números. Mude qualquer premissa e veja o resultado na hora.</p>
+      </div>
+      <div class="mt-10">
+        <CalculadoraCompleta />
+      </div>
+    </div>
+  </section>
+
+  <section class="secao" aria-labelledby="conta-titulo">
+    <div class="wrap grid gap-10 lg:grid-cols-12 lg:gap-16">
+      <header class="lg:col-span-5">
+        <p class="eyebrow">Como a conta é feita</p>
+        <h2 id="conta-titulo" class="mt-3 text-display-xl">Sem mágica e sem número inventado.</h2>
+      </header>
+      <ol class="grid gap-6 lg:col-span-7">
+        <li class="flex gap-4">
+          <span class="grid size-10 flex-none place-items-center rounded-pill bg-ink font-display font-bold text-paper">1</span>
+          <div>
+            <h3 class="text-title font-semibold">Faturamento do mês</h3>
+            <p class="mt-1 text-muted">Ticket médio × clientes por dia × dias abertos.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="grid size-10 flex-none place-items-center rounded-pill bg-ink font-display font-bold text-paper">2</span>
+          <div>
+            <h3 class="text-title font-semibold">Quem não te achou</h3>
+            <p class="mt-1 text-muted">Parte das pessoas que procuram um negócio como o seu e vão para outro.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="grid size-10 flex-none place-items-center rounded-pill bg-ink font-display font-bold text-paper">3</span>
+          <div>
+            <h3 class="text-title font-semibold">Pedido perdido</h3>
+            <p class="mt-1 text-muted">Parte dos pedidos que somem no meio das mensagens.</p>
+          </div>
+        </li>
+        <li class="flex gap-3 rounded-md bg-warn-tint p-5 text-warn-strong">
+          <Icon name="lampada" size={22} class="mt-0.5 flex-none" />
+          <p class="font-medium">As premissas são suposições. No diagnóstico completo, a gente olha o seu caso de verdade.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <CtaFinal titulo="Quer o diagnóstico completo, olhando a sua loja?" whatsapp="Olá! Fiz a conta no site e quero o diagnóstico completo, olhando a minha loja." />
+</Base>

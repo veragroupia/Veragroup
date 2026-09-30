@@ -1,0 +1,810 @@
+---
+/**
+ * Modo apresentação: para mostrar no celular ou tablet dentro da loja do cliente.
+ * Não indexado, fora do menu. Funciona offline depois da primeira visita (public/sw.js).
+ */
+import { getCollection } from 'astro:content';
+import QRCode from 'qrcode';
+import Base from '@/layouts/Base.astro';
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+import Img from '@/components/ui/Img.astro';
+import Placeholder from '@/components/ui/Placeholder.astro';
+import { linkWhatsApp } from '@/lib/whatsapp';
+import { EXEMPLO, PREMISSAS, calcular, reais, mensagemDiagnostico } from '@/lib/calc';
+import { site } from '@/config/site';
+
+const cases = (await getCollection('portfolio')).sort((a, b) => a.data.ordem - b.data.ordem);
+const servicos = (await getCollection('servicos')).sort((a, b) => a.data.ordem - b.data.ordem);
+
+const msgVisita = 'Olá! Conheci a Vera Group numa visita na minha loja e quero o diagnóstico gratuito.';
+const linkVisita = linkWhatsApp(msgVisita);
+const qr = await QRCode.toString(linkVisita, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#0E1116', light: '#FFFFFF' } });
+
+const inicial = { segmento: EXEMPLO.segmento, ticket: EXEMPLO.ticket, clientesDia: EXEMPLO.clientesDia, ...PREMISSAS };
+const r = calcular(inicial);
+
+const perdas: { titulo: string; icone: IconName }[] = [
+  { titulo: 'Procuraram e não te acharam', icone: 'lupa' },
+  { titulo: 'O pedido chegou e ninguém viu', icone: 'mensagem-alerta' },
+  { titulo: 'Saiu feliz e não avaliou', icone: 'estrela' },
+];
+
+const slides = ['Abertura', 'A perda', ...cases.map((c) => c.data.nome), 'Serviços', 'A conta', 'Próximo passo'];
+const temas = ['escuro', 'escuro', ...cases.map((c) => (c.data.tema === 'escuro' ? 'escuro' : 'claro')), 'claro', 'areia', 'escuro'];
+---
+
+<Base title="Apresentação" description="Modo apresentação da Vera Group para visitas de venda." path="/apresentacao" noindex semMoldura class="ap-corpo">
+  <meta slot="head" name="theme-color" content="#0E1116" />
+  <div class="ap" data-ap>
+    <div class="ap-topo">
+      <a href="/" class="ap-marca" aria-label="Sair da apresentação e ir para o site">Vera Group</a>
+      <div class="ap-topo-nav">
+        <button type="button" class="ap-icone ap-so-celular" data-ap-anterior aria-label="Slide anterior"><Icon name="anterior" size={24} /></button>
+        <p class="ap-contador" aria-live="polite"><span data-ap-atual>1</span> / {slides.length}</p>
+        <button type="button" class="ap-icone ap-so-celular" data-ap-proximo aria-label="Próximo slide"><Icon name="proximo" size={24} /></button>
+      </div>
+      <button type="button" class="ap-icone" data-ap-tela-cheia aria-label="Tela cheia" hidden>
+        <Icon name="tela" size={22} />
+      </button>
+    </div>
+
+    <div class="ap-trilho" data-ap-trilho tabindex="0" role="region" aria-roledescription="apresentação" aria-label="Apresentação da Vera Group. Use as setas para passar.">
+      <!-- 1. Abertura -->
+      <section class="ap-slide tema-escuro" aria-roledescription="slide" aria-label={`1 de ${slides.length}: ${slides[0]}`}>
+        <div class="ap-conteudo">
+          <p class="ap-eyebrow">
+            <span data-p-preparado hidden>Preparado para <strong data-p-empresa></strong> · </span>{site.cidades.join(' · ')}
+          </p>
+          <h1 class="ap-titulo mt-5">Seu cliente procurou no Google. <span class="text-warn">Achou o concorrente.</span></h1>
+          <p class="ap-texto mt-6 text-muted">Vamos ver como mudar isso na sua loja?</p>
+          <p class="ap-dica mt-10"><Icon name="seta" size={22} /> Arraste para o lado</p>
+        </div>
+      </section>
+
+      <!-- 2. Perda -->
+      <section class="ap-slide tema-escuro" aria-roledescription="slide" aria-label={`2 de ${slides.length}: ${slides[1]}`}>
+        <div class="ap-conteudo">
+          <p class="ap-eyebrow text-warn">Onde o dinheiro escapa</p>
+          <h2 class="ap-titulo mt-4">Todo dia tem cliente indo embora.</h2>
+          <ul class="ap-perdas mt-8">
+            {
+              perdas.map((p) => (
+                <li>
+                  <span class="ap-perda-icone">
+                    <Icon name={p.icone} size={30} />
+                  </span>
+                  {p.titulo}
+                </li>
+              ))
+            }
+          </ul>
+          <p class="ap-texto mt-8 font-display font-semibold text-warn">Nenhuma dessas perdas aparece no caixa.</p>
+        </div>
+      </section>
+
+      <!-- 3-5. Cases -->
+      {
+        cases.map((c, i) => (
+          <section class:list={['ap-slide', `tema-${temas[i + 2]}`]} aria-roledescription="slide" aria-label={`${i + 3} de ${slides.length}: ${c.data.nome}`}>
+            <div class="ap-conteudo ap-case">
+              <div class="ap-case-celular">
+                {c.data.capa.mobile ? (
+                  <Img src={c.data.capa.mobile} alt={c.data.capa.altMobile ?? ''} widths={[320, 480]} sizes="(min-width: 768px) 280px, 46vw" eager class="h-full w-full object-cover object-top" />
+                ) : (
+                  <Placeholder label="tela" compacto />
+                )}
+              </div>
+              <div>
+                <p class="ap-eyebrow">
+                  {c.data.segmento} · {c.data.cidade}
+                </p>
+                <h2 class="ap-titulo mt-3">{c.data.nome}</h2>
+                <p class="ap-texto mt-3 text-muted">{c.data.resumo}</p>
+                <ul class="ap-lista mt-5">
+                  {c.data.oQueFizemos.slice(0, 4).map((f, j) => (
+                    <li class:list={[j === 3 && 'ap-so-tablet']}>
+                      <Icon name="check" size={24} class="flex-none text-accent-2" />
+                      {f.titulo}
+                    </li>
+                  ))}
+                </ul>
+                <p class="mt-5">
+                  {c.data.status === 'no-ar' ? <span class="badge ap-badge badge-sucesso badge-ponto">No ar</span> : <span class="badge ap-badge badge-alerta badge-ponto">Em desenvolvimento</span>}
+                </p>
+              </div>
+            </div>
+          </section>
+        ))
+      }
+
+      <!-- Serviços -->
+      <section class="ap-slide tema-claro" aria-roledescription="slide" aria-label={`${cases.length + 3} de ${slides.length}: Serviços`}>
+        <div class="ap-conteudo">
+          <p class="ap-eyebrow">O que a gente faz</p>
+          <h2 class="ap-titulo mt-3">Tudo para vender no digital.</h2>
+          <ul class="ap-servicos mt-8">
+            {
+              servicos.map((s) => (
+                <li>
+                  <span class="grid size-12 flex-none place-items-center rounded-md bg-accent-tint text-accent-strong">
+                    <Icon name={s.data.icone as IconName} size={26} />
+                  </span>
+                  {s.data.tituloCurto}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </section>
+
+      <!-- Calculadora -->
+      <section class="ap-slide tema-areia" aria-roledescription="slide" aria-label={`${cases.length + 4} de ${slides.length}: A conta`}>
+        <div class="ap-conteudo">
+          <p class="ap-eyebrow">A conta</p>
+          <h2 class="ap-titulo mt-3">Quanto você deixa na mesa?</h2>
+          <form class="ap-calc mt-8" data-ap-calc onsubmit="return false">
+            <div class="grid gap-6">
+              <label class="ap-campo">
+                <span>Ticket médio</span>
+                <span class="ap-stepper">
+                  <button type="button" data-passo="ticket" data-delta="-5" aria-label="Diminuir ticket">−</button>
+                  <span class="ap-valor"><small>R$</small><input name="ticket" type="number" inputmode="numeric" min="1" max="100000" value={EXEMPLO.ticket} aria-label="Ticket médio em reais" /></span>
+                  <button type="button" data-passo="ticket" data-delta="5" aria-label="Aumentar ticket">+</button>
+                </span>
+              </label>
+              <label class="ap-campo">
+                <span>Clientes por dia</span>
+                <span class="ap-stepper">
+                  <button type="button" data-passo="cli" data-delta="-5" aria-label="Diminuir clientes">−</button>
+                  <span class="ap-valor"><input name="cli" type="number" inputmode="numeric" min="1" max="1000" value={EXEMPLO.clientesDia} aria-label="Clientes por dia" /></span>
+                  <button type="button" data-passo="cli" data-delta="5" aria-label="Aumentar clientes">+</button>
+                </span>
+              </label>
+            </div>
+            <div class="ap-resultado tema-escuro">
+              <p class="text-muted">Na mesa, por mês</p>
+              <p class="ap-numero tabular-nums text-accent-2" data-ap-mes>{reais(r.mes)}</p>
+              <p class="text-muted">
+                <span data-ap-ano>{reais(r.ano)}</span> por ano
+              </p>
+              <p class="ap-premissas mt-3 text-muted">{PREMISSAS.diasMes} dias por mês · {PREMISSAS.naoAcham} em 100 não te acham · {PREMISSAS.perdidos} em 100 pedidos perdidos</p>
+              <a href={linkWhatsApp(mensagemDiagnostico(inicial))} class="btn btn-whatsapp btn-lg btn-block mt-6" target="_blank" rel="noopener" data-ap-calc-wa>
+                <Icon name="whatsapp" /> <span>Mandar esta conta no WhatsApp</span>
+              </a>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Contato -->
+      <section class="ap-slide tema-escuro" aria-roledescription="slide" aria-label={`${slides.length} de ${slides.length}: Próximo passo`}>
+        <div class="ap-conteudo ap-contato">
+          <div>
+            <p class="ap-eyebrow">Próximo passo</p>
+            <h2 class="ap-titulo mt-3">Diagnóstico gratuito na sua loja.</h2>
+            <p class="ap-texto mt-4 text-muted">Aponte a câmera para o código ou toque no botão.</p>
+            <div class="mt-8 grid gap-3">
+              <a href={linkVisita} class="btn btn-whatsapp btn-lg btn-block" target="_blank" rel="noopener" data-wa={msgVisita}>
+                <Icon name="whatsapp" /> <span>{site.whatsapp.exibicao}</span>
+              </a>
+              <a href={site.instagram.url} class="btn btn-secondary btn-lg btn-block" target="_blank" rel="noopener">
+                <Icon name="instagram" /> <span>@{site.instagram.usuario}</span>
+              </a>
+            </div>
+          </div>
+          <figure class="ap-qr">
+            <div set:html={qr} role="img" aria-label="QR code que abre o WhatsApp da Vera Group" />
+            <figcaption>Abre o WhatsApp da Vera Group</figcaption>
+          </figure>
+        </div>
+      </section>
+    </div>
+
+    <nav class="ap-nav" aria-label="Navegação da apresentação">
+      <button type="button" class="ap-seta" data-ap-anterior aria-label="Slide anterior">
+        <Icon name="anterior" size={28} />
+      </button>
+      <ol class="ap-pontos">
+        {
+          slides.map((s, i) => (
+            <li>
+              <button type="button" data-ap-ir={i} aria-label={`Ir para ${s}`} aria-current={i === 0 ? 'step' : undefined}>
+                <span />
+              </button>
+            </li>
+          ))
+        }
+      </ol>
+      <button type="button" class="ap-seta" data-ap-proximo aria-label="Próximo slide">
+        <Icon name="proximo" size={28} />
+      </button>
+    </nav>
+
+    <p class="ap-offline" data-ap-offline hidden role="status">
+      <Icon name="check" size={16} /> Pronto para usar sem internet
+    </p>
+  </div>
+</Base>
+
+<style is:global>
+  .ap-corpo {
+    background: var(--color-ink);
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  .ap-corpo main {
+    padding: 0;
+  }
+</style>
+
+<style>
+  .ap {
+    position: fixed;
+    inset: 0;
+    color: var(--color-paper);
+  }
+  .ap-topo {
+    position: absolute;
+    z-index: 5;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 4rem;
+    padding: max(0.5rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) 0 max(1.25rem, env(safe-area-inset-left));
+    pointer-events: none;
+    mix-blend-mode: difference;
+    color: #fff;
+  }
+  .ap-topo > * {
+    pointer-events: auto;
+  }
+  .ap-marca {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+  .ap-topo-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+  }
+  @media (width >= 48rem) {
+    .ap-so-celular {
+      display: none;
+    }
+  }
+  .ap-icone:disabled {
+    opacity: 0.3;
+  }
+  .ap-badge {
+    min-height: 2.25rem;
+    padding-inline: 0.875rem;
+    font-size: 1rem;
+  }
+  .ap-premissas {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  .ap-contador {
+    font-variant-numeric: tabular-nums;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .ap-icone {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .ap-trilho {
+    display: flex;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .ap-trilho::-webkit-scrollbar {
+    display: none;
+  }
+  .ap-trilho:focus-visible {
+    outline: none;
+  }
+  .ap-slide {
+    flex: 0 0 100%;
+    display: grid;
+    place-items: center;
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    padding: 4.5rem max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
+  }
+  @media (width >= 48rem) {
+    .ap-slide {
+      padding: 5rem max(3rem, env(safe-area-inset-right)) 7rem max(3rem, env(safe-area-inset-left));
+    }
+  }
+  .ap-conteudo {
+    width: 100%;
+    max-width: 62rem;
+  }
+  .ap-eyebrow {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tema-muted);
+  }
+  .ap-titulo {
+    font-family: var(--font-display);
+    font-size: var(--text-stage);
+    line-height: var(--text-stage--line-height);
+    letter-spacing: var(--text-stage--letter-spacing);
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .ap-texto {
+    font-size: var(--text-stage-body);
+    line-height: var(--text-stage-body--line-height);
+  }
+  .ap-dica {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    color: var(--tema-muted);
+    animation: dica 600ms var(--ease-out) 800ms both;
+  }
+  @keyframes dica {
+    from {
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+  }
+
+  .ap-perdas {
+    display: grid;
+    gap: 1rem;
+  }
+  .ap-perdas li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.125rem 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-ink-2);
+    border: 1px solid var(--color-ink-3);
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 1.1rem + 1vw, 2rem);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .ap-perda-icone {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: rgb(242 163 58 / 0.16);
+    color: var(--color-warn);
+  }
+
+  .ap-case {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+  }
+  .ap-case-celular {
+    height: min(36dvh, 22rem);
+    aspect-ratio: 390 / 844;
+    justify-self: center;
+    overflow: hidden;
+    border: 7px solid #0b0d11;
+    border-radius: 32px;
+    background: var(--color-ink-2);
+    box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.6);
+  }
+  @media (width >= 48rem) {
+    .ap-case {
+      grid-template-columns: auto 1fr;
+      gap: 3.5rem;
+    }
+    .ap-case-celular {
+      height: min(68dvh, 40rem);
+    }
+  }
+  .ap-lista {
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (width < 48rem) {
+    .ap-so-tablet {
+      display: none !important;
+    }
+  }
+  .ap-lista li {
+    display: flex;
+    gap: 0.75rem;
+    font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.625rem);
+    line-height: 1.3;
+  }
+
+  .ap-servicos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+  @media (width >= 48rem) {
+    .ap-servicos {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .ap-servicos li {
+      display: grid;
+      align-content: start;
+      padding: 1.125rem;
+    }
+  }
+  .ap-servicos li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-1);
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 0.85rem + 0.6vw, 1.375rem);
+    font-weight: 600;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .ap-calc {
+    display: grid;
+    gap: 1.5rem;
+    color: var(--color-ink);
+  }
+  @media (width >= 48rem) {
+    .ap-calc {
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 2rem;
+    }
+  }
+  .ap-campo {
+    display: grid;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .ap-stepper {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .ap-stepper button {
+    flex: none;
+    width: 4rem;
+    border-radius: var(--radius-md);
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+  .ap-stepper button:active {
+    transform: scale(0.94);
+  }
+  .ap-valor {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    min-height: 4rem;
+    padding: 0 1rem;
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    border: 1.5px solid var(--color-line-strong);
+  }
+  .ap-valor:focus-within {
+    border-color: var(--color-accent-strong);
+    box-shadow: 0 0 0 3px rgb(47 107 255 / 0.35);
+  }
+  .ap-valor small {
+    font-size: 1.25rem;
+    color: var(--color-stone);
+  }
+  .ap-valor input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .ap-valor input::-webkit-inner-spin-button,
+  .ap-valor input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .ap-resultado {
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+  }
+  .ap-numero {
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 2rem + 3vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+  }
+
+  .ap-contato {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  @media (width >= 48rem) {
+    .ap-contato {
+      grid-template-columns: 1.2fr 1fr;
+    }
+  }
+  .ap-qr {
+    justify-self: center;
+    width: min(56vw, 18rem);
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    color: var(--color-ink);
+    text-align: center;
+  }
+  .ap-qr :global(svg) {
+    width: 100%;
+    height: auto;
+  }
+  .ap-qr figcaption {
+    margin-top: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .ap-nav {
+    position: absolute;
+    z-index: 5;
+    inset: auto 0 0;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    pointer-events: none;
+  }
+  .ap-nav > * {
+    pointer-events: auto;
+  }
+  @media (width >= 48rem) {
+    .ap-nav {
+      display: flex;
+    }
+  }
+  .ap-seta {
+    display: grid;
+    place-items: center;
+    width: 3.75rem;
+    height: 3.75rem;
+    border-radius: 50%;
+    background: rgb(14 17 22 / 0.78);
+    color: var(--color-paper);
+    border: 1px solid rgb(246 244 239 / 0.2);
+    cursor: pointer;
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .ap-seta:active {
+    transform: scale(0.94);
+  }
+  .ap-seta:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+  /* No celular ficam só as setas e o contador; os pontos entram a partir do tablet. */
+  .ap-pontos {
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    background: rgb(14 17 22 / 0.78);
+  }
+  @media (width >= 48rem) {
+    .ap-pontos {
+      display: flex;
+    }
+  }
+  .ap-pontos button {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    cursor: pointer;
+  }
+  .ap-pontos span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: rgb(246 244 239 / 0.4);
+    transition:
+      width var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out);
+  }
+  .ap-pontos [aria-current] span {
+    width: 1.25rem;
+    background: var(--color-paper);
+  }
+  .ap-offline {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    top: max(4.25rem, calc(env(safe-area-inset-top) + 3.75rem));
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 999px;
+    background: var(--color-accent-2);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    animation: aviso 3.2s var(--ease-out) both;
+  }
+  @keyframes aviso {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -8px);
+    }
+    12%,
+    85% {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  import { calcular, reais, mensagemDiagnostico, PREMISSAS, EXEMPLO } from '@/lib/calc';
+  import { animarNumero } from '@/scripts/numero';
+  import { site } from '@/config/site';
+
+  const trilho = document.querySelector<HTMLElement>('[data-ap-trilho]')!;
+  const slides = [...trilho.querySelectorAll<HTMLElement>('.ap-slide')];
+  const atual = document.querySelector<HTMLElement>('[data-ap-atual]')!;
+  const anteriores = [...document.querySelectorAll<HTMLButtonElement>('[data-ap-anterior]')];
+  const proximos = [...document.querySelectorAll<HTMLButtonElement>('[data-ap-proximo]')];
+  const pontos = [...document.querySelectorAll<HTMLButtonElement>('[data-ap-ir]')];
+  const semMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let indice = 0;
+
+  const ir = (i: number) => {
+    const alvo = Math.max(0, Math.min(slides.length - 1, i));
+    trilho.scrollTo({ left: alvo * trilho.clientWidth, behavior: semMovimento ? 'auto' : 'smooth' });
+  };
+  function marcar(i: number) {
+    indice = i;
+    atual.textContent = String(i + 1);
+    anteriores.forEach((b) => (b.disabled = i === 0));
+    proximos.forEach((b) => (b.disabled = i === slides.length - 1));
+    pontos.forEach((p, j) => (j === i ? p.setAttribute('aria-current', 'step') : p.removeAttribute('aria-current')));
+  }
+  const io = new IntersectionObserver(
+    (entradas) => entradas.forEach((e) => e.isIntersecting && marcar(slides.indexOf(e.target as HTMLElement))),
+    { root: trilho, threshold: 0.6 },
+  );
+  slides.forEach((s) => io.observe(s));
+  anteriores.forEach((b) => b.addEventListener('click', () => ir(indice - 1)));
+  proximos.forEach((b) => b.addEventListener('click', () => ir(indice + 1)));
+  pontos.forEach((p) => p.addEventListener('click', () => ir(Number(p.dataset.apIr))));
+  document.addEventListener('keydown', (e) => {
+    if ((e.target as HTMLElement).matches('input, textarea, select')) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) {
+      e.preventDefault();
+      ir(indice + 1);
+    } else if (['ArrowLeft', 'PageUp'].includes(e.key)) {
+      e.preventDefault();
+      ir(indice - 1);
+    } else if (e.key === 'Home') ir(0);
+    else if (e.key === 'End') ir(slides.length - 1);
+  });
+  // Ao girar o tablet, mantém o slide atual no lugar.
+  window.addEventListener('resize', () => trilho.scrollTo({ left: indice * trilho.clientWidth }));
+  marcar(0);
+  trilho.focus({ preventScroll: true });
+
+  // Tela cheia, onde o navegador permite (iPhone não permite).
+  const telaCheia = document.querySelector<HTMLButtonElement>('[data-ap-tela-cheia]')!;
+  if (document.fullscreenEnabled) {
+    telaCheia.hidden = false;
+    telaCheia.addEventListener('click', () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen().catch(() => {});
+    });
+  }
+
+  // Calculadora com botões grandes de + e −.
+  const calc = document.querySelector<HTMLFormElement>('[data-ap-calc]')!;
+  const mes = calc.querySelector<HTMLElement>('[data-ap-mes]')!;
+  const ano = calc.querySelector<HTMLElement>('[data-ap-ano]')!;
+  const wa = calc.querySelector<HTMLAnchorElement>('[data-ap-calc-wa]')!;
+  const campo = (n: string) => calc.querySelector<HTMLInputElement>(`[name="${n}"]`)!;
+  let anteriorMes = calcular({ ticket: EXEMPLO.ticket, clientesDia: EXEMPLO.clientesDia, ...PREMISSAS }).mes;
+  function recalcular() {
+    const d = { segmento: 'outro', ticket: Number(campo('ticket').value) || 0, clientesDia: Number(campo('cli').value) || 0, ...PREMISSAS };
+    const r = calcular(d);
+    animarNumero(mes, anteriorMes, r.mes, reais);
+    anteriorMes = r.mes;
+    ano.textContent = reais(r.ano);
+    wa.href = `https://wa.me/${site.whatsapp.numero}?text=${encodeURIComponent(mensagemDiagnostico(d))}`;
+  }
+  calc.addEventListener('input', recalcular);
+  calc.querySelectorAll<HTMLButtonElement>('[data-passo]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const c = campo(b.dataset.passo!);
+      c.value = String(Math.max(Number(c.min) || 0, Math.min(Number(c.max) || 1e6, (Number(c.value) || 0) + Number(b.dataset.delta))));
+      recalcular();
+    }),
+  );
+
+  // Offline: registra o service worker só para esta rota e guarda tudo o que a página usou.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/apresentacao' });
+        const ativo = reg.active || (await navigator.serviceWorker.ready).active;
+        const urls = new Set<string>([location.pathname]);
+        performance.getEntriesByType('resource').forEach((r) => {
+          const u = new URL(r.name);
+          if (u.origin === location.origin) urls.add(u.pathname + u.search);
+        });
+        // Todas as versões de cada imagem: se o tablet girar, a outra medida também está guardada.
+        document.querySelectorAll<HTMLImageElement | HTMLSourceElement>('img, source').forEach((el) => {
+          const lista = [el.getAttribute('src'), ...(el.getAttribute('srcset') || '').split(',').map((c) => c.trim().split(' ')[0])];
+          lista.filter(Boolean).forEach((u) => urls.add(new URL(u!, location.href).pathname));
+        });
+        const aviso = document.querySelector<HTMLElement>('[data-ap-offline]')!;
+        navigator.serviceWorker.addEventListener('message', (e) => {
+          if (e.data?.tipo === 'guardado' && e.data.novo) aviso.hidden = false;
+        });
+        ativo?.postMessage({ tipo: 'guardar', urls: [...urls] });
+      } catch {
+        /* sem service worker: a apresentação funciona, só não fica offline */
+      }
+    });
+  }
+</script>

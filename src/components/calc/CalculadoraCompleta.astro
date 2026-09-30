@@ -1,0 +1,288 @@
+---
+import Field from '../ui/Field.astro';
+import Slider from '../ui/Slider.astro';
+import Icon from '../ui/Icon.astro';
+import { SEGMENTOS, EXEMPLO, PREMISSAS, calcular, reais, mensagemDiagnostico } from '@/lib/calc';
+import { linkWhatsApp } from '@/lib/whatsapp';
+import { site } from '@/config/site';
+
+const inicial = { segmento: EXEMPLO.segmento, ticket: EXEMPLO.ticket, clientesDia: EXEMPLO.clientesDia, ...PREMISSAS };
+const r = calcular(inicial);
+const linkInicial = linkWhatsApp(mensagemDiagnostico(inicial));
+---
+
+<form class="diag" data-diag onsubmit="return false" novalidate>
+  <div class="diag-entradas">
+    <fieldset class="diag-bloco">
+      <legend class="diag-legenda"><span>1</span> Seu negócio</legend>
+      <Field as="select" label="Segmento" name="seg" id="d-seg" options={SEGMENTOS.map((s) => ({ value: s.value, label: s.label }))} />
+      <div class="grid gap-5 md:grid-cols-2">
+        <Field label="Nome do negócio (opcional)" name="empresa" id="d-empresa" autocomplete="organization" maxlength="60" data-p-campo="empresa" />
+        <Field
+          as="select"
+          label="Cidade"
+          name="cidade"
+          id="d-cidade"
+          options={[{ value: '', label: 'Escolha a cidade' }, ...site.cidades.map((c) => ({ value: c, label: c })), { value: 'Outra', label: 'Outra cidade' }]}
+        />
+      </div>
+      <Field label="Ticket médio" name="ticket" id="d-ticket" prefix="R$" type="number" inputmode="numeric" min="1" max="100000" step="1" value={String(EXEMPLO.ticket)} hint="Quanto cada cliente gasta, em média, por compra." />
+      <Slider label="Clientes por dia" name="cli" id="d-cli" min={1} max={300} value={EXEMPLO.clientesDia} hint="Num dia normal, sem contar datas especiais." />
+      <Slider label="Dias abertos por mês" name="dias" id="d-dias" min={1} max={31} value={PREMISSAS.diasMes} />
+    </fieldset>
+
+    <fieldset class="diag-bloco">
+      <legend class="diag-legenda"><span>2</span> Premissas (mude se quiser)</legend>
+      <p class="text-small text-muted">São suposições conservadoras da Vera Group, não estatística. Se você conhece o seu número, use o seu.</p>
+      <Slider label="A cada 100 clientes, quantos procuraram e não te acharam" name="naoAcham" id="d-naoacham" min={0} max={30} value={PREMISSAS.naoAcham} hint="Quem pesquisa e não acha foto, horário ou rota vai para outro lugar." />
+      <Slider label="A cada 100 pedidos, quantos se perdem no WhatsApp" name="perdidos" id="d-perdidos" min={0} max={20} value={PREMISSAS.perdidos} hint="Mensagem sem resposta, pedido anotado errado, cliente que cansou de esperar." />
+    </fieldset>
+  </div>
+
+  <aside class="diag-resultado tema-escuro" id="diag-resultado" aria-labelledby="diag-resultado-titulo" data-sem-flutuante>
+    <div class="diag-resultado-interno">
+      <h2 id="diag-resultado-titulo" class="eyebrow">Seu resultado</h2>
+      <p class="mt-4 text-small text-muted">Você pode estar deixando na mesa cerca de</p>
+      <p class="mt-1 font-display text-display-xl font-bold tabular-nums text-accent-2" aria-hidden="true"><span data-d="mes">{reais(r.mes)}</span></p>
+      <p class="text-muted">por mês, ou <strong class="text-paper" data-d="ano">{reais(r.ano)}</strong> por ano.</p>
+      <p class="sr-only" aria-live="polite" data-d-leitura>Estimativa: {reais(r.mes)} por mês.</p>
+
+      <dl class="diag-conta">
+        <div><dt>Faturamento estimado do mês</dt><dd data-d="faturamento">{reais(r.faturamento)}</dd></div>
+        <div><dt>Quem procurou e não te achou</dt><dd data-d="perdaGoogle">{reais(r.perdaGoogle)}</dd></div>
+        <div><dt>Pedidos perdidos no WhatsApp</dt><dd data-d="perdaWhatsApp">{reais(r.perdaWhatsApp)}</dd></div>
+        <div><dt>Clientes a mais por mês</dt><dd data-d="clientesMes">{r.clientesMes.toLocaleString('pt-BR')}</dd></div>
+      </dl>
+
+      <p class="mt-5 text-small text-muted" data-d-considerando>
+        Considerando {PREMISSAS.diasMes} dias abertos por mês, {PREMISSAS.naoAcham} a cada 100 clientes que não te acham e {PREMISSAS.perdidos} a cada 100 pedidos perdidos.
+      </p>
+
+      <a href={linkInicial} class="btn btn-whatsapp btn-lg btn-block mt-6" target="_blank" rel="noopener" data-d-whatsapp>
+        <Icon name="whatsapp" />
+        <span>Receber diagnóstico completo no WhatsApp</span>
+      </a>
+      <p class="mt-3 text-center text-small text-muted">Estimativa com as suas premissas. Não é promessa de resultado.</p>
+    </div>
+  </aside>
+  <!-- Celular: o resultado acompanha enquanto a pessoa mexe nos números lá em cima. -->
+  <a href="#diag-resultado" class="diag-barra tema-escuro" data-d-barra aria-hidden="true" tabindex="-1">
+    <span class="text-small text-muted">Na mesa por mês</span>
+    <strong class="font-display text-title tabular-nums text-accent-2" data-d="barra">{reais(r.mes)}</strong>
+    <span class="ml-auto inline-flex items-center gap-1 text-small font-semibold">Ver resultado <Icon name="baixo" size={16} /></span>
+  </a>
+</form>
+
+<style>
+  .diag {
+    display: grid;
+    gap: 1.5rem;
+  }
+  @media (width >= 64rem) {
+    .diag {
+      grid-template-columns: 1.15fr 1fr;
+      align-items: start;
+      gap: 2rem;
+    }
+  }
+  .diag-entradas {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .diag-bloco {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-1);
+  }
+  @media (width >= 48rem) {
+    .diag-bloco {
+      padding: 2rem;
+    }
+  }
+  .diag-legenda {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.5rem;
+    float: left; /* legend flutuante vira item normal do grid (não fica na borda) */
+    width: 100%;
+    font-family: var(--font-display);
+    font-size: var(--text-title);
+    font-weight: 600;
+  }
+  .diag-legenda span {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-size: 0.9375rem;
+  }
+  .diag-resultado {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+  }
+  @media (width >= 64rem) {
+    .diag-resultado {
+      position: sticky;
+      top: 5rem;
+    }
+  }
+  .diag-resultado-interno {
+    padding: 1.5rem;
+  }
+  @media (width >= 48rem) {
+    .diag-resultado-interno {
+      padding: 2rem;
+    }
+  }
+  .diag-barra {
+    position: fixed;
+    z-index: 35;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-2);
+    text-decoration: none;
+    opacity: 0;
+    transform: translateY(1rem);
+    pointer-events: none;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out);
+  }
+  .diag-barra[data-visivel] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  @media (width >= 64rem) {
+    .diag-barra {
+      display: none;
+    }
+  }
+  .diag-conta {
+    display: grid;
+    gap: 0.625rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-ink-3);
+    font-size: 0.9375rem;
+  }
+  .diag-conta div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .diag-conta dt {
+    color: var(--color-stone-on-ink);
+  }
+  .diag-conta dd {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { calcular, reais, mensagemDiagnostico, segmentoDoNicho, SEGMENTOS, type Entrada } from '@/lib/calc';
+  import { animarNumero } from '@/scripts/numero';
+  import { lerProspect } from '@/scripts/prospect';
+  import { site } from '@/config/site';
+
+  const NUMERO = site.whatsapp.numero;
+  const form = document.querySelector<HTMLFormElement>('[data-diag]');
+  if (form) {
+    const campo = <T extends HTMLElement = HTMLInputElement>(n: string) => form.querySelector<T>(`[name="${n}"]`)!;
+    const saidas = Object.fromEntries([...form.querySelectorAll<HTMLElement>('[data-d]')].map((el) => [el.dataset.d!, el]));
+    const leitura = form.querySelector<HTMLElement>('[data-d-leitura]')!;
+    const considerando = form.querySelector<HTMLElement>('[data-d-considerando]')!;
+    const botao = form.querySelector<HTMLAnchorElement>('[data-d-whatsapp]')!;
+    let anterior: Record<string, number> = {};
+    let timer: number | undefined;
+
+    // Dados vindos da calculadora da home (?seg=&ticket=&cli=) e do link do Maestro.
+    const q = new URLSearchParams(location.search);
+    const prospect = lerProspect();
+    const seg = q.get('seg');
+    if (seg && SEGMENTOS.some((s) => s.value === seg)) campo<HTMLSelectElement>('seg').value = seg;
+    else if (prospect.nicho) {
+      const doNicho = segmentoDoNicho(prospect.nicho);
+      if (doNicho) campo<HTMLSelectElement>('seg').value = doNicho;
+    }
+    const definirNumero = (nome: string, valor: string | null) => {
+      const n = Number(valor);
+      if (!valor || !Number.isFinite(n) || n <= 0) return;
+      const el = campo(nome);
+      el.value = String(Math.min(Number(el.max) || n, Math.round(n)));
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    definirNumero('ticket', q.get('ticket'));
+    definirNumero('cli', q.get('cli'));
+    if (prospect.cidade) {
+      const sel = campo<HTMLSelectElement>('cidade');
+      const opcao = [...sel.options].find((o) => o.value.toLowerCase() === prospect.cidade!.toLowerCase());
+      sel.value = opcao ? opcao.value : 'Outra';
+    }
+
+    function ler(): Entrada & { segmento: string; cidade: string; empresa: string } {
+      return {
+        segmento: campo<HTMLSelectElement>('seg').value,
+        cidade: campo<HTMLSelectElement>('cidade').value === 'Outra' ? prospect.cidade || '' : campo<HTMLSelectElement>('cidade').value,
+        empresa: campo('empresa').value.trim(),
+        ticket: Number(campo('ticket').value) || 0,
+        clientesDia: Number(campo('cli').value) || 0,
+        diasMes: Number(campo('dias').value) || 0,
+        naoAcham: Number(campo('naoAcham').value) || 0,
+        perdidos: Number(campo('perdidos').value) || 0,
+      };
+    }
+
+    function atualizar() {
+      const d = ler();
+      const r = calcular(d) as unknown as Record<string, number>;
+      for (const chave of ['mes', 'faturamento', 'perdaGoogle', 'perdaWhatsApp']) {
+        animarNumero(saidas[chave], anterior[chave] ?? r[chave], r[chave], reais);
+      }
+      saidas.barra.textContent = reais(r.mes);
+      saidas.ano.textContent = reais(r.ano);
+      saidas.clientesMes.textContent = r.clientesMes.toLocaleString('pt-BR');
+      anterior = r;
+      considerando.textContent = `Considerando ${d.diasMes} dias abertos por mês, ${d.naoAcham} a cada 100 clientes que não te acham e ${d.perdidos} a cada 100 pedidos perdidos.`;
+      botao.href = `https://wa.me/${NUMERO}?text=${encodeURIComponent(mensagemDiagnostico(d))}`;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => (leitura.textContent = `Estimativa: ${reais(r.mes)} por mês.`), 700);
+    }
+
+    // Barra do celular: aparece com o formulário na tela e o resultado fora dela.
+    const barra = form.querySelector<HTMLElement>('[data-d-barra]')!;
+    const resultado = form.querySelector<HTMLElement>('#diag-resultado')!;
+    let formNaTela = false;
+    let resultadoNaTela = false;
+    const mostrarBarra = () => barra.toggleAttribute('data-visivel', formNaTela && !resultadoNaTela);
+    new IntersectionObserver(([e]) => {
+      formNaTela = e.isIntersecting;
+      mostrarBarra();
+    }).observe(form.querySelector('.diag-entradas')!);
+    new IntersectionObserver(([e]) => {
+      resultadoNaTela = e.isIntersecting;
+      mostrarBarra();
+    }).observe(resultado);
+
+    form.addEventListener('input', atualizar);
+    form.addEventListener('change', atualizar);
+    atualizar();
+  }
+</script>
