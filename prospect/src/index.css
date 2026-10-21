@@ -1,0 +1,130 @@
+/* Vera Prospect · mesma identidade do site da Vera Group:
+   papel, tinta e um vermelho de sinal. Sem gradiente, sem vidro. */
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/archivo-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/archivo-latin-ext.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Plex Mono';
+  src: url('/fonts/plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Mono';
+  src: url('/fonts/plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --fundo: 242 239 232;
+  --folha: 250 248 243;
+  --realce: 232 228 218;
+  --fio: 217 212 201;
+  --tinta: 20 20 19;
+  --tinta-2: 58 57 53;
+  --tinta-3: 109 106 98;
+  --sinal: 212 55 28;
+  --sinal-forte: 169 42 20;
+  --ok: 38 120 74;
+  --alerta: 176 112 20;
+  --info: 40 92 140;
+  --reuniao: 22 116 120;
+  color-scheme: light;
+}
+
+[data-tema='escuro'] {
+  --fundo: 15 15 14;
+  --folha: 23 23 22;
+  --realce: 33 32 30;
+  --fio: 45 44 41;
+  --tinta: 236 233 226;
+  --tinta-2: 196 192 184;
+  --tinta-3: 154 150 141;
+  --sinal: 232 84 58;
+  --sinal-forte: 246 120 96;
+  --ok: 92 186 128;
+  --alerta: 226 166 72;
+  --info: 112 164 214;
+  --reuniao: 86 190 190;
+  color-scheme: dark;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-fundo text-tinta font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: 'ss01', 'tnum';
+  }
+  ::selection { background: rgb(var(--sinal) / .18); }
+  :focus-visible { outline: 2px solid rgb(var(--sinal)); outline-offset: 2px; border-radius: 4px; }
+  h1, h2, h3 { font-stretch: 112%; letter-spacing: -0.01em; }
+}
+
+@layer components {
+  .folha { @apply bg-folha border border-fio rounded-lg; }
+  .rotulo { @apply font-mono text-[11px] uppercase tracking-[.08em] text-tinta-3; }
+  .numero { @apply font-mono tabular-nums; }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded h-9 px-3.5 text-sm font-medium select-none whitespace-nowrap
+           transition-[background-color,border-color,color,transform] duration-100 active:translate-y-px
+           disabled:opacity-45 disabled:pointer-events-none;
+  }
+  .btn-sm { @apply h-8 px-2.5 text-[13px]; }
+  .btn-lg { @apply h-11 px-5 text-[15px]; }
+  .btn-pri { @apply btn bg-tinta text-fundo hover:bg-tinta-2; }
+  .btn-sinal { @apply btn bg-sinal text-white hover:bg-sinal-forte; }
+  .btn-sec { @apply btn bg-folha text-tinta border border-fio hover:border-tinta-3; }
+  .btn-fantasma { @apply btn text-tinta-2 hover:bg-realce hover:text-tinta; }
+  .btn-wa { @apply btn bg-[#1d8f4e] text-white hover:bg-[#177a42]; }
+  .btn-icone { @apply btn-fantasma w-9 px-0; }
+
+  .inp {
+    @apply w-full h-9 rounded bg-folha border border-fio px-3 text-sm text-tinta placeholder:text-tinta-3
+           focus:outline-none focus:border-tinta focus:ring-2 focus:ring-tinta/10 transition-colors;
+  }
+  textarea.inp { @apply h-auto py-2 leading-relaxed resize-y; }
+  select.inp { @apply pr-8 appearance-none bg-no-repeat; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236D6A62' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-position: right .7rem center; }
+  .lbl { @apply block rotulo mb-1.5; }
+
+  .tecla { @apply inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded border border-fio bg-folha font-mono text-[11px] text-tinta-3 leading-none; }
+  .divisor { @apply border-t border-fio; }
+
+  .tabela { @apply w-full text-sm; }
+  .tabela th { @apply rotulo text-left font-normal px-3 py-2.5 border-b border-fio bg-fundo/60 sticky top-0 z-[1] backdrop-blur-sm; }
+  .tabela td { @apply px-3 py-2.5 border-b border-fio/70 align-middle; }
+  .tabela tbody tr { @apply hover:bg-realce/60 cursor-pointer; }
+}
+
+@layer utilities {
+  .rolagem-fina { scrollbar-width: thin; scrollbar-color: rgb(var(--fio)) transparent; }
+  .sem-rolagem { scrollbar-width: none; }
+  .sem-rolagem::-webkit-scrollbar { display: none; }
+  .pb-seguro { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
