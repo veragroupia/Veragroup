@@ -94,3 +94,9 @@ export function baixarCsv(nome: string, linhas: (string | number | null | undefi
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
+/** 'YYYY-MM-DD' no fuso de quem está olhando, a partir de um timestamp. */
+export function isoDia(s: string) {
+  const d = new Date(s)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}

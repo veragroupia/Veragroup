@@ -11,6 +11,7 @@ type Item = { id: string; titulo: string; sub?: string; lead?: Pick<Lead, 'etapa
 
 const ATALHOS: Item[] = [
   { id: 'p-hoje', titulo: 'Ir para Hoje', ir: '/' },
+  { id: 'p-agenda', titulo: 'Ir para Agenda', ir: '/agenda' },
   { id: 'p-funil', titulo: 'Ir para Funil', ir: '/funil' },
   { id: 'p-leads', titulo: 'Ir para Leads', ir: '/leads' },
   { id: 'p-metricas', titulo: 'Ir para Métricas', ir: '/metricas' },

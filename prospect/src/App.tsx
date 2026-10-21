@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, CalendarCheck, Columns3, List, LogOut, Moon, Search, Settings, Sun } from 'lucide-react'
+import { BarChart3, CalendarCheck, CalendarDays, Columns3, List, LogOut, Moon, Search, Settings, Sun } from 'lucide-react'
 import { SessaoProvider, useSessao } from './lib/sessao'
 import { supabase } from './lib/supabase'
 import { invalidar } from './lib/dados'
@@ -12,6 +12,7 @@ import { Marca } from './components/Marca'
 import Login from './pages/Login'
 
 const Hoje = lazy(() => import('./pages/Hoje'))
+const Agenda = lazy(() => import('./pages/Agenda'))
 const Funil = lazy(() => import('./pages/Funil'))
 const Leads = lazy(() => import('./pages/Leads'))
 const LeadDetalhe = lazy(() => import('./pages/LeadDetalhe'))
@@ -20,10 +21,11 @@ const Config = lazy(() => import('./pages/Config'))
 
 const NAV = [
   { to: '/', nome: 'Hoje', icon: CalendarCheck, tecla: '1' },
-  { to: '/funil', nome: 'Funil', icon: Columns3, tecla: '2' },
-  { to: '/leads', nome: 'Leads', icon: List, tecla: '3' },
-  { to: '/metricas', nome: 'Métricas', icon: BarChart3, tecla: '4' },
-  { to: '/config', nome: 'Configurações', curto: 'Config', icon: Settings, tecla: '5' },
+  { to: '/agenda', nome: 'Agenda', icon: CalendarDays, tecla: '2' },
+  { to: '/funil', nome: 'Funil', icon: Columns3, tecla: '3' },
+  { to: '/leads', nome: 'Leads', icon: List, tecla: '4' },
+  { to: '/metricas', nome: 'Métricas', icon: BarChart3, tecla: '5' },
+  { to: '/config', nome: 'Configurações', curto: 'Config', icon: Settings, tecla: '6' },
 ]
 
 function useTema() {
@@ -40,7 +42,7 @@ function useRealtime(ativo: boolean) {
   useEffect(() => {
     if (!ativo) return
     const canal = supabase.channel('painel')
-    for (const t of ['leads', 'mensagens', 'followups']) {
+    for (const t of ['leads', 'mensagens', 'followups', 'agenda']) {
       canal.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => invalidar(t))
     }
     canal.subscribe()
@@ -132,6 +134,7 @@ function Shell() {
         <Suspense fallback={<div className="max-w-6xl mx-auto px-4 md:px-8 pt-8 space-y-3"><Esqueleto className="h-8 w-48" /><Esqueleto className="h-64" /></div>}>
           <Routes>
             <Route path="/" element={<Hoje />} />
+            <Route path="/agenda" element={<Agenda />} />
             <Route path="/funil" element={<Funil />} />
             <Route path="/leads" element={<Leads />} />
             <Route path="/leads/:id" element={<LeadDetalhe />} />
@@ -144,10 +147,10 @@ function Shell() {
 
       {/* Barra inferior (celular) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-folha/95 backdrop-blur border-t border-fio pb-seguro">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.to === '/'}
-              className={({ isActive }) => cx('flex flex-col items-center justify-center gap-1 h-14 text-[11px]', isActive ? 'text-tinta font-medium' : 'text-tinta-3')}>
+              className={({ isActive }) => cx('flex flex-col items-center justify-center gap-1 h-14 text-[10.5px]', isActive ? 'text-tinta font-medium' : 'text-tinta-3')}>
               {({ isActive }) => (<>
                 <n.icon size={20} strokeWidth={isActive ? 2.2 : 1.7} />
                 {n.curto ?? n.nome}

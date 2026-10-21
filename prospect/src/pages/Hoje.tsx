@@ -7,6 +7,7 @@ import { useSessao } from '../lib/sessao'
 import { abrirWhatsApp, adiarFollowup, mudarEtapa, pularFollowup } from '../lib/acoes'
 import type { Followup, Lead, Reuniao } from '../lib/tipos'
 import { cx, fimDoDia, hora, inicioDoDia, nomeCurto, relativo, saudacao } from '../lib/util'
+import { carregarHoje, concluido, ehConteudo, mudarStatus, proximoStatus, textoFollowup, type ItemAgenda } from '../lib/agenda'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { Erro, EtapaTag, Linhas, Modal, Pagina, Score, Sinal, Vazio } from '../components/ui'
 
@@ -32,12 +33,6 @@ const GRUPOS: { tipo: Tipo; titulo: string; dica: string; icone: typeof Reply }[
   { tipo: 'primeiro', titulo: 'Primeiro contato', dica: 'Os melhores do radar, pelo score.', icone: Sparkles },
 ]
 
-function textoFollowup(tentativa: number, lead: LeadMin) {
-  const nome = nomeCurto(lead.nome)
-  if (tentativa <= 1) return `Oi, tudo bem? Passando pra saber se você conseguiu ver minha mensagem sobre a ${nome}. Posso te mostrar em 2 minutos como ficaria?`
-  if (tentativa === 2) return `Oi! Separei um exemplo de site que fizemos pra um negócio parecido com a ${nome}. Quer que eu te mande aqui?`
-  return `Última vez que te chamo por aqui, prometo. Se fizer sentido conversar sobre a ${nome} aparecer melhor no Google, é só me responder. Se não for o momento, tudo bem também!`
-}
 
 const META_PADRAO = 15
 function lerMeta() {
@@ -104,7 +99,7 @@ export default function Hoje() {
       lista.push({
         chave: `f:${f.id}`, tipo: 'followup', lead: l, followup: f, quando: f.agendado_para,
         motivo: `${f.tentativa}ª tentativa · ${vencido ? `venceu ${relativo(f.agendado_para)}` : `hoje às ${hora(f.agendado_para)}`}`,
-        mensagem: f.mensagem_sugerida || textoFollowup(f.tentativa, l),
+        mensagem: f.mensagem_sugerida || textoFollowup(f.tentativa, l.nome),
       })
     }
     const novos = leads.data.filter((l) => l.etapa === 'novo' && !usados.has(l.id) && (!l.responsavel || l.responsavel === eu!.email))
@@ -148,6 +143,8 @@ export default function Hoje() {
         <Placar rotulo="Follow-ups" valor={tarefas.filter((t) => t.tipo === 'followup').length} />
         <Placar ultimo rotulo="Reuniões" valor={tarefas.filter((t) => t.tipo === 'reuniao').length} />
       </div>
+
+      <AgendaDeHoje />
 
       {erro && <Erro msg={erro} onTentar={() => { leads.recarregar(); followups.recarregar() }} />}
       {leads.carregando ? <Linhas n={6} /> : abertas.length === 0 ? (
@@ -349,5 +346,45 @@ function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; 
         </p>
       </div>
     </Modal>
+  )
+}
+
+/* O que a aba Agenda tem hoje para quem está logado (ou sem dono). */
+function AgendaDeHoje() {
+  const { eu } = useSessao()
+  const executar = useExecutar()
+  const nav = useNavigate()
+  const itens = useConsulta(`hoje:agenda:${eu!.email}`, () => carregarHoje(eu!.email), ['agenda'])
+  const lista = itens.data ?? []
+  if (!lista.length) return null
+  const faltam = lista.filter((i) => !concluido(i)).length
+  return (
+    <section className="mb-8">
+      <div className="flex items-center gap-2.5 mb-2.5">
+        <h2 className="font-semibold">Na agenda de hoje</h2>
+        <span className="numero text-sm text-tinta-3">{faltam ? `${faltam} a fazer` : 'tudo feito'}</span>
+        <button className="ml-auto text-sm text-tinta-3 hover:text-tinta" onClick={() => nav('/agenda')}>Abrir agenda</button>
+      </div>
+      <ul className="folha divide-y divide-fio overflow-hidden">
+        {lista.map((i: ItemAgenda) => {
+          const prox = proximoStatus(i)
+          const feito = concluido(i)
+          return (
+            <li key={i.id} className="flex items-center gap-3 px-4 py-2.5">
+              <span className={cx('w-2 h-2 rounded-full shrink-0', ehConteudo(i.tipo) ? 'bg-sinal' : 'bg-tinta', feito && 'opacity-30')} />
+              <div className="flex-1 min-w-0">
+                <div className={cx('text-sm truncate', feito && 'line-through text-tinta-3')}>{i.titulo}</div>
+                <div className="text-xs text-tinta-3">{[i.hora?.slice(0, 5), i.plataforma, ehConteudo(i.tipo) ? i.status : null].filter(Boolean).join(' · ')}</div>
+              </div>
+              {prox && (
+                <button className="btn-sec btn-sm" onClick={() => executar(() => mudarStatus(i.id, prox))}>
+                  {ehConteudo(i.tipo) ? <>Marcar {prox}</> : <><Check size={13} /> Feito</>}
+                </button>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
