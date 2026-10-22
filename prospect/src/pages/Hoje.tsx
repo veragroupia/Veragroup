@@ -6,8 +6,9 @@ import { q, useConsulta } from '../lib/dados'
 import { useSessao } from '../lib/sessao'
 import { abrirWhatsApp, adiarFollowup, mudarEtapa, pularFollowup } from '../lib/acoes'
 import type { Followup, Lead, Reuniao } from '../lib/tipos'
-import { cx, fimDoDia, hora, inicioDoDia, nomeCurto, relativo, saudacao } from '../lib/util'
+import { brl, cx, fimDoDia, hora, inicioDoDia, nomeCurto, relativo, saudacao } from '../lib/util'
 import { carregarHoje, concluido, ehConteudo, mudarStatus, proximoStatus, textoFollowup, type ItemAgenda } from '../lib/agenda'
+import { situacao, type Lancamento } from '../lib/gestao'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { Erro, EtapaTag, Linhas, Modal, Pagina, Score, Sinal, Vazio } from '../components/ui'
 
@@ -144,6 +145,7 @@ export default function Hoje() {
         <Placar ultimo rotulo="Reuniões" valor={tarefas.filter((t) => t.tipo === 'reuniao').length} />
       </div>
 
+      <AlertasGestao />
       <AgendaDeHoje />
 
       {erro && <Erro msg={erro} onTentar={() => { leads.recarregar(); followups.recarregar() }} />}
@@ -384,6 +386,43 @@ function AgendaDeHoje() {
             </li>
           )
         })}
+      </ul>
+    </section>
+  )
+}
+
+/* O que a gestão pede hoje: dinheiro a receber ou pagar e entrega perto do prazo. */
+function AlertasGestao() {
+  const nav = useNavigate()
+  const hoje = new Date().toLocaleDateString('sv-SE')
+  const em3 = new Date(Date.now() + 3 * 86400e3).toLocaleDateString('sv-SE')
+  const dados = useConsulta('hoje:gestao', async () => {
+    const [lancs, projetos] = await Promise.all([
+      q<Lancamento[]>(supabase.from('fin_lancamentos').select('*').is('pago_em', null).lte('vencimento', hoje)),
+      q<{ id: string; nome: string; prazo: string; cliente: { nome: string } | null }[]>(supabase.from('projetos').select('id, nome, prazo, cliente:clientes(nome)').not('etapa', 'in', '(no_ar,manutencao,pausado)').lte('prazo', em3)),
+    ])
+    return { lancs, projetos }
+  }, ['fin', 'projetos'])
+  if (!dados.data) return null
+  const receber = dados.data.lancs.filter((l) => l.tipo === 'receita')
+  const pagar = dados.data.lancs.filter((l) => l.tipo === 'despesa')
+  const itens = [
+    receber.length > 0 && { chave: 'r', texto: `${receber.length} ${receber.length === 1 ? 'cobrança' : 'cobranças'} para receber`, valor: brl(receber.reduce((s, l) => s + +l.valor, 0)), quente: receber.some((l) => situacao(l) === 'atrasado'), ir: '/financeiro' },
+    pagar.length > 0 && { chave: 'p', texto: `${pagar.length} ${pagar.length === 1 ? 'conta' : 'contas'} para pagar`, valor: brl(pagar.reduce((s, l) => s + +l.valor, 0)), quente: pagar.some((l) => situacao(l) === 'atrasado'), ir: '/financeiro' },
+    ...dados.data.projetos.map((p) => ({ chave: p.id, texto: `${p.nome}${p.cliente ? ` · ${p.cliente.nome}` : ''}`, valor: p.prazo < hoje ? 'prazo vencido' : p.prazo === hoje ? 'entrega hoje' : `entrega ${new Date(p.prazo + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'short' })}`, quente: p.prazo < hoje, ir: '/projetos' })),
+  ].filter(Boolean) as { chave: string; texto: string; valor: string; quente: boolean; ir: string }[]
+  if (!itens.length) return null
+  return (
+    <section className="mb-8">
+      <h2 className="font-semibold mb-2.5">Gestão</h2>
+      <ul className="folha divide-y divide-fio overflow-hidden">
+        {itens.map((i) => (
+          <li key={i.chave}><button onClick={() => nav(i.ir)} className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-realce/50">
+            <span className={cx('w-2 h-2 rounded-full shrink-0', i.quente ? 'bg-sinal' : 'bg-alerta')} />
+            <span className="flex-1 text-sm truncate">{i.texto}</span>
+            <span className={cx('text-sm numero', i.quente ? 'text-sinal' : 'text-tinta-2')}>{i.valor}</span>
+          </button></li>
+        ))}
       </ul>
     </section>
   )

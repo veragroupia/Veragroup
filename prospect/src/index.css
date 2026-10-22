@@ -1,4 +1,4 @@
-/* Vera Prospect · mesma identidade do site da Vera Group:
+/* Vera Group Manager · mesma identidade do site da Vera Group:
    papel, tinta e um vermelho de sinal. Sem gradiente, sem vidro. */
 
 @font-face {
@@ -123,6 +123,11 @@
   .sem-rolagem { scrollbar-width: none; }
   .sem-rolagem::-webkit-scrollbar { display: none; }
   .pb-seguro { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+}
+
+@media print {
+  @page { margin: 16mm; }
+  html, body { background: #fff !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -97,7 +97,7 @@ export function invalidar(...tabelas: string[]) {
 export function limparCache() { cache.clear() }
 
 /** Desembrulha a resposta do supabase-js e lança o erro, se houver. */
-export async function q<T>(p: PromiseLike<{ data: T | null; error: { message: string } | null }>): Promise<T> {
+export async function q<T>(p: PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<T> {
   const { data, error } = await p
   if (error) throw new Error(error.message)
   return data as T

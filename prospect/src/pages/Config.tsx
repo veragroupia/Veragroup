@@ -223,7 +223,7 @@ function NovoMembro({ onFechar }: { onFechar: () => void }) {
       <div className="mt-4 folha p-4 font-mono text-sm space-y-1 bg-realce">
         <div>{f.email.trim().toLowerCase()}</div><div className="text-lg">{senha}</div>
       </div>
-      <button className="btn-sec btn-sm mt-3" onClick={() => { navigator.clipboard.writeText(`Vera Prospect\n${location.origin}\nE-mail: ${f.email.trim().toLowerCase()}\nSenha: ${senha}`); avisar('Copiado') }}><Copy size={13} /> Copiar acesso</button>
+      <button className="btn-sec btn-sm mt-3" onClick={() => { navigator.clipboard.writeText(`Vera Group Manager\n${location.origin}\nE-mail: ${f.email.trim().toLowerCase()}\nSenha: ${senha}`); avisar('Copiado') }}><Copy size={13} /> Copiar acesso</button>
     </Modal>
   )
 

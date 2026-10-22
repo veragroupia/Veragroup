@@ -1,6 +1,6 @@
-# Vera Prospect
+# Vera Group Manager
 
-Painel comercial da Vera Group. Mesma identidade do site (papel, tinta, vermelho de sinal; Archivo e Plex Mono) e o mesmo banco Supabase `vera-prospect` de antes: nenhuma tabela, gatilho ou função mudou.
+Centro de gestão da Vera Group (antes Vera Prospect): prospecção, propostas, clientes, projetos e financeiro. Mesma identidade do site (papel, tinta, vermelho de sinal; Archivo e Plex Mono) e o mesmo banco Supabase `vera-prospect` de antes: nenhuma tabela, gatilho ou função mudou.
 
 ## O que mudou no uso
 
@@ -14,6 +14,16 @@ Painel comercial da Vera Group. Mesma identidade do site (papel, tinta, vermelho
 - Fechar pede plano e valores; perder pede o motivo. Isso alimenta Métricas.
 - **Métricas**: contatos por dia, taxa de resposta, funil, desempenho por vendedor, resposta por nicho e por cidade (para calibrar o radar), motivos de perda e execuções do radar.
 - Tempo real: mensagens, leads e follow-ups atualizam sozinhos. Tema claro e escuro. Celular com barra inferior.
+
+## Gestão
+
+- **Propostas**: monta com os pacotes da tabela do site, copia para o WhatsApp, imprime em PDF com espaço para assinatura e guarda o link do contrato. Ao marcar como aceita, o painel cria o cliente (a partir do lead, se for o caso), o projeto com o checklist do pacote, a cobrança do setup e a mensalidade recorrente, e leva o lead para "fechado".
+- **Clientes**: ficha com dados, projetos, cobranças, mensalidades, propostas e o lead de origem.
+- **Projetos**: quadro por etapa (briefing, layout, desenvolvimento, revisão, no ar, manutenção), com prazo, checklist, responsável e links de prévia e produção.
+- **Financeiro**: visão do mês (recebido, pago, lucro, a receber e atrasado), lançamentos com "recebi" e "paguei" num toque, mensalidades e despesas fixas que geram o lançamento de cada mês sozinhas (`gerar_lancamentos_mes`) e divisão do lucro entre sócios com retiradas.
+- A tela Hoje avisa cobrança vencendo, conta a pagar e projeto perto do prazo.
+
+As tabelas ficam em `supabase/migrations/0002_gestao.sql`. Nenhuma tabela da prospecção foi alterada.
 
 ## Desempenho
 

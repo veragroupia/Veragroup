@@ -13,6 +13,11 @@ const ATALHOS: Item[] = [
   { id: 'p-hoje', titulo: 'Ir para Hoje', ir: '/' },
   { id: 'p-agenda', titulo: 'Ir para Agenda', ir: '/agenda' },
   { id: 'p-funil', titulo: 'Ir para Funil', ir: '/funil' },
+  { id: 'p-propostas', titulo: 'Ir para Propostas', ir: '/propostas' },
+  { id: 'p-clientes', titulo: 'Ir para Clientes', ir: '/clientes' },
+  { id: 'p-projetos', titulo: 'Ir para Projetos', ir: '/projetos' },
+  { id: 'p-financeiro', titulo: 'Ir para Financeiro', ir: '/financeiro' },
+  { id: 'p-proposta', titulo: 'Nova proposta', ir: '/propostas/nova' },
   { id: 'p-leads', titulo: 'Ir para Leads', ir: '/leads' },
   { id: 'p-metricas', titulo: 'Ir para Métricas', ir: '/metricas' },
   { id: 'p-config', titulo: 'Ir para Configurações', ir: '/config' },
@@ -36,8 +41,15 @@ export function Comando({ onFechar }: { onFechar: () => void }) {
       const filtro = digitos.length >= 4
         ? `telefone.ilike.%${digitos}%,whatsapp.ilike.%${digitos}%`
         : `nome.ilike.%${termo.replaceAll(',', ' ')}%`
-      const { data } = await supabase.from('leads').select('id, nome, nicho, cidade, etapa').or(filtro).order('score', { ascending: false }).limit(8)
-      setLeads((data ?? []).map((l: any) => ({ id: l.id, titulo: nomeCurto(l.nome), sub: [l.nicho, l.cidade].filter(Boolean).join(' · '), lead: l, ir: `/leads/${l.id}` })))
+      const filtroCli = digitos.length >= 4 ? `whatsapp.ilike.%${digitos}%,telefone.ilike.%${digitos}%` : `nome.ilike.%${termo.replaceAll(',', ' ')}%,contato_nome.ilike.%${termo.replaceAll(',', ' ')}%`
+      const [{ data }, { data: cli }] = await Promise.all([
+        supabase.from('leads').select('id, nome, nicho, cidade, etapa').or(filtro).order('score', { ascending: false }).limit(6),
+        supabase.from('clientes').select('id, nome, cidade, contato_nome').or(filtroCli).limit(4),
+      ])
+      setLeads([
+        ...(cli ?? []).map((c: any) => ({ id: 'c' + c.id, titulo: c.nome, sub: ['Cliente', c.contato_nome, c.cidade].filter(Boolean).join(' · '), ir: `/clientes/${c.id}` })),
+        ...(data ?? []).map((l: any) => ({ id: l.id, titulo: nomeCurto(l.nome), sub: [l.nicho, l.cidade].filter(Boolean).join(' · '), lead: l, ir: `/leads/${l.id}` })),
+      ])
       setSel(0)
     }, 180)
     return () => clearTimeout(t)
@@ -63,7 +75,7 @@ export function Comando({ onFechar }: { onFechar: () => void }) {
           <Search size={18} className="text-tinta-3 shrink-0" />
           <input
             ref={ref} value={busca} onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar lead por nome ou telefone, ou ir para uma tela"
+            placeholder="Buscar cliente, lead ou telefone, ou ir para uma tela"
             className="flex-1 h-14 bg-transparent outline-none text-[15px] placeholder:text-tinta-3"
             onKeyDown={(e) => {
               if (e.key === 'Escape') onFechar()

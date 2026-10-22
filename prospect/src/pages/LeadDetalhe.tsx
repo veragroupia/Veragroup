@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarPlus, ExternalLink, AtSign, Globe, MapPin, MessageCircle, MoreHorizontal, Phone, Sparkles, Star } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, ExternalLink, AtSign, FileText, Globe, MapPin, MessageCircle, MoreHorizontal, Phone, Sparkles, Star } from 'lucide-react'
 import { supabase, chamarFuncao } from '../lib/supabase'
 import { invalidar, q, useConsulta } from '../lib/dados'
 import { useSessao } from '../lib/sessao'
@@ -9,6 +9,7 @@ import { ETAPAS, ETAPAS_ENCERRADAS, type Avaliacao, type Followup, type Lead, ty
 import { brl, cx, dataHora, diasDesde, nomeCurto, relativo, telefoneBonito } from '../lib/util'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { useMudarEtapa } from '../components/MudarEtapa'
+import { clienteDoLead } from '../lib/gestao'
 import { Abas, Campo, Erro, Esqueleto, EtapaTag, Modal, Score } from '../components/ui'
 import { Conversa } from '../components/lead/Conversa'
 import { Avaliacoes } from '../components/lead/Avaliacoes'
@@ -105,6 +106,7 @@ function Cabecalho({ l, sugerida, followupId }: { l: Lead; sugerida: { texto: st
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {(l.etapa === 'reuniao_marcada' || l.etapa === 'proposta') && <button className="btn-sec" onClick={() => nav(`/propostas/nova?lead=${l.id}`)}><FileText size={15} /> Proposta</button>}
           <button className="btn-sec" onClick={avaliar} disabled={avaliando}><Sparkles size={15} className={cx(avaliando && 'animate-pulsa')} /> {avaliando ? 'Avaliando…' : 'Avaliar'}</button>
           {(l.whatsapp || l.telefone) && (
             <button className="btn-wa" onClick={() => executar(() => abrirWhatsApp(l, sugerida?.texto ?? '', eu!, sugerida ? followupId : undefined))}>
@@ -122,6 +124,13 @@ function Cabecalho({ l, sugerida, followupId }: { l: Lead; sugerida: { texto: st
                   </button>
                 ))}
                 {encerrado && <button className="w-full text-left px-3 py-2 text-sm hover:bg-realce" onClick={() => { setMenu(false); mudar(l, 'novo') }}>Reabrir lead</button>}
+                <button className="w-full text-left px-3 py-2 text-sm hover:bg-realce" onClick={() => { setMenu(false); nav(`/propostas/nova?lead=${l.id}`) }}>Criar proposta</button>
+                <button className="w-full text-left px-3 py-2 text-sm hover:bg-realce" onClick={async () => {
+                  setMenu(false)
+                  let id = ''
+                  if (await executar(async () => { id = await clienteDoLead(l, eu!.email) }, 'Cliente criado')) nav(`/clientes/${id}`)
+                }}>Virar cliente</button>
+                <div className="divisor my-1" />
                 {l.maps_url && <a className="flex items-center justify-between px-3 py-2 text-sm hover:bg-realce" href={l.maps_url} target="_blank" rel="noreferrer">Ver no Google Maps <ExternalLink size={13} /></a>}
               </div>
             </>}
