@@ -21,6 +21,7 @@ export function Historico({ leadId, followups }: { leadId: string; followups: Fo
       if (a.tipo === 'etapa') return { ...base, icone: ArrowRight, texto: <>Etapa: {etapaInfo(a.detalhe.de as Etapa).nome} → <b>{etapaInfo(a.detalhe.para as Etapa).nome}</b></> }
       if (a.tipo === 'whatsapp_aberto') return { ...base, icone: MessageCircle, texto: a.detalhe.followup ? 'Follow-up enviado pelo WhatsApp' : 'Abriu o WhatsApp' }
       if (a.tipo === 'avaliacao') return { ...base, icone: Sparkles, texto: <>Avaliação da {a.detalhe.alvo === 'reuniao' ? 'reunião' : 'conversa'}: nota <b>{String(a.detalhe.nota ?? '-').replace('.', ',')}</b></> }
+      if (a.tipo === 'rascunho_ia') return { ...base, icone: Sparkles, texto: <>Mensagem da IA gerada: <b>{a.detalhe.status === 'nao_contatar' ? 'não contatar' : a.detalhe.status}</b></> }
       if (a.tipo === 'reuniao') return { ...base, icone: CalendarCheck, texto: <>Reunião agendada para {dataHora(a.detalhe.data_hora)}</> }
       return { ...base, icone: Clock, texto: a.tipo }
     }),

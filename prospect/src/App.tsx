@@ -66,7 +66,7 @@ function useTema() {
 // Tabelas em que a mudança feita por um aparece na tela do outro.
 const TEMPO_REAL: Record<string, string> = {
   leads: 'leads', mensagens: 'mensagens', followups: 'followups', agenda: 'agenda',
-  clientes: 'clientes', projetos: 'projetos', propostas: 'propostas', fin_lancamentos: 'fin',
+  clientes: 'clientes', projetos: 'projetos', propostas: 'propostas', fin_lancamentos: 'fin', rascunhos_ia: 'rascunhos_ia',
 }
 
 function useRealtime(ativo: boolean) {

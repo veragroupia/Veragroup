@@ -25,6 +25,16 @@ Centro de gestão da Vera Group (antes Vera Prospect): prospecção, propostas, 
 
 As tabelas ficam em `supabase/migrations/0002_gestao.sql`. Nenhuma tabela da prospecção foi alterada.
 
+## Mensagem IA
+
+Botão **Gerar mensagem** na página do lead (aba "Mensagem IA"). A função `mensagem` (`supabase/functions/mensagem`) segue o prompt da equipe comercial (`prompt.ts`) e devolve o status (pronto, revisar ou não contatar), os fatos usados, a oferta e até duas opções de texto para escolher.
+
+- A IA só trata como fato o cadastro, a conversa e o que o vendedor escreve no campo "O que você viu". Site vazio aparece como desconhecido, não como "sem site".
+- O catálogo é a tabela de preços do site, fixa em `index.ts`. Ao mudar preço no site, mude lá também.
+- A função descarta evidência ou oferta que a IA inventar, e zera as mensagens quando o status é "não contatar".
+- Cada geração fica em `rascunhos_ia` (`supabase/migrations/0003_rascunhos_ia.sql`), com qual opção foi usada.
+- A função `avaliar` (notas do Método Vera) continua como estava.
+
 ## Desempenho
 
 O código antigo era um arquivo único de 540 KB. Agora cada tela carrega só quando é aberta, as fontes vêm do próprio site (sem Google Fonts) e as consultas ficam em cache e só são refeitas quando o banco avisa que algo mudou.

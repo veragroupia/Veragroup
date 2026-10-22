@@ -50,6 +50,15 @@ export interface Avaliacao {
   proxima_acao: string | null; proxima_mensagem: string | null; modelo: string | null; created_at: string
 }
 
+export type StatusRascunho = 'pronto' | 'revisar' | 'nao_contatar'
+export interface RascunhoIA {
+  id: string; lead_id: string; status: StatusRascunho; objetivo_da_etapa: string | null
+  evidencias_usadas: { id: string; fato: string }[]; hipotese_comercial: string | null; oferta_id: string | null
+  informacoes_faltantes: string[]; mensagem_a: string | null; mensagem_b: string | null
+  justificativa_curta: string | null; proxima_acao_sugerida: string | null; observacao_vendedor: string | null
+  vendedor: string | null; usada: 'a' | 'b' | null; modelo: string | null; created_at: string
+}
+
 export interface Atividade { id: number; lead_id: string | null; tipo: string; detalhe: Record<string, any>; usuario: string | null; created_at: string }
 
 export interface RadarConfig {

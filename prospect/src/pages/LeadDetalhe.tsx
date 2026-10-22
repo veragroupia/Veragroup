@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarPlus, ExternalLink, AtSign, FileText, Globe, MapPin, MessageCircle, MoreHorizontal, Phone, Sparkles, Star } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, ExternalLink, AtSign, FileText, Globe, MapPin, MessageCircle, MoreHorizontal, PenLine, Phone, Sparkles, Star } from 'lucide-react'
 import { supabase, chamarFuncao } from '../lib/supabase'
 import { invalidar, q, useConsulta } from '../lib/dados'
 import { useSessao } from '../lib/sessao'
 import { abrirWhatsApp, agendarFollowup, atualizarLead, pularFollowup } from '../lib/acoes'
-import { ETAPAS, ETAPAS_ENCERRADAS, type Avaliacao, type Followup, type Lead, type Mensagem } from '../lib/tipos'
+import { ETAPAS, ETAPAS_ENCERRADAS, type Avaliacao, type Followup, type Lead, type Mensagem, type RascunhoIA } from '../lib/tipos'
 import { brl, cx, dataHora, diasDesde, nomeCurto, relativo, telefoneBonito } from '../lib/util'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { useMudarEtapa } from '../components/MudarEtapa'
@@ -13,10 +13,11 @@ import { clienteDoLead } from '../lib/gestao'
 import { Abas, Campo, Erro, Esqueleto, EtapaTag, Modal, Score } from '../components/ui'
 import { Conversa } from '../components/lead/Conversa'
 import { Avaliacoes } from '../components/lead/Avaliacoes'
+import { MensagemIA } from '../components/lead/MensagemIA'
 import { Reunioes } from '../components/lead/Reunioes'
 import { Historico } from '../components/lead/Historico'
 
-type Aba = 'conversa' | 'avaliacao' | 'reunioes' | 'historico'
+type Aba = 'conversa' | 'mensagem' | 'avaliacao' | 'reunioes' | 'historico'
 
 export default function LeadDetalhe() {
   const { id } = useParams<{ id: string }>()
@@ -24,6 +25,7 @@ export default function LeadDetalhe() {
   const msgs = useConsulta(`lead:${id}:msgs`, () => q<Mensagem[]>(supabase.from('mensagens').select('*').eq('lead_id', id!).order('enviada_em')), ['mensagens'])
   const fus = useConsulta(`lead:${id}:fu`, () => q<Followup[]>(supabase.from('followups').select('*').eq('lead_id', id!).order('agendado_para', { ascending: false })), ['followups'])
   const avs = useConsulta(`lead:${id}:av`, () => q<Avaliacao[]>(supabase.from('avaliacoes').select('*').eq('lead_id', id!).order('created_at', { ascending: false })), ['avaliacoes'])
+  const ras = useConsulta(`lead:${id}:ras`, () => q<RascunhoIA[]>(supabase.from('rascunhos_ia').select('*').eq('lead_id', id!).order('created_at', { ascending: false }).limit(30)), ['rascunhos_ia'])
   const [aba, setAba] = useState<Aba>('conversa')
 
   if (lead.erro) return <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8"><Erro msg={lead.erro} onTentar={lead.recarregar} /></div>
@@ -38,8 +40,13 @@ export default function LeadDetalhe() {
   const pendente = (fus.data ?? []).filter((f) => f.status === 'pendente').sort((a, b) => +new Date(a.agendado_para) - +new Date(b.agendado_para))[0]
   const ultimaAv = avs.data?.[0]
   const mensagens = msgs.data ?? []
+  const ultimoRas = ras.data?.[0]
+  const depoisDaConversa = (quando: string) => !mensagens.length || new Date(quando) >= new Date(mensagens[mensagens.length - 1].enviada_em)
   const sugerida = (() => {
     if (pendente?.mensagem_sugerida) return { texto: pendente.mensagem_sugerida, origem: 'Sugestão do follow-up' }
+    if (ultimoRas?.status === 'pronto' && ultimoRas.mensagem_a && depoisDaConversa(ultimoRas.created_at)
+      && (!ultimaAv || new Date(ultimoRas.created_at) >= new Date(ultimaAv.created_at)))
+      return { texto: ultimoRas.mensagem_a, origem: 'Mensagem da IA (opção A)' }
     if (ultimaAv?.proxima_mensagem && (!mensagens.length || new Date(ultimaAv.created_at) >= new Date(mensagens[mensagens.length - 1].enviada_em)))
       return { texto: ultimaAv.proxima_mensagem, origem: 'Sugestão da IA' }
     if (!mensagens.length && l.mensagem_inicial) return { texto: l.mensagem_inicial, origem: 'Primeira mensagem do radar' }
@@ -48,18 +55,20 @@ export default function LeadDetalhe() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-28 md:pb-12 animate-entra">
-      <Cabecalho l={l} sugerida={sugerida} followupId={pendente?.id} />
+      <Cabecalho l={l} sugerida={sugerida} followupId={pendente?.id} onMensagem={() => setAba('mensagem')} />
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 mt-6">
         <div className="min-w-0">
           <Abas valor={aba} onChange={setAba} abas={[
             { id: 'conversa', nome: <>Conversa <span className="numero text-xs text-tinta-3">{mensagens.length || ''}</span></> },
+            { id: 'mensagem', nome: 'Mensagem IA' },
             { id: 'avaliacao', nome: <>Avaliação IA {ultimaAv?.nota_geral != null && <span className="numero text-xs text-tinta-3">{String(ultimaAv.nota_geral).replace('.', ',')}</span>}</> },
             { id: 'reunioes', nome: 'Reuniões' },
             { id: 'historico', nome: 'Histórico' },
           ]} />
           <div className="pt-4">
             {aba === 'conversa' && <Conversa lead={l} mensagens={mensagens} carregando={msgs.carregando} sugerida={sugerida} followupId={pendente?.id} />}
+            {aba === 'mensagem' && <MensagemIA lead={l} rascunhos={ras.data} />}
             {aba === 'avaliacao' && <Avaliacoes lead={l} avaliacoes={avs.data} temMensagens={mensagens.length > 0} />}
             {aba === 'reunioes' && <Reunioes lead={l} />}
             {aba === 'historico' && <Historico leadId={l.id} followups={fus.data ?? []} />}
@@ -71,7 +80,7 @@ export default function LeadDetalhe() {
   )
 }
 
-function Cabecalho({ l, sugerida, followupId }: { l: Lead; sugerida: { texto: string } | null; followupId?: string }) {
+function Cabecalho({ l, sugerida, followupId, onMensagem }: { l: Lead; sugerida: { texto: string } | null; followupId?: string; onMensagem: () => void }) {
   const { eu } = useSessao()
   const executar = useExecutar()
   const avisar = useAviso()
@@ -105,8 +114,9 @@ function Cabecalho({ l, sugerida, followupId }: { l: Lead; sugerida: { texto: st
             {' · '}{l.etapa === 'novo' ? `no radar ${relativo(l.created_at)}` : `${ETAPAS[idxAtual]?.nome.toLowerCase()} ${diasDesde(l.etapa_desde) ? `há ${diasDesde(l.etapa_desde)} d` : 'desde hoje'}`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {(l.etapa === 'reuniao_marcada' || l.etapa === 'proposta') && <button className="btn-sec" onClick={() => nav(`/propostas/nova?lead=${l.id}`)}><FileText size={15} /> Proposta</button>}
+          <button className="btn-sec" onClick={onMensagem}><PenLine size={15} /> Gerar mensagem</button>
           <button className="btn-sec" onClick={avaliar} disabled={avaliando}><Sparkles size={15} className={cx(avaliando && 'animate-pulsa')} /> {avaliando ? 'Avaliando…' : 'Avaliar'}</button>
           {(l.whatsapp || l.telefone) && (
             <button className="btn-wa" onClick={() => executar(() => abrirWhatsApp(l, sugerida?.texto ?? '', eu!, sugerida ? followupId : undefined))}>
@@ -196,7 +206,7 @@ function Lateral({ l, pendente }: { l: Lead; pendente?: Followup }) {
         <Info icone={Phone} rotulo="WhatsApp">{l.whatsapp || l.telefone ? telefoneBonito(l.whatsapp ?? l.telefone) : null}</Info>
         {l.whatsapp && l.telefone && telefoneBonito(l.telefone) !== telefoneBonito(l.whatsapp) && <Info icone={Phone} rotulo="Telefone">{telefoneBonito(l.telefone)}</Info>}
         <Info icone={AtSign} rotulo="Instagram">{l.instagram && <a className="underline underline-offset-2 break-all" href={l.instagram.startsWith('http') ? l.instagram : `https://instagram.com/${l.instagram.replace('@', '')}`} target="_blank" rel="noreferrer">{l.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '')}</a>}</Info>
-        <Info icone={Globe} rotulo="Site">{l.site && !l.site.includes('instagram') ? <a className="underline underline-offset-2 break-all" href={l.site} target="_blank" rel="noreferrer">{l.site.replace(/^https?:\/\//, '')}</a> : <span className="text-sinal">Não tem</span>}</Info>
+        <Info icone={Globe} rotulo="Site">{l.site ? <a className="underline underline-offset-2 break-all" href={l.site} target="_blank" rel="noreferrer">{l.site.replace(/^https?:\/\//, '')}</a> : <span className="text-tinta-3">Não informado</span>}</Info>
         <Info icone={Star} rotulo="Google">{l.rating ? <>{String(l.rating).replace('.', ',')} <span className="text-tinta-3">· {l.avaliacoes} avaliações</span></> : null}</Info>
         <Info icone={MapPin} rotulo="Endereço">{l.endereco && (l.maps_url ? <a className="hover:underline" href={l.maps_url} target="_blank" rel="noreferrer">{l.endereco}</a> : l.endereco)}</Info>
       </section>
