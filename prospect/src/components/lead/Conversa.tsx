@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FileUp, MessageCircle, NotebookPen, Scissors, Trash2 } from 'lucide-react'
+import { FileUp, MessageCircle, NotebookPen, Scissors, SendHorizontal, Trash2 } from 'lucide-react'
 import { useSessao } from '../../lib/sessao'
 import { abrirWhatsApp, excluirMensagem, importarConversa, parseConversa, registrarMensagem, registrarVarias, restaurarMensagem, separarColadas, separarMensagem, type MensagemImportada } from '../../lib/acoes'
 import type { Lead, Mensagem } from '../../lib/tipos'
 import { cx, dataHora, hora, nomeCurto } from '../../lib/util'
 import { useAviso, useExecutar } from '../Aviso'
 import { Modal, Segmentos, Vazio, Linhas } from '../ui'
+
+type Modo = 'enviar' | 'recebida' | 'minha'
 
 export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: {
   lead: Lead; mensagens: Mensagem[]; carregando: boolean; sugerida: { texto: string; origem: string } | null; followupId?: string
@@ -14,25 +16,27 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
   const executar = useExecutar()
   const avisar = useAviso()
   const [texto, setTexto] = useState('')
-  const [modo, setModo] = useState<'enviar' | 'recebida'>('enviar')
+  // enviar: abre o WhatsApp. recebida: registra o que o lead mandou. minha: registra o que você já mandou.
+  const [modo, setModo] = useState<Modo>('enviar')
   const [importar, setImportar] = useState(false)
   const [sel, setSel] = useState<string | null>(null)
   // Direção trocada à mão na prévia das mensagens coladas (índice → direção).
   const [trocas, setTrocas] = useState<Record<number, 'enviada' | 'recebida'>>({})
   const fim = useRef<HTMLDivElement>(null)
   const nomesEquipe = useMemo(() => equipe.map((m) => m.nome), [equipe])
-  const separar = (t: string) => separarColadas(t, lead, nomesEquipe)
+  const separar = (t: string, padrao?: 'enviada' | 'recebida') => separarColadas(t, lead, nomesEquipe, padrao)
 
   // Texto colado do WhatsApp ("[17:22, 21/10/2026] Fulano: oi") vira uma mensagem por linha.
-  const coladas = useMemo(() => modo === 'recebida' ? separar(texto).map((m, i) => ({ ...m, direcao: trocas[i] ?? m.direcao })) : [], [modo, texto, trocas, lead, nomesEquipe])
+  const coladas = useMemo(() => modo === 'enviar' ? []
+    : separar(texto, modo === 'minha' ? 'enviada' : 'recebida').map((m, i) => ({ ...m, direcao: trocas[i] ?? m.direcao })), [modo, texto, trocas, lead, nomesEquipe])
   useEffect(() => setTrocas({}), [texto])
   // Ao selecionar um balão, rola até os botões dele aparecerem.
   useEffect(() => { if (sel) document.getElementById(`acoes-${sel}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }, [sel])
 
   // A sugestão é para enviar; em "Registrar resposta" a caixa começa vazia.
-  function trocarModo(m: 'enviar' | 'recebida') {
+  function trocarModo(m: Modo) {
     setModo(m)
-    if (m === 'recebida' && texto === sugerida?.texto) setTexto('')
+    if (m !== 'enviar' && texto === sugerida?.texto) setTexto('')
     if (m === 'enviar' && !texto.trim() && sugerida) setTexto(sugerida.texto)
   }
 
@@ -59,13 +63,14 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
   }
 
   async function confirmar() {
-    if (modo === 'recebida' && coladas.length) {
+    if (modo !== 'enviar' && coladas.length) {
       if (await executar(() => registrarVarias(lead.id, coladas, eu!.email), `${coladas.length} ${coladas.length === 1 ? 'mensagem registrada' : 'mensagens registradas'}`)) setTexto('')
     } else if (modo === 'enviar') {
       const ok = await executar(() => abrirWhatsApp(lead, texto, eu!, texto === sugerida?.texto ? followupId : undefined))
       if (ok) setTexto('')
     } else if (texto.trim()) {
-      if (await executar(() => registrarMensagem(lead.id, 'recebida', texto.trim(), eu!.email), 'Resposta registrada')) setTexto('')
+      const minha = modo === 'minha'
+      if (await executar(() => registrarMensagem(lead.id, minha ? 'enviada' : 'recebida', texto.trim(), eu!.email), minha ? 'Mensagem registrada' : 'Resposta registrada')) setTexto('')
     }
   }
 
@@ -124,13 +129,16 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <Segmentos valor={modo} onChange={trocarModo} opcoes={[
             { id: 'enviar', nome: <span className="inline-flex items-center gap-1.5"><MessageCircle size={13} /> Enviar</span> },
-            { id: 'recebida', nome: <span className="inline-flex items-center gap-1.5"><NotebookPen size={13} /> Registrar resposta</span> },
+            { id: 'recebida', nome: <span className="inline-flex items-center gap-1.5"><NotebookPen size={13} /> <span className="sm:hidden">Do lead</span><span className="hidden sm:inline">Resposta do lead</span></span> },
+            { id: 'minha', nome: <span className="inline-flex items-center gap-1.5"><SendHorizontal size={13} /> <span className="sm:hidden">Minha</span><span className="hidden sm:inline">Minha mensagem</span></span> },
           ]} />
           {modo === 'enviar' && sugerida && texto === sugerida.texto && <span className="text-xs text-tinta-3">{sugerida.origem}</span>}
         </div>
         <textarea className="inp text-[14px]" rows={modo === 'enviar' ? 4 : 3} value={texto} onChange={(e) => setTexto(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); confirmar() } }}
-          placeholder={modo === 'enviar' ? 'Escreva a mensagem. Ela abre pronta no WhatsApp.' : 'Cole aqui o que o lead respondeu. Pode colar várias mensagens copiadas do WhatsApp de uma vez.'} />
+          placeholder={modo === 'enviar' ? 'Escreva a mensagem. Ela abre pronta no WhatsApp.'
+            : modo === 'minha' ? 'Cole aqui o que você já mandou pelo WhatsApp. Não abre o WhatsApp, só registra.'
+            : 'Cole aqui o que o lead respondeu. Pode colar várias mensagens copiadas do WhatsApp de uma vez.'} />
         {coladas.length > 0 && (
           <div className="rounded border border-fio bg-fundo/50 p-2.5 animate-entra">
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -158,7 +166,8 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs text-tinta-3 hidden sm:block">
             {modo === 'enviar' ? <>{texto.includes('{vendedor}') && <>{'{vendedor}'} vira {eu!.nome.split(' ')[0]} · </>}<span className="tecla">Ctrl Enter</span> envia</>
-              : coladas.length ? 'Cada uma entra com o horário dela.' : 'Fica no histórico e move o lead para Respondeu.'}
+              : coladas.length ? 'Cada uma entra com o horário dela.'
+              : modo === 'minha' ? 'Entra como enviada por você, com o horário de agora.' : 'Fica no histórico e move o lead para Respondeu.'}
           </span>
           {modo === 'enviar'
             ? <button className="btn-wa ml-auto" onClick={confirmar} disabled={!lead.whatsapp && !lead.telefone}><MessageCircle size={15} /> Abrir no WhatsApp</button>

@@ -116,10 +116,10 @@ export function parseConversa(texto: string, nomeLead: string): MensagemImportad
 
 /**
  * Mensagens coladas em "Registrar resposta". Quem tem o número ou o nome do lead é o lead;
- * quem tem o nome de alguém da equipe, "Vera" ou "Você" é a Vera; o resto conta como lead,
- * porque é uma resposta que está sendo registrada. A tela deixa trocar um a um.
+ * quem tem o nome de alguém da equipe, "Vera" ou "Você" é a Vera. O resto segue `padrao`:
+ * lead em "Resposta do lead", Vera em "Minha mensagem". A tela deixa trocar um a um.
  */
-export function separarColadas(texto: string, lead: Pick<Lead, 'nome' | 'whatsapp' | 'telefone'>, equipe: string[]): (MensagemImportada & { autor: string })[] {
+export function separarColadas(texto: string, lead: Pick<Lead, 'nome' | 'whatsapp' | 'telefone'>, equipe: string[], padrao: 'enviada' | 'recebida' = 'recebida'): (MensagemImportada & { autor: string })[] {
   const numLead = soDigitos(lead.whatsapp || lead.telefone).slice(-8)
   const nossos = ['vera', 'você', 'voce', ...equipe.map((n) => n.split(' ')[0].toLowerCase()).filter((n) => n.length > 2)]
   const doLead = (autor: string) => {
@@ -127,7 +127,8 @@ export function separarColadas(texto: string, lead: Pick<Lead, 'nome' | 'whatsap
     if (numLead && dig.length >= 8 && dig.slice(-8) === numLead) return true
     const a = autor.toLowerCase()
     if (a.includes(lead.nome.toLowerCase().split(' ')[0])) return true
-    return !nossos.some((n) => a.includes(n))
+    if (nossos.some((n) => a.includes(n))) return false
+    return padrao === 'recebida'
   }
   return lerWhatsApp(texto).map((b) => ({ autor: b.autor, direcao: doLead(b.autor) ? 'recebida' : 'enviada', texto: b.texto.trim(), enviada_em: b.data.toISOString() }))
 }
