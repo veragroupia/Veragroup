@@ -5,8 +5,9 @@ import { useSessao } from '../lib/sessao'
 import { ETAPAS, type Atividade, type Etapa, type Lead, type RadarExecucao } from '../lib/tipos'
 import { brl, cx, data, dataHora, nichoValido, pct } from '../lib/util'
 import { Avatar, Erro, Esqueleto, Kpi, Pagina, Secao, Segmentos } from '../components/ui'
+import { AMOSTRA_MINIMA, calcular, enviada, type MsgM, type Taxa } from '../lib/metricas'
 
-type L = Pick<Lead, 'id' | 'etapa' | 'created_at' | 'responsavel' | 'ultimo_contato_em' | 'ultima_resposta_em' | 'fechado_em' | 'valor_mensal' | 'valor_setup' | 'motivo_perda' | 'nicho' | 'cidade'>
+type L = Pick<Lead, 'id' | 'etapa' | 'created_at' | 'responsavel' | 'ultimo_contato_em' | 'ultima_resposta_em' | 'fechado_em' | 'valor_mensal' | 'valor_setup' | 'motivo_perda' | 'nicho' | 'cidade' | 'whatsapp' | 'telefone'>
 type Periodo = '7' | '30' | '90'
 
 export default function Metricas() {
@@ -16,16 +17,35 @@ export default function Metricas() {
   const desdeIso = desde.toISOString()
 
   const leads = useConsulta('met:leads', () => q<L[]>(supabase.from('leads')
-    .select('id, etapa, created_at, responsavel, ultimo_contato_em, ultima_resposta_em, fechado_em, valor_mensal, valor_setup, motivo_perda, nicho, cidade').limit(10000)), ['leads'])
+    .select('id, etapa, created_at, responsavel, ultimo_contato_em, ultima_resposta_em, fechado_em, valor_mensal, valor_setup, motivo_perda, nicho, cidade, whatsapp, telefone').limit(10000)), ['leads'])
+  const base = useConsulta(`met:comercial:${periodo}`, async () => {
+    // Sem a migration 0004, cai para as colunas antigas (todos os envios contam como não confirmados).
+    let msgs = await supabase.from('mensagens').select('id, lead_id, direcao, confirmada, origem, enviada_em, autor').limit(50000)
+    if (msgs.error) msgs = await supabase.from('mensagens').select('id, lead_id, direcao, origem, enviada_em, autor').limit(50000) as typeof msgs
+    const [envios, intel, hist, rasc, props] = await Promise.all([
+      supabase.from('envios').select('status, aberto_em').gte('aberto_em', desdeIso),
+      supabase.from('lead_inteligencia').select('lead_id, estagio, necessidade, sinais'),
+      supabase.from('lead_inteligencia_historico').select('lead_id, temperatura, created_at').in('origem', ['ia', 'regra']).order('created_at').limit(20000),
+      supabase.from('rascunhos_ia').select('lead_id, usada, enviada_confirmada_em').not('usada', 'is', null),
+      supabase.from('propostas').select('status, enviada_em'),
+    ])
+    return {
+      mensagens: (msgs.data ?? []) as MsgM[], envios: envios.data ?? [], intel: intel.data ?? [], historico: hist.data ?? [],
+      rascunhos: (rasc.error ? [] : rasc.data ?? []) as { lead_id: string; usada: 'a' | 'b' | null; enviada_confirmada_em: string | null }[], propostas: props.data ?? [],
+    }
+  }, ['mensagens', 'envios', 'lead_inteligencia', 'rascunhos_ia', 'propostas'])
   const ativ = useConsulta(`met:ativ:${periodo}`, () => q<Atividade[]>(supabase.from('atividades')
     .select('id, lead_id, tipo, detalhe, usuario, created_at').gte('created_at', desdeIso).limit(20000)), ['atividades'])
   const notas = useConsulta(`met:av:${periodo}`, () => q<{ nota_geral: number | null }[]>(supabase.from('avaliacoes').select('nota_geral').gte('created_at', desdeIso)), ['avaliacoes'])
   const radar = useConsulta('met:radar', () => q<RadarExecucao[]>(supabase.from('radar_execucoes').select('*').order('iniciado_em', { ascending: false }).limit(8)), [])
 
+  const c = useMemo(() => (leads.data && base.data ? calcular({ desde, leads: leads.data, ...base.data }) : null), [leads.data, base.data, desde])
+
   const m = useMemo(() => {
-    if (!leads.data || !ativ.data) return null
+    if (!leads.data || !ativ.data || !base.data) return null
     const noPeriodo = (s?: string | null) => !!s && new Date(s) >= desde
-    const contatos = ativ.data.filter((a) => a.tipo === 'whatsapp_aberto')
+    // Contato = envio confirmado (abrir o WhatsApp não conta).
+    const contatos = base.data.mensagens.filter((x) => enviada(x) && noPeriodo(x.enviada_em)).map((x) => ({ lead_id: x.lead_id, created_at: x.enviada_em, usuario: x.autor }))
     const contatados = new Set(contatos.map((a) => a.lead_id))
     const respondidos = leads.data.filter((l) => noPeriodo(l.ultima_resposta_em))
     const mudancas = ativ.data.filter((a) => a.tipo === 'etapa')
@@ -82,7 +102,7 @@ export default function Metricas() {
       funil: ETAPAS.filter((e) => e.ativa).map((e) => ({ ...e, n: leads.data!.filter((l) => l.etapa === e.id).length })),
       mrrTotal: leads.data.filter((l) => l.etapa === 'fechado').reduce((s, l) => s + (l.valor_mensal ?? 0), 0),
     }
-  }, [leads.data, ativ.data, desde, equipe])
+  }, [leads.data, ativ.data, base.data, desde, equipe])
 
   const validas = (notas.data ?? []).filter((a) => a.nota_geral != null)
   const notaMedia = validas.length ? validas.reduce((s, a) => s + Number(a.nota_geral), 0) / validas.length : null
@@ -95,13 +115,15 @@ export default function Metricas() {
       {!m ? <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{Array.from({ length: 8 }, (_, i) => <Esqueleto key={i} className="h-24" />)}</div> : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Kpi rotulo="Contatos feitos" valor={m.contatos} detalhe={`${m.contatados} leads diferentes`} />
-            <Kpi rotulo="Taxa de resposta" valor={`${m.taxa}%`} detalhe={`${m.respostas} responderam`} />
+            <Kpi rotulo="Envios confirmados" valor={m.contatos} detalhe={`${m.contatados} ${m.contatados === 1 ? 'lead' : 'leads'} · ${c?.semConfirmacao ?? 0} ${(c?.semConfirmacao ?? 0) === 1 ? 'abertura' : 'aberturas'} sem confirmação`} />
+            <Kpi rotulo="Resposta humana" valor={c ? fmtTaxa(c.respostaHumana) : '-'} detalhe={c ? `${c.respostaHumana.sim} de ${c.primeirosContatos} primeiros contatos` : ''} />
             <Kpi rotulo="Reuniões marcadas" valor={m.reunioes} detalhe={`${m.propostas} propostas enviadas`} />
             <Kpi rotulo="Fechados" valor={m.fechados} destaque={m.fechados > 0} detalhe={m.fechados ? `${brl(m.mrr)}/mês · ${brl(m.setup)} setup` : 'nenhum no período'} />
           </div>
 
-          <Secao titulo="Contatos por dia" acao={<span className="text-xs text-tinta-3">{m.novos} leads novos no radar</span>}>
+          {c && <Comercial c={c} />}
+
+          <Secao titulo="Envios confirmados por dia" acao={<span className="text-xs text-tinta-3">{m.novos} leads novos no radar</span>}>
             <div className="flex items-end gap-[3px] h-36" role="img" aria-label="Contatos por dia">
               {m.dias.map((d) => (
                 <div key={d.dia.toISOString()} className="group flex-1 h-full flex flex-col justify-end relative" title={`${data(d.dia.toISOString())}: ${d.n} contatos`}>
@@ -133,9 +155,9 @@ export default function Metricas() {
             </Secao>
 
             <Secao titulo="Por vendedor">
-              {m.porVendedor.length === 0 ? <p className="text-sm text-tinta-3">Sem contatos no período.</p> : (
+              {m.porVendedor.length === 0 ? <p className="text-sm text-tinta-3">Sem envios confirmados no período.</p> : (
                 <table className="w-full text-sm">
-                  <thead><tr className="rotulo text-left">{['', 'Contatos', 'Respostas', 'Reuniões', 'Fechados'].map((h) => <th key={h} className="font-normal pb-2">{h}</th>)}</tr></thead>
+                  <thead><tr className="rotulo text-left">{['', 'Envios', 'Respostas', 'Reuniões', 'Fechados'].map((h) => <th key={h} className="font-normal pb-2">{h}</th>)}</tr></thead>
                   <tbody>
                     {m.porVendedor.map((x) => (
                       <tr key={x.v.email} className="border-t border-fio">
@@ -200,5 +222,51 @@ function TaxaResposta({ titulo, linhas }: { titulo: string; linhas: { nome: stri
         </ul>
       )}
     </Secao>
+  )
+}
+
+const fmtTaxa = (t: Taxa) => (t.pct == null ? (t.n ? 'poucos dados' : '-') : `${t.pct}%`)
+const horas = (h: number | null) => (h == null ? '-' : h < 1 ? `${Math.round(h * 60)} min` : h < 48 ? `${h.toFixed(1).replace('.', ',')} h` : `${Math.round(h / 24)} dias`)
+
+/* Indicadores da inteligência comercial. Observado = contado no banco; o resto é dito como retrato de agora. */
+function Comercial({ c }: { c: ReturnType<typeof calcular> }) {
+  const linha = (rotulo: string, valor: React.ReactNode, detalhe?: string) => (
+    <div key={rotulo} className="flex items-baseline justify-between gap-3 py-1.5 border-t border-fio first:border-t-0">
+      <span className="text-sm">{rotulo}{detalhe && <span className="block text-xs text-tinta-3">{detalhe}</span>}</span>
+      <span className="numero text-sm whitespace-nowrap">{valor}</span>
+    </div>
+  )
+  return (
+    <div className="grid lg:grid-cols-3 gap-6">
+      <Secao titulo="Do radar à conversa">
+        {linha('Leads pesquisados', c.pesquisados, 'novos no radar no período')}
+        {linha('Aptos a contato', c.aptos, 'abertos e com telefone, agora')}
+        {linha('Primeiros contatos confirmados', c.primeirosContatos)}
+        {linha('Resposta humana', fmtTaxa(c.respostaHumana), `${c.respostaHumana.sim} de ${c.respostaHumana.n}`)}
+        {linha('Respostas com informação útil', c.respostasUteis, 'segundo a análise da IA')}
+        {linha('Tempo até a resposta (mediana)', horas(c.medianaHorasResposta), `${c.amostraTempo} respostas`)}
+        {(c.legados > 0 || c.naoEnviados > 0) && <p className="text-xs text-tinta-3 mt-2">{c.legados > 0 && c.legados === 1 ? '1 mensagem antiga sem envio comprovado fica fora das contas. ' : `${c.legados} mensagens antigas sem envio comprovado ficam fora das contas. `}{c.naoEnviados > 0 && c.naoEnviados === 1 ? '1 abertura marcada como não enviada.' : `${c.naoEnviados} aberturas marcadas como não enviadas.`}</p>}
+      </Secao>
+      <Secao titulo="Da conversa ao contrato">
+        {linha('Conversas qualificadas', c.conversasQualificadas, 'retrato de agora')}
+        {linha('Demonstrações pedidas', c.demonstracoes, 'retrato de agora')}
+        {linha('Propostas apresentadas', c.propostas)}
+        {linha('Oportunidades ganhas', c.ganhas)}
+        {linha('Oportunidades perdidas', c.perdidas, 'no funil hoje')}
+        {linha('Receita contratada', c.receitaSetup || c.receitaMensal ? `${brl(c.receitaSetup)} + ${brl(c.receitaMensal)}/mês` : '-', c.fechadosSemValor ? `${c.fechadosSemValor} fechados sem valor informado` : 'quando informada')}
+      </Secao>
+      <Secao titulo="O que funciona">
+        <div className="rotulo mb-1">Por variante de mensagem</div>
+        {linha('Opção A · conversa natural', fmtTaxa(c.variantes.a), `${c.variantes.a.n} envios confirmados`)}
+        {linha('Opção B · abordagem estratégica', fmtTaxa(c.variantes.b), `${c.variantes.b.n} envios confirmados`)}
+        <div className="rotulo mt-4 mb-1">Por temperatura inicial</div>
+        {c.porTemperatura.map((t) => linha(t.temperatura[0].toUpperCase() + t.temperatura.slice(1), fmtTaxa(t.resposta), `${t.resposta.n} leads · ${t.fechados} fechados`))}
+        {c.segmentos.length > 0 && <>
+          <div className="rotulo mt-4 mb-1">Por segmento</div>
+          {c.segmentos.slice(0, 5).map((x) => linha(x.nome, fmtTaxa(x), `${x.sim} de ${x.n} responderam`))}
+        </>}
+        <p className="text-xs text-tinta-3 mt-2">Taxas só aparecem com {AMOSTRA_MINIMA} ou mais casos.</p>
+      </Secao>
+    </div>
   )
 }

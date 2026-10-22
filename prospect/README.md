@@ -25,15 +25,50 @@ Centro de gestão da Vera Group (antes Vera Prospect): prospecção, propostas, 
 
 As tabelas ficam em `supabase/migrations/0002_gestao.sql`. Nenhuma tabela da prospecção foi alterada.
 
-## Mensagem IA
+## Inteligência comercial (V4)
 
-Botão **Gerar mensagem** na página do lead (aba "Mensagem IA"). A função `mensagem` (`supabase/functions/mensagem`) segue o prompt da equipe comercial (`prompt.ts`) e devolve o status (pronto, revisar ou não contatar), os fatos usados, a oferta e até duas opções de texto para escolher.
+Aba **Inteligência** na página do lead. Ela substitui a antiga "Mensagem IA". Cada lead recebe:
 
-- A IA só trata como fato o cadastro, a conversa e o que o vendedor escreve no campo "O que você viu". Site vazio aparece como desconhecido, não como "sem site".
-- O catálogo é a tabela de preços do site, fixa em `index.ts`. Ao mudar preço no site, mude lá também.
-- A função descarta evidência ou oferta que a IA inventar, e zera as mensagens quando o status é "não contatar".
-- Cada geração fica em `rascunhos_ia` (`supabase/migrations/0003_rascunhos_ia.sql`), com qual opção foi usada.
-- A função `avaliar` (notas do Método Vera) continua como estava.
+- temperatura (frio, morno, quente) por evidência;
+- interesse e adequação de 0 a 100, separados;
+- confiança da análise;
+- situação do contato;
+- a próxima ação, que pode ser "aguardar";
+- o melhor horário, com o nível de certeza;
+- quando faz sentido escrever, duas opções de mensagem: A (conversa natural) e B (abordagem estratégica).
+
+**Onde está cada coisa**
+
+- `supabase/functions/_shared/inteligencia/`: as regras, em TypeScript puro, usadas pelo painel e pela função.
+  - `pontuacao.ts`: pesos, temperatura e confiança.
+  - `decisao.ts`: próxima ação.
+  - `horario.ts`: melhor momento.
+  - `conversa.ts`: leitura da conversa, pedidos para parar e datas combinadas.
+  - `validade.ts`: quando uma sugestão fica velha.
+  - `contrato.ts`: validação Zod da resposta da IA.
+  - `prompts.ts`: instruções versionadas (`vera-sales-v4`).
+  - `motor.ts`: junta regras e IA.
+- `supabase/functions/mensagem/`: a função faz duas chamadas.
+  1. Análise: classifica sinais com o id da mensagem que prova cada um. Ela é reaproveitada enquanto a conversa não muda.
+  2. Redação: só roda quando as regras permitem uma mensagem.
+- `src/lib/inteligencia.ts`: leitura das tabelas e ajustes manuais (temperatura, retorno combinado, não contatar).
+- `src/components/lead/Inteligencia.tsx`: o painel do lead.
+- `src/components/ConfigInteligencia.tsx`: estilo, catálogo, pesos e lista de "não contatar" (Configurações › Inteligência).
+- `src/lib/metricas.ts`: as contas da tela Métricas.
+
+**Envio confirmado.** Abrir o WhatsApp não conta mais como envio. Fica um registro em `envios` e o painel pergunta "Você enviou a mensagem?". Só o "Enviei" grava a mensagem como enviada e cria o follow-up. Mensagens antigas ficam como "envio não confirmado" e não entram nas taxas.
+
+**Não contatar.** Vale por telefone e pelo cadastro do Google. Um lead reimportado já entra descartado.
+
+**Banco.** `supabase/migrations/0004_inteligencia_comercial.sql` só adiciona coisas: tabelas e colunas novas. Nada é apagado. O fim do arquivo tem o rollback comentado. Sem a migration, o painel continua funcionando só com as regras.
+
+**Ativar em produção** (nesta ordem):
+
+1. Aplicar a migration 0004.
+2. Publicar a função `mensagem`. A pasta `_shared` precisa ir junto, e o `deno.json` resolve o `zod`. Comando: `supabase functions deploy mensagem`.
+3. Publicar o painel.
+
+**Testes.** `npm test` roda os cenários com Vitest: temperatura, decisão, horário, contrato da IA, Hoje, métricas e envio confirmado.
 
 ## Desempenho
 
@@ -47,7 +82,7 @@ npm install
 npm run dev
 ```
 
-`npm run build` checa os tipos e gera `dist/`.
+`npm run build` checa os tipos e gera `dist/`. `npm test` roda os testes.
 
 ## Publicar na Vercel
 

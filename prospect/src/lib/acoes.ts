@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import { invalidar, q } from './dados'
 import type { Etapa, Lead, Membro, Mensagem } from './tipos'
 import { numeroWa, preencher, soDigitos, waLink } from './util'
+import { telefoneChave } from '../../supabase/functions/_shared/inteligencia/conversa.ts'
 
 let leituraAtiva: boolean | null = null
 /** Com a leitura do WhatsApp ligada, o webhook grava as mensagens; sem ela, gravamos à mão. */
@@ -14,28 +15,79 @@ export async function whatsappLeituraAtiva() {
 export function esquecerLeitura() { leituraAtiva = null }
 
 /**
- * Abre a conversa no WhatsApp com o texto pronto e registra o contato.
- * O banco cuida do resto: a mensagem enviada leva o lead de "novo" para
- * "contatado" e agenda o próximo follow-up (gatilho tg_mensagem_insert).
+ * Grava mensagens marcadas como confirmadas. Se a coluna `confirmada` ainda não existir
+ * (migration 0004 não aplicada), grava sem ela, como antes.
  */
-export async function abrirWhatsApp(lead: Pick<Lead, 'id' | 'whatsapp' | 'telefone' | 'responsavel'>, texto: string, eu: Membro, followupId?: string) {
+async function inserirMensagens(linhas: Record<string, unknown>[]) {
+  const { data, error } = await supabase.from('mensagens').insert(linhas.map((l) => ({ ...l, confirmada: true }))).select('id')
+  if (!error) return (data ?? []) as { id: string }[]
+  if (error.code !== 'PGRST204' && !/confirmada/.test(error.message)) throw error
+  return await q<{ id: string }[]>(supabase.from('mensagens').insert(linhas).select('id'))
+}
+
+/**
+ * Abre a conversa no WhatsApp com o texto pronto.
+ * Abrir o link não prova que a mensagem foi enviada: aqui só registramos a abertura (tabela `envios`).
+ * A mensagem entra no histórico, conta nas métricas e agenda follow-up só quando alguém confirma o envio
+ * (confirmarEnvio), ou quando a leitura automática do WhatsApp grava a mensagem real.
+ */
+export async function abrirWhatsApp(
+  lead: Pick<Lead, 'id' | 'whatsapp' | 'telefone' | 'responsavel'>, texto: string, eu: Membro, followupId?: string,
+  origem: { rascunhoId?: string; variante?: 'a' | 'b' } = {},
+): Promise<{ id: string } | null> {
   const numero = numeroWa(lead.whatsapp, lead.telefone)
   if (!numero) throw new Error('Este lead não tem telefone.')
+  await garantirNaoBloqueado(lead)
   const msg = preencher(texto, eu.nome)
   window.open(waLink(numero, msg), '_blank', 'noopener')
 
+  const leitura = await whatsappLeituraAtiva()
   const tarefas: PromiseLike<unknown>[] = [
     supabase.from('atividades').insert({ lead_id: lead.id, tipo: 'whatsapp_aberto', detalhe: { followup: followupId ?? null }, usuario: eu.email }),
   ]
   if (!lead.responsavel) tarefas.push(supabase.from('leads').update({ responsavel: eu.email }).eq('id', lead.id))
-  if (followupId) {
-    tarefas.push(supabase.from('followups').update({ status: 'feito', feito_em: new Date().toISOString(), feito_por: eu.email }).eq('id', followupId))
-  }
   await Promise.all(tarefas)
-  if (!(await whatsappLeituraAtiva()) && msg.trim()) {
-    await supabase.from('mensagens').insert({ lead_id: lead.id, direcao: 'enviada', texto: msg, origem: 'manual', autor: eu.email })
+
+  const { data, error } = await supabase.from('envios').insert({
+    lead_id: lead.id, texto: msg, followup_id: followupId ?? null, rascunho_id: origem.rascunhoId ?? null, variante: origem.variante ?? null,
+    status: leitura ? 'leitura_automatica' : 'aberto', autor: eu.email,
+  }).select('id').single()
+
+  if (error) {
+    // Sem a tabela `envios` (migration 0004 não aplicada): comportamento antigo, para nada parar de funcionar.
+    if (!leitura && msg.trim()) await supabase.from('mensagens').insert({ lead_id: lead.id, direcao: 'enviada', texto: msg, origem: 'manual', autor: eu.email })
+    if (followupId) await supabase.from('followups').update({ status: 'feito', feito_em: new Date().toISOString(), feito_por: eu.email }).eq('id', followupId)
+    invalidar('leads', 'mensagens', 'followups', 'atividades')
+    return null
   }
-  invalidar('leads', 'mensagens', 'followups', 'atividades')
+  invalidar('leads', 'envios', 'atividades')
+  return leitura ? null : (data as { id: string })
+}
+
+/** Lead de contato bloqueado não abre o WhatsApp por engano. */
+async function garantirNaoBloqueado(lead: Pick<Lead, 'id' | 'whatsapp' | 'telefone'>) {
+  const chaves = [telefoneChave(lead.whatsapp), telefoneChave(lead.telefone)].filter(Boolean) as string[]
+  const filtro = [`lead_id.eq.${lead.id}`, ...chaves.map((c) => `telefone_chave.eq.${c}`)].join(',')
+  const { data, error } = await supabase.from('contatos_bloqueados').select('motivo').or(filtro).limit(1)
+  if (!error && data?.length) throw new Error(`Contato bloqueado: ${data[0].motivo}. Nenhuma mensagem comercial.`)
+}
+
+/** A pessoa confirmou que enviou: agora sim a mensagem entra no histórico (e o banco agenda o follow-up). */
+export async function confirmarEnvio(envio: { id: string; lead_id: string; texto: string; followup_id: string | null; rascunho_id: string | null; variante: 'a' | 'b' | null }, eu: Membro, texto?: string) {
+  const final = (texto ?? envio.texto).trim()
+  const agora = new Date().toISOString()
+  const [m] = final ? await inserirMensagens([{ lead_id: envio.lead_id, direcao: 'enviada', texto: final, origem: 'manual', autor: eu.email }]) : [null]
+  await q(supabase.from('envios').update({ status: 'confirmado', confirmado_em: agora, mensagem_id: m?.id ?? null, texto: final }).eq('id', envio.id))
+  if (envio.followup_id) await supabase.from('followups').update({ status: 'feito', feito_em: agora, feito_por: eu.email }).eq('id', envio.followup_id)
+  if (envio.rascunho_id) {
+    await supabase.from('rascunhos_ia').update({ usada: envio.variante, texto_final: final, enviada_confirmada_em: agora, mensagem_id: m?.id ?? null }).eq('id', envio.rascunho_id)
+  }
+  invalidar('envios', 'mensagens', 'leads', 'followups', 'rascunhos_ia')
+}
+
+export async function marcarNaoEnviado(envioId: string) {
+  await q(supabase.from('envios').update({ status: 'nao_enviado' }).eq('id', envioId))
+  invalidar('envios')
 }
 
 export async function atualizarLead(id: string, campos: Partial<Lead>) {
@@ -70,8 +122,9 @@ export async function agendarFollowup(lead_id: string, agendado_para: Date, moti
   invalidar('followups', 'leads')
 }
 
+/** Registro feito pela equipe ("Resposta do lead" ou "Minha mensagem"): é declaração de quem viu, conta como confirmada. */
 export async function registrarMensagem(lead_id: string, direcao: 'enviada' | 'recebida', texto: string, autor: string, enviada_em?: string) {
-  await q(supabase.from('mensagens').insert({ lead_id, direcao, texto, origem: 'manual', autor, ...(enviada_em ? { enviada_em } : {}) }))
+  await inserirMensagens([{ lead_id, direcao, texto, origem: 'manual', autor, ...(enviada_em ? { enviada_em } : {}) }])
   invalidar('mensagens', 'leads', 'followups')
 }
 
@@ -135,7 +188,7 @@ export function separarColadas(texto: string, lead: Pick<Lead, 'nome' | 'whatsap
 
 export async function registrarVarias(lead_id: string, msgs: MensagemImportada[], autor: string) {
   if (!msgs.length) return
-  await q(supabase.from('mensagens').insert(msgs.map((m) => ({ ...m, lead_id, origem: 'manual', autor: m.direcao === 'enviada' ? autor : null }))))
+  await inserirMensagens(msgs.map((m) => ({ ...m, lead_id, origem: 'manual', autor: m.direcao === 'enviada' ? autor : null })))
   invalidar('mensagens', 'leads', 'followups')
 }
 
@@ -165,7 +218,8 @@ export async function importarConversa(lead_id: string, msgs: MensagemImportada[
   const ja = new Set((existentes ?? []).map((m) => `${new Date(m.enviada_em).getTime()}|${m.texto}`))
   const novas = msgs.filter((m) => !ja.has(`${new Date(m.enviada_em).getTime()}|${m.texto}`))
   if (novas.length) {
-    await q(supabase.from('mensagens').insert(novas.map((m) => ({ ...m, lead_id, origem: 'importada', autor: m.direcao === 'enviada' ? autor : null }))))
+    // Exportação do próprio WhatsApp: o envio é comprovado.
+    await inserirMensagens(novas.map((m) => ({ ...m, lead_id, origem: 'importada', autor: m.direcao === 'enviada' ? autor : null })))
   }
   invalidar('mensagens', 'leads', 'followups')
   return novas.length

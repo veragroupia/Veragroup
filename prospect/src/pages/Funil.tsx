@@ -8,6 +8,7 @@ import { ETAPAS, type Etapa, type Lead } from '../lib/tipos'
 import { brl, cx, diasDesde, nomeCurto, relativo } from '../lib/util'
 import { useMudarEtapa } from '../components/MudarEtapa'
 import { Avatar, Erro, Esqueleto, Pagina, Score, Segmentos } from '../components/ui'
+import { carregarIntel, FUNDO_TEMPERATURA, NOME_TEMPERATURA } from '../lib/inteligencia'
 
 type Card = Pick<Lead, 'id' | 'nome' | 'nicho' | 'cidade' | 'score' | 'etapa' | 'etapa_desde' | 'responsavel' | 'proximo_followup_em' | 'valor_mensal' | 'valor_setup' | 'ultima_resposta_em' | 'ultimo_contato_em'>
 const CAMPOS = 'id, nome, nicho, cidade, score, etapa, etapa_desde, responsavel, proximo_followup_em, valor_mensal, valor_setup, ultima_resposta_em, ultimo_contato_em'
@@ -23,6 +24,7 @@ export default function Funil() {
   const { mudar, dialogo } = useMudarEtapa()
 
   const leads = useConsulta('funil', () => q<Card[]>(supabase.from('leads').select(CAMPOS).order('score', { ascending: false }).limit(2000)), ['leads'])
+  const intel = useConsulta('funil:intel', () => carregarIntel(), ['lead_inteligencia'])
 
   const colunas = useMemo(() => {
     const visiveis = ETAPAS.filter((e) => e.ativa || encerrados)
@@ -73,6 +75,8 @@ export default function Funil() {
                   const esperando = l.ultima_resposta_em && (!l.ultimo_contato_em || l.ultima_resposta_em > l.ultimo_contato_em)
                   const dias = diasDesde(l.etapa_desde)
                   const prox = proxima(l.etapa)
+                  const li = intel.data?.get(l.id)
+                  const temp = li?.temperatura_manual ?? li?.temperatura ?? null
                   return (
                     <article key={l.id} draggable
                       onDragStart={(e) => { setArrastando(l.id); e.dataTransfer.effectAllowed = 'move' }}
@@ -84,7 +88,10 @@ export default function Funil() {
                         <h3 className="text-sm font-medium leading-snug flex-1 min-w-0 line-clamp-2">{nomeCurto(l.nome)}</h3>
                         {esperando && <span className="w-2 h-2 rounded-full bg-sinal mt-1.5 shrink-0" title="Respondeu e espera retorno" />}
                       </div>
-                      <div className="text-xs text-tinta-3 mt-1 truncate">{[l.nicho, l.cidade].filter(Boolean).join(' · ')}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-tinta-3 mt-1 min-w-0">
+                        {temp && <span className="inline-flex items-center gap-1 shrink-0" title={`Temperatura${li?.temperatura_manual ? ' (definida pela equipe)' : ''}${li?.score_interesse != null ? ` · interesse ${li.score_interesse}` : ''}`}><span className={cx('w-1.5 h-1.5 rounded-full', FUNDO_TEMPERATURA[temp])} />{NOME_TEMPERATURA[temp]}</span>}
+                        <span className="truncate">{[l.nicho, l.cidade].filter(Boolean).join(' · ')}</span>
+                      </div>
                       <div className="flex items-center gap-2 mt-2.5 text-xs text-tinta-3">
                         {c.id === 'novo' ? <Score v={l.score} /> : (
                           <span className={cx('numero', dias >= 7 && 'text-alerta')} title="Dias nesta etapa">{dias}d</span>

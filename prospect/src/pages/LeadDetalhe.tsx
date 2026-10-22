@@ -13,11 +13,12 @@ import { clienteDoLead } from '../lib/gestao'
 import { Abas, Campo, Erro, Esqueleto, EtapaTag, Modal, Score } from '../components/ui'
 import { Conversa } from '../components/lead/Conversa'
 import { Avaliacoes } from '../components/lead/Avaliacoes'
-import { MensagemIA } from '../components/lead/MensagemIA'
+import { PainelInteligencia, ResumoInteligencia, useRecomendacao, type DadosInteligencia } from '../components/lead/Inteligencia'
+import { rascunhoObsoleto, textoRecomendado, useBloqueios, useConfigComercial, type LeadIntel } from '../lib/inteligencia'
 import { Reunioes } from '../components/lead/Reunioes'
 import { Historico } from '../components/lead/Historico'
 
-type Aba = 'conversa' | 'mensagem' | 'avaliacao' | 'reunioes' | 'historico'
+type Aba = 'conversa' | 'inteligencia' | 'avaliacao' | 'reunioes' | 'historico'
 
 export default function LeadDetalhe() {
   const { id } = useParams<{ id: string }>()
@@ -26,6 +27,16 @@ export default function LeadDetalhe() {
   const fus = useConsulta(`lead:${id}:fu`, () => q<Followup[]>(supabase.from('followups').select('*').eq('lead_id', id!).order('agendado_para', { ascending: false })), ['followups'])
   const avs = useConsulta(`lead:${id}:av`, () => q<Avaliacao[]>(supabase.from('avaliacoes').select('*').eq('lead_id', id!).order('created_at', { ascending: false })), ['avaliacoes'])
   const ras = useConsulta(`lead:${id}:ras`, () => q<RascunhoIA[]>(supabase.from('rascunhos_ia').select('*').eq('lead_id', id!).order('created_at', { ascending: false }).limit(30)), ['rascunhos_ia'])
+  const intel = useConsulta(`lead:${id}:intel`, async () => {
+    const { data, error } = await supabase.from('lead_inteligencia').select('*').eq('lead_id', id!).maybeSingle()
+    return error ? null : (data as LeadIntel | null)
+  }, ['lead_inteligencia'])
+  const proposta = useConsulta(`lead:${id}:proposta`, async () => {
+    const { data } = await supabase.from('propostas').select('status, enviada_em').eq('lead_id', id!).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    return (data as { status: string; enviada_em: string | null } | null) ?? null
+  }, ['propostas'])
+  const bloqueios = useBloqueios()
+  const { config } = useConfigComercial()
   const [aba, setAba] = useState<Aba>('conversa')
 
   if (lead.erro) return <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8"><Erro msg={lead.erro} onTentar={lead.recarregar} /></div>
@@ -40,47 +51,63 @@ export default function LeadDetalhe() {
   const pendente = (fus.data ?? []).filter((f) => f.status === 'pendente').sort((a, b) => +new Date(a.agendado_para) - +new Date(b.agendado_para))[0]
   const ultimaAv = avs.data?.[0]
   const mensagens = msgs.data ?? []
-  const ultimoRas = ras.data?.[0]
-  const depoisDaConversa = (quando: string) => !mensagens.length || new Date(quando) >= new Date(mensagens[mensagens.length - 1].enviada_em)
-  const sugerida = (() => {
+  const d: DadosInteligencia = { lead: l, mensagens, intel: intel.data ?? null, bloqueios: bloqueios.data ?? [], config, proposta: proposta.data ?? null }
+  return <Detalhe d={d} aba={aba} setAba={setAba} rascunhos={ras.data} avaliacoes={avs.data} followups={fus.data ?? []} pendente={pendente} ultimaAv={ultimaAv} carregandoMsgs={msgs.carregando} />
+}
+
+function Detalhe({ d, aba, setAba, rascunhos, avaliacoes, followups, pendente, ultimaAv, carregandoMsgs }: {
+  d: DadosInteligencia; aba: Aba; setAba: (a: Aba) => void; rascunhos?: RascunhoIA[]; avaliacoes?: Avaliacao[]; followups: Followup[]
+  pendente?: Followup; ultimaAv?: Avaliacao; carregandoMsgs: boolean
+}) {
+  const l = d.lead, mensagens = d.mensagens
+  const rec = useRecomendacao(d)
+  const ultimaMsg = mensagens[mensagens.length - 1]?.enviada_em ?? null
+  // Sugestão para o botão do WhatsApp: só o que ainda vale para a conversa de agora.
+  const sugerida = ((): Sugerida | null => {
+    if (rec.bloqueado) return null
+    const ras = rascunhos?.[0]
+    const valido = ras && !rascunhoObsoleto(ras, l, false, d.config, ultimaMsg)
+    // A última análise disse que não é hora de escrever: nada de sugestão antiga no botão.
+    if (valido && ras.prompt_version && !ras.mensagem_a) return null
+    const texto = valido ? textoRecomendado(ras) : null
+    if (ras && texto) return { texto, origem: `Mensagem da IA (opção ${(ras.melhor_opcao ?? 'A')})`, rascunho: { id: ras.id, variante: (ras.melhor_opcao ?? 'A').toLowerCase() as 'a' | 'b' } }
     if (pendente?.mensagem_sugerida) return { texto: pendente.mensagem_sugerida, origem: 'Sugestão do follow-up' }
-    if (ultimoRas?.status === 'pronto' && ultimoRas.mensagem_a && depoisDaConversa(ultimoRas.created_at)
-      && (!ultimaAv || new Date(ultimoRas.created_at) >= new Date(ultimaAv.created_at)))
-      return { texto: ultimoRas.mensagem_a, origem: 'Mensagem da IA (opção A)' }
-    if (ultimaAv?.proxima_mensagem && (!mensagens.length || new Date(ultimaAv.created_at) >= new Date(mensagens[mensagens.length - 1].enviada_em)))
-      return { texto: ultimaAv.proxima_mensagem, origem: 'Sugestão da IA' }
+    if (ultimaAv?.proxima_mensagem && (!ultimaMsg || new Date(ultimaAv.created_at) >= new Date(ultimaMsg)))
+      return { texto: ultimaAv.proxima_mensagem, origem: 'Sugestão da avaliação' }
     if (!mensagens.length && l.mensagem_inicial) return { texto: l.mensagem_inicial, origem: 'Primeira mensagem do radar' }
     return null
   })()
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-28 md:pb-12 animate-entra">
-      <Cabecalho l={l} sugerida={sugerida} followupId={pendente?.id} onMensagem={() => setAba('mensagem')} />
+      <Cabecalho l={l} sugerida={sugerida} followupId={pendente?.id} bloqueado={rec.bloqueado} onMensagem={() => setAba('inteligencia')} />
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 mt-6">
         <div className="min-w-0">
           <Abas valor={aba} onChange={setAba} abas={[
             { id: 'conversa', nome: <>Conversa <span className="numero text-xs text-tinta-3">{mensagens.length || ''}</span></> },
-            { id: 'mensagem', nome: 'Mensagem IA' },
+            { id: 'inteligencia', nome: 'Inteligência' },
             { id: 'avaliacao', nome: <>Avaliação IA {ultimaAv?.nota_geral != null && <span className="numero text-xs text-tinta-3">{String(ultimaAv.nota_geral).replace('.', ',')}</span>}</> },
             { id: 'reunioes', nome: 'Reuniões' },
             { id: 'historico', nome: 'Histórico' },
           ]} />
           <div className="pt-4">
-            {aba === 'conversa' && <Conversa lead={l} mensagens={mensagens} carregando={msgs.carregando} sugerida={sugerida} followupId={pendente?.id} />}
-            {aba === 'mensagem' && <MensagemIA lead={l} rascunhos={ras.data} />}
-            {aba === 'avaliacao' && <Avaliacoes lead={l} avaliacoes={avs.data} temMensagens={mensagens.length > 0} />}
+            {aba === 'conversa' && <Conversa lead={l} mensagens={mensagens} carregando={carregandoMsgs} sugerida={sugerida} followupId={pendente?.id} bloqueado={rec.bloqueado} />}
+            {aba === 'inteligencia' && <PainelInteligencia d={d} rascunhos={rascunhos} />}
+            {aba === 'avaliacao' && <Avaliacoes lead={l} avaliacoes={avaliacoes} temMensagens={mensagens.length > 0} />}
             {aba === 'reunioes' && <Reunioes lead={l} />}
-            {aba === 'historico' && <Historico leadId={l.id} followups={fus.data ?? []} />}
+            {aba === 'historico' && <Historico leadId={l.id} followups={followups} />}
           </div>
         </div>
-        <Lateral l={l} pendente={pendente} />
+        <Lateral l={l} pendente={pendente} d={d} onInteligencia={() => setAba('inteligencia')} />
       </div>
     </div>
   )
 }
 
-function Cabecalho({ l, sugerida, followupId, onMensagem }: { l: Lead; sugerida: { texto: string } | null; followupId?: string; onMensagem: () => void }) {
+export interface Sugerida { texto: string; origem: string; rascunho?: { id: string; variante: 'a' | 'b' } }
+
+function Cabecalho({ l, sugerida, followupId, bloqueado, onMensagem }: { l: Lead; sugerida: Sugerida | null; followupId?: string; bloqueado: boolean; onMensagem: () => void }) {
   const { eu } = useSessao()
   const executar = useExecutar()
   const avisar = useAviso()
@@ -119,7 +146,7 @@ function Cabecalho({ l, sugerida, followupId, onMensagem }: { l: Lead; sugerida:
           <button className="btn-sec" onClick={onMensagem}><PenLine size={15} /> Gerar mensagem</button>
           <button className="btn-sec" onClick={avaliar} disabled={avaliando}><Sparkles size={15} className={cx(avaliando && 'animate-pulsa')} /> {avaliando ? 'Avaliando…' : 'Avaliar'}</button>
           {(l.whatsapp || l.telefone) && (
-            <button className="btn-wa" onClick={() => executar(() => abrirWhatsApp(l, sugerida?.texto ?? '', eu!, sugerida ? followupId : undefined))}>
+            <button className="btn-wa" disabled={bloqueado} title={bloqueado ? 'Contato bloqueado' : undefined} onClick={() => executar(() => abrirWhatsApp(l, sugerida?.texto ?? '', eu!, sugerida ? followupId : undefined, sugerida?.rascunho ? { rascunhoId: sugerida.rascunho.id, variante: sugerida.rascunho.variante } : undefined))}>
               <MessageCircle size={16} /> WhatsApp
             </button>
           )}
@@ -175,13 +202,14 @@ function Cabecalho({ l, sugerida, followupId, onMensagem }: { l: Lead; sugerida:
   )
 }
 
-function Lateral({ l, pendente }: { l: Lead; pendente?: Followup }) {
+function Lateral({ l, pendente, d, onInteligencia }: { l: Lead; pendente?: Followup; d: DadosInteligencia; onInteligencia: () => void }) {
   const { equipe, nomeDe } = useSessao()
   const executar = useExecutar()
   const [agendar, setAgendar] = useState(false)
 
   return (
     <aside className="space-y-4 min-w-0">
+      <ResumoInteligencia d={d} onAbrir={onInteligencia} />
       {/* Próximo passo */}
       <section className="folha p-4">
         <div className="flex items-center justify-between mb-2">

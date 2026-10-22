@@ -41,7 +41,7 @@ export function Avaliacoes({ lead, avaliacoes, temMensagens }: { lead: Lead; ava
   if (!a) return (
     <div className="folha">
       <Vazio titulo="Nenhuma avaliação ainda." icone={<Sparkles size={18} />}>
-        {temMensagens ? 'A IA lê a conversa, dá nota em cada etapa do Método Vera e escreve a próxima mensagem.' : 'Registre ou importe a conversa primeiro. A IA precisa de mensagens para avaliar.'}
+        {temMensagens ? 'A IA lê a conversa e dá nota em cada etapa do Método Vera. Para temperatura, próxima ação e mensagem, use a aba Inteligência.' : 'Registre ou importe a conversa primeiro. A IA precisa de mensagens para avaliar.'}
       </Vazio>
       {temMensagens && <div className="text-center pb-8"><button className="btn-pri" onClick={avaliar} disabled={avaliando}><Sparkles size={15} /> {avaliando ? 'Avaliando…' : 'Avaliar conversa'}</button></div>}
     </div>
@@ -56,7 +56,7 @@ export function Avaliacoes({ lead, avaliacoes, temMensagens }: { lead: Lead; ava
             <div className="numero text-5xl font-medium mt-1">{a.nota_geral != null ? String(a.nota_geral).replace('.', ',') : '-'}<span className="text-xl text-tinta-3">/10</span></div>
           </div>
           {a.temperatura && <div><div className="rotulo">Temperatura</div><div className={cx('text-xl font-semibold mt-2 capitalize', TEMPERATURA[a.temperatura])}>{a.temperatura}</div></div>}
-          {a.probabilidade != null && <div><div className="rotulo">Chance de fechar</div><div className="numero text-xl mt-2">{a.probabilidade}%</div></div>}
+          {a.probabilidade != null && <div title="Palpite do modelo de IA nesta avaliação. Não é probabilidade estatística de fechamento."><div className="rotulo">Palpite da IA</div><div className="numero text-xl mt-2">{a.probabilidade}<span className="text-sm text-tinta-3">/100</span></div><div className="text-[11px] text-tinta-3 mt-0.5">não é probabilidade</div></div>}
           <div className="ml-auto text-right">
             <div className="text-xs text-tinta-3">{a.alvo === 'reuniao' ? 'Reunião' : 'Conversa'} · {dataHora(a.created_at)}</div>
             <button className="btn-sec btn-sm mt-2" onClick={avaliar} disabled={avaliando}><Sparkles size={13} /> {avaliando ? 'Avaliando…' : 'Avaliar de novo'}</button>

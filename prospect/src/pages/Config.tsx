@@ -8,8 +8,9 @@ import type { Membro, RadarConfig } from '../lib/tipos'
 import { cx, relativo } from '../lib/util'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { Abas, Avatar, Campo, Erro, Interruptor, Linhas, Modal, Pagina } from '../components/ui'
+import { ConfigInteligencia } from '../components/ConfigInteligencia'
 
-type Aba = 'radar' | 'mensagem' | 'equipe' | 'integracoes'
+type Aba = 'radar' | 'mensagem' | 'inteligencia' | 'equipe' | 'integracoes'
 
 export default function Config() {
   const [aba, setAba] = useState<Aba>('radar')
@@ -17,12 +18,13 @@ export default function Config() {
   return (
     <Pagina titulo="Configurações" largura="max-w-4xl">
       <Abas valor={aba} onChange={setAba} abas={[
-        { id: 'radar', nome: 'Radar' }, { id: 'mensagem', nome: 'Mensagem' }, { id: 'equipe', nome: 'Equipe' }, { id: 'integracoes', nome: 'Integrações' },
+        { id: 'radar', nome: 'Radar' }, { id: 'mensagem', nome: 'Mensagem' }, { id: 'inteligencia', nome: 'Inteligência' }, { id: 'equipe', nome: 'Equipe' }, { id: 'integracoes', nome: 'Integrações' },
       ]} />
       <div className="pt-6">
         {cfg.erro && <Erro msg={cfg.erro} onTentar={cfg.recarregar} />}
         {aba === 'radar' && (cfg.data ? <AbaRadar cfg={cfg.data} /> : <Linhas n={3} />)}
         {aba === 'mensagem' && (cfg.data ? <AbaMensagem cfg={cfg.data} /> : <Linhas n={3} />)}
+        {aba === 'inteligencia' && <ConfigInteligencia />}
         {aba === 'equipe' && <AbaEquipe />}
         {aba === 'integracoes' && <AbaIntegracoes />}
       </div>
@@ -244,7 +246,7 @@ function NovoMembro({ onFechar }: { onFechar: () => void }) {
 
 const CHAVES = [
   { nome: 'google_places_api_key', titulo: 'Google Places', uso: 'Usada pelo radar para buscar negócios no Maps.' },
-  { nome: 'anthropic_api_key', titulo: 'Anthropic (Claude)', uso: 'Avaliação das conversas e reuniões.' },
+  { nome: 'anthropic_api_key', titulo: 'Anthropic (Claude)', uso: 'Inteligência comercial, mensagens e avaliação das conversas e reuniões.' },
   { nome: 'groq_api_key', titulo: 'Groq', uso: 'Transcrição de áudio e reserva da avaliação.' },
   { nome: 'openai_api_key', titulo: 'OpenAI', uso: 'Transcrição de áudio, se não houver Groq.' },
 ]

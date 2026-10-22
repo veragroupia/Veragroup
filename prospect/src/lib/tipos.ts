@@ -30,6 +30,8 @@ export interface Membro { email: string; nome: string; papel: 'admin' | 'vendedo
 export interface Mensagem {
   id: string; lead_id: string; direcao: 'enviada' | 'recebida'; texto: string | null; tipo: string
   origem: string; autor: string | null; enviada_em: string
+  /** true = envio comprovado (confirmado pela equipe ou lido do WhatsApp). null = registro antigo, não comprovado. */
+  confirmada?: boolean | null
 }
 
 export interface Followup {
@@ -50,13 +52,20 @@ export interface Avaliacao {
   proxima_acao: string | null; proxima_mensagem: string | null; modelo: string | null; created_at: string
 }
 
-export type StatusRascunho = 'pronto' | 'revisar' | 'nao_contatar'
+export type StatusRascunho = 'pronto' | 'revisar' | 'nao_contatar' | 'sem_mensagem'
 export interface RascunhoIA {
   id: string; lead_id: string; status: StatusRascunho; objetivo_da_etapa: string | null
   evidencias_usadas: { id: string; fato: string }[]; hipotese_comercial: string | null; oferta_id: string | null
   informacoes_faltantes: string[]; mensagem_a: string | null; mensagem_b: string | null
   justificativa_curta: string | null; proxima_acao_sugerida: string | null; observacao_vendedor: string | null
   vendedor: string | null; usada: 'a' | 'b' | null; modelo: string | null; created_at: string
+  // v4 (vera-sales-v4). Rascunhos antigos não têm estes campos.
+  acao?: string | null; motivo?: string | null; temperatura?: 'frio' | 'morno' | 'quente' | null
+  score_interesse?: number | null; score_adequacao?: number | null; confianca?: 'baixa' | 'media' | 'alta' | null
+  melhor_opcao?: 'A' | 'B' | null; mencionar_assunto_anterior?: boolean | null; horario?: import('../../supabase/functions/_shared/inteligencia/tipos.ts').JanelaContato | null
+  condicao_retomar?: string | null; alertas?: string[]; contexto_hash?: string | null; ultima_mensagem_id?: string | null
+  etapa?: string | null; prompt_version?: string | null; catalogo_versao?: string | null; texto_final?: string | null
+  copiada_em?: string | null; enviada_confirmada_em?: string | null; mensagem_id?: string | null
 }
 
 export interface Atividade { id: number; lead_id: string | null; tipo: string; detalhe: Record<string, any>; usuario: string | null; created_at: string }

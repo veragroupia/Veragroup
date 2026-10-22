@@ -1,126 +1,159 @@
-import { admin, autorizar, claude, cors, extrairJson, json } from "./util.ts";
-import { COMO_LER_A_ENTRADA, PROMPT_EQUIPE } from "./prompt.ts";
+import { admin, autorizar, claude, cors, json } from "./util.ts";
+import { lerConfig } from "../_shared/inteligencia/config.ts";
+import { ErroIA, gerarRecomendacao, idEvidencia } from "../_shared/inteligencia/motor.ts";
+import type { Analise } from "../_shared/inteligencia/contrato.ts";
+import type { Bloqueio, Msg, Temperatura } from "../_shared/inteligencia/tipos.ts";
 
-// Catálogo aprovado: a tabela de preços do site (index.html, seção 04 Preços).
-// Ao mudar preço no site, mude aqui também. Nada fora desta lista vira oferta.
-const CATALOGO = [
-  { id: "landing_express", nome: "Landing Express", preco: "R$ 1.200", prazo: "5 dias",
-    itens: "Uma página completa para o negócio ser encontrado: serviços, fotos, localização e botão de WhatsApp." },
-  { id: "landing_whatsapp", nome: "Landing com WhatsApp automático", preco: "R$ 1.800", prazo: "7 dias",
-    itens: "A página e um atendimento automático que responde as dúvidas mais comuns e encaminha o cliente." },
-  { id: "site_completo", nome: "Site completo", preco: "R$ 2.500 a R$ 4.000, conforme o escopo", prazo: "14 dias",
-    itens: "Várias páginas, serviços detalhados, galeria, catálogo ou blog. Para quem precisa mostrar mais." },
-  { id: "automacao_whatsapp", nome: "Automação de WhatsApp", preco: "R$ 800", prazo: "5 dias",
-    itens: "Para quem já tem site: respostas automáticas, agendamento e lembretes para o cliente." },
-  { id: "sistema_sob_medida", nome: "Sistema sob medida", preco: "sob consulta", prazo: "definido na proposta",
-    itens: "Loja online, cardápio com gestão, painel de controle." },
-];
-
-// O que o site da Vera mostra publicamente. Só nome e o que o site diz.
-const PORTFOLIO = [
-  { nome: "Vó Neis", descricao: "Confeitaria. Citada no site da Vera como exemplo de sistema sob medida." },
-  { nome: "ERK Pratas", descricao: "Loja de pratas. Citada no site da Vera como exemplo de sistema sob medida." },
-];
-
-const STATUS = ["pronto", "revisar", "nao_contatar"] as const;
-const brt = (d: string | Date) => new Date(d).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-const texto = (v: unknown) => {
-  if (typeof v !== "string") return null;
-  const t = v.trim();
-  return t && t.toLowerCase() !== "null" ? t : null;
-};
+/* Vera Sales Intelligence (vera-sales-v4).
+   Corpo: { lead_id, observacao?, modo?: "analisar" | "gerar", forcar?: boolean }
+   - "analisar" atualiza a classificação do lead (temperatura, scores, próxima ação, horário) sem escrever mensagem.
+   - "gerar" faz o mesmo e, se as regras permitirem, escreve as opções de mensagem.
+   Regras de bloqueio, aguardar e retorno combinado rodam antes da IA; se não há o que escrever, a IA de redação nem é chamada.
+   Se o contexto não mudou desde a última análise, a análise é reaproveitada (sem nova chamada). */
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const db = admin();
   const quem = await autorizar(req, db);
   if (!quem) return json({ erro: "não autorizado" }, 401);
+
+  let corpo: { lead_id?: string; observacao?: unknown; modo?: unknown; forcar?: unknown };
+  try { corpo = await req.json(); } catch { return json({ erro: "corpo inválido" }, 400); }
+  const lead_id = corpo.lead_id;
+  if (typeof lead_id !== "string") return json({ erro: "lead_id obrigatório" }, 400);
+  const modo = corpo.modo === "analisar" ? "analisar" : "gerar";
+  const forcar = corpo.forcar === true;
+  const observacao = typeof corpo.observacao === "string" && corpo.observacao.trim() ? corpo.observacao.trim().slice(0, 2000) : null;
+
   try {
-    const { lead_id, observacao } = await req.json();
     const { data: lead } = await db.from("leads").select("*").eq("id", lead_id).single();
     if (!lead) return json({ erro: "lead não encontrado" }, 404);
 
+    const [msgs, intel, bloqueios, cfg, proposta] = await Promise.all([
+      db.from("mensagens").select("id, direcao, texto, enviada_em, confirmada, origem").eq("lead_id", lead_id)
+        .order("enviada_em", { ascending: false }).limit(80),
+      db.from("lead_inteligencia").select("*").eq("lead_id", lead_id).maybeSingle(),
+      db.from("contatos_bloqueados").select("telefone_chave, place_id, lead_id, motivo"),
+      db.from("config_comercial").select("*").eq("id", 1).maybeSingle(),
+      db.from("propostas").select("status, enviada_em").eq("lead_id", lead_id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    if (msgs.error) throw msgs.error;
+    if (intel.error || bloqueios.error) {
+      return json({ erro: "Falta aplicar a migration 0004_inteligencia_comercial no banco." }, 500);
+    }
+
+    const config = lerConfig(cfg.data);
     const emailVendedor = quem === "sistema" ? lead.responsavel : quem;
     const { data: membro } = emailVendedor
       ? await db.from("equipe").select("nome").eq("email", emailVendedor).maybeSingle()
       : { data: null };
-    const vendedor = membro?.nome?.split(" ")[0] ?? null;
 
-    const [{ data: msgs }, { data: fus }] = await Promise.all([
-      db.from("mensagens").select("direcao, texto, enviada_em").eq("lead_id", lead_id)
-        .order("enviada_em", { ascending: false }).limit(60),
-      db.from("followups").select("agendado_para, tentativa, motivo").eq("lead_id", lead_id)
-        .eq("status", "pendente").order("agendado_para").limit(1),
-    ]);
-    const conversa = (msgs ?? []).reverse().map((m, i) => ({
-      id: `msg_${i + 1}`, quem: m.direcao === "enviada" ? "VERA" : "LEAD", quando: brt(m.enviada_em), texto: m.texto ?? "[mídia]",
-    }));
+    const i = intel.data;
+    const cache = i?.analise && i?.contexto_hash ? { analise: i.analise as Analise, contexto_hash: i.contexto_hash as string } : null;
+    const p = proposta.data;
 
-    // Cada fato vira uma evidência com id fixo. Campo vazio é dito como desconhecido.
-    const evidencias: { id: string; fonte: string; fato: string }[] = [];
-    const ev = (id: string, fonte: string, fato: string) => evidencias.push({ id, fonte, fato });
-    ev("lead.nome", "cadastro", `Nome: ${lead.nome}`);
-    ev("lead.nicho", "cadastro", lead.nicho ? `Ramo informado: ${lead.nicho}` : "Ramo: desconhecido");
-    ev("lead.cidade", "cadastro", lead.cidade ? `Cidade: ${lead.cidade}` : "Cidade: desconhecida");
-    ev("lead.site", "cadastro", lead.site
-      ? `Endereço de site registrado: ${lead.site}. A página não foi analisada.`
-      : "Site: campo vazio, ou seja, desconhecido. Não significa que a empresa não tenha site.");
-    ev("lead.instagram", "cadastro", lead.instagram
-      ? `Instagram registrado: ${lead.instagram}. O perfil não foi analisado.`
-      : "Instagram: desconhecido.");
-    if (lead.rating != null) ev("lead.google", "Google Maps", `Nota ${lead.rating} com ${lead.avaliacoes ?? 0} avaliações no Google.`);
-    if (lead.observacoes) ev("lead.observacoes", "anotação interna da equipe", lead.observacoes);
-    const obs = typeof observacao === "string" ? observacao.trim().slice(0, 2000) : "";
-    if (obs) ev("observacao_vendedor", "visto agora pela equipe", obs);
-    for (const m of conversa) evidencias.push({ id: m.id, fonte: `conversa (${m.quem})`, fato: m.texto.slice(0, 500) });
+    const res = await gerarRecomendacao({
+      agora: new Date(),
+      config,
+      lead,
+      mensagens: (msgs.data ?? []) as Msg[],
+      bloqueios: (bloqueios.data ?? []) as Bloqueio[],
+      liberadoEm: i?.contato_liberado_em ?? null,
+      retornoManual: i?.retorno_em ?? null,
+      temperaturaManual: (i?.temperatura_manual ?? null) as Temperatura | null,
+      propostaEnviadaEm: p?.status === "enviada" ? p.enviada_em : null,
+      propostaStatus: p?.status ?? null,
+      vendedor: membro?.nome?.split(" ")[0] ?? null,
+      observacao,
+      modo,
+      forcar,
+      cache,
+    }, (system, user) => claude(db, system, user, 2000));
 
-    const ultima = conversa[conversa.length - 1];
-    const situacao = {
-      etapa: lead.etapa,
-      motivo_perda: lead.motivo_perda ?? null,
-      primeiro_contato: conversa.length === 0,
-      ultima_mensagem_do_lead_sem_resposta: ultima?.quem === "LEAD",
-      followup_pendente: fus?.[0]
-        ? { tentativa: fus[0].tentativa, agendado_para: brt(fus[0].agendado_para), motivo: fus[0].motivo }
-        : null,
-      agora: brt(new Date()),
-    };
+    const r = res.recomendacao;
+    const agora = new Date().toISOString();
 
-    const entrada = { vendedor: vendedor ?? "(nome do vendedor não cadastrado)", situacao, evidencias, conversa, catalogo: CATALOGO, portfolio: PORTFOLIO };
-    const { text, model } = await claude(db, PROMPT_EQUIPE + COMO_LER_A_ENTRADA, JSON.stringify(entrada, null, 1), 2500);
-    const r = extrairJson(text);
-
-    // A IA não pode inventar status, evidência nem oferta: o que não bate é descartado.
-    if (!STATUS.includes(r.status)) throw new Error(`Status inválido da IA: ${r.status}`);
-    const idsEv = new Set(evidencias.map((e) => e.id));
-    const idsOferta = new Set(CATALOGO.map((o) => o.id));
-    let a = texto(r.mensagem_a), b = texto(r.mensagem_b);
-    if (!a && b) [a, b] = [b, null];
-    if (r.status === "revisar") b = null;
-    const nao = r.status === "nao_contatar";
-
-    const { data: rascunho, error } = await db.from("rascunhos_ia").insert({
+    // Classificação atual. As colunas de correção manual não são tocadas.
+    const { error: eIntel } = await db.from("lead_inteligencia").upsert({
       lead_id,
-      status: r.status,
-      objetivo_da_etapa: texto(r.objetivo_da_etapa),
-      evidencias_usadas: (Array.isArray(r.evidencias_usadas) ? r.evidencias_usadas : [])
-        .filter((e: any) => e && idsEv.has(e.id)).map((e: any) => ({ id: e.id, fato: String(e.fato ?? "") })),
-      hipotese_comercial: texto(r.hipotese_comercial),
-      oferta_id: !nao && idsOferta.has(r.oferta_id) ? r.oferta_id : null,
-      informacoes_faltantes: (Array.isArray(r.informacoes_faltantes) ? r.informacoes_faltantes : []).map(String).filter(Boolean),
-      mensagem_a: nao ? null : a,
-      mensagem_b: nao ? null : b,
-      justificativa_curta: texto(r.justificativa_curta),
-      proxima_acao_sugerida: texto(r.proxima_acao_sugerida),
-      observacao_vendedor: obs || null,
-      vendedor: emailVendedor,
-      modelo: model,
-    }).select().single();
-    if (error) throw error;
+      temperatura: r.temperatura_calculada,
+      score_interesse: r.score_interesse,
+      score_adequacao: r.score_adequacao,
+      confianca: r.confianca,
+      estado: r.estado,
+      estagio: r.estagio,
+      necessidade: r.necessidade,
+      solucao: r.solucao,
+      oferta_id: r.oferta_id,
+      sinais: r.sinais,
+      conhecido: res.analise.conhecido,
+      desconhecido: r.desconhecido,
+      pergunta_prioritaria: r.pergunta_prioritaria,
+      proxima_acao: r.decisao.acao,
+      motivo: r.decisao.motivo,
+      janela: r.horario,
+      analise: res.analise,
+      resumo: res.analise.resumo || null,
+      contexto_hash: res.contexto_hash,
+      ultima_mensagem_id: res.ultima_mensagem_id,
+      prompt_version: res.prompt_version,
+      modelo: res.modelo ?? i?.modelo ?? null,
+      analisado_em: agora,
+      updated_at: agora,
+    }, { onConflict: "lead_id" });
+    if (eIntel) throw eIntel;
 
-    await db.from("atividades").insert({ lead_id, tipo: "rascunho_ia", detalhe: { status: r.status }, usuario: quem });
-    return json({ ok: true, rascunho });
+    await db.from("lead_inteligencia_historico").insert({
+      lead_id, origem: res.analiseReaproveitada ? "regra" : "ia",
+      temperatura: r.temperatura_calculada, score_interesse: r.score_interesse, score_adequacao: r.score_adequacao,
+      confianca: r.confianca, proxima_acao: r.decisao.acao, motivo: r.decisao.motivo,
+      detalhe: { sinais: r.sinais.map((s) => s.codigo), descartados: res.descartados, modo }, prompt_version: res.prompt_version, usuario: quem,
+    });
+
+    let rascunho = null;
+    if (modo === "gerar") {
+      const red = res.redacao;
+      const hipoteses = res.analise.conhecido.filter((f) => f.fonte === "hipotese").map((f) => f.fato);
+      const { data, error } = await db.from("rascunhos_ia").insert({
+        lead_id,
+        status: res.status,
+        objetivo_da_etapa: red?.objetivo || null,
+        evidencias_usadas: r.sinais.filter((s) => s.evidencia_id).map((s) => ({ id: s.evidencia_id, fato: s.detalhe })),
+        hipotese_comercial: hipoteses.length ? `Hipótese: ${hipoteses.join("; ")}` : null,
+        oferta_id: r.oferta_id,
+        informacoes_faltantes: r.desconhecido,
+        mensagem_a: red?.mensagem_a ?? null,
+        mensagem_b: red?.mensagem_b ?? null,
+        justificativa_curta: red?.justificativa || r.decisao.motivo,
+        proxima_acao_sugerida: r.decisao.condicaoRetomar ? `${r.decisao.motivo} ${r.decisao.condicaoRetomar}` : r.decisao.motivo,
+        observacao_vendedor: observacao,
+        vendedor: emailVendedor,
+        modelo: res.modelo,
+        acao: r.decisao.acao,
+        motivo: r.decisao.motivo,
+        temperatura: r.temperatura,
+        score_interesse: r.score_interesse,
+        score_adequacao: r.score_adequacao,
+        confianca: r.confianca,
+        melhor_opcao: red?.melhor_opcao ?? null,
+        mencionar_assunto_anterior: res.analise.mencionar_assunto_anterior,
+        horario: r.horario,
+        condicao_retomar: r.decisao.condicaoRetomar,
+        alertas: red?.alertas ?? [],
+        contexto_hash: res.contexto_hash,
+        ultima_mensagem_id: res.ultima_mensagem_id,
+        etapa: lead.etapa,
+        prompt_version: res.prompt_version,
+        catalogo_versao: config.catalogo_versao,
+      }).select().single();
+      if (error) throw error;
+      rascunho = data;
+    }
+
+    await db.from("atividades").insert({ lead_id, tipo: modo === "gerar" ? "rascunho_ia" : "analise_ia", detalhe: { status: res.status, acao: r.decisao.acao }, usuario: quem });
+    return json({ ok: true, rascunho, recomendacao: r, reaproveitada: res.analiseReaproveitada, evidencia_ids: Object.fromEntries((msgs.data ?? []).map((m: { id: string }) => [idEvidencia(m.id), m.id])) });
   } catch (e) {
-    return json({ erro: String(e?.message ?? e) }, 500);
+    if (e instanceof ErroIA) return json({ erro: e.message, etapa: e.etapa }, 502);
+    return json({ erro: String((e as Error)?.message ?? e) }, 500);
   }
 });

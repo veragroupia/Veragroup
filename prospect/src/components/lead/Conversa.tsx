@@ -3,14 +3,15 @@ import { FileUp, MessageCircle, NotebookPen, Scissors, SendHorizontal, Trash2 } 
 import { useSessao } from '../../lib/sessao'
 import { abrirWhatsApp, excluirMensagem, importarConversa, parseConversa, registrarMensagem, registrarVarias, restaurarMensagem, separarColadas, separarMensagem, type MensagemImportada } from '../../lib/acoes'
 import type { Lead, Mensagem } from '../../lib/tipos'
+import type { Sugerida } from '../../pages/LeadDetalhe'
 import { cx, dataHora, hora, nomeCurto } from '../../lib/util'
 import { useAviso, useExecutar } from '../Aviso'
 import { Modal, Segmentos, Vazio, Linhas } from '../ui'
 
 type Modo = 'enviar' | 'recebida' | 'minha'
 
-export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: {
-  lead: Lead; mensagens: Mensagem[]; carregando: boolean; sugerida: { texto: string; origem: string } | null; followupId?: string
+export function Conversa({ lead, mensagens, carregando, sugerida, followupId, bloqueado = false }: {
+  lead: Lead; mensagens: Mensagem[]; carregando: boolean; sugerida: Sugerida | null; followupId?: string; bloqueado?: boolean
 }) {
   const { eu, nomeDe, equipe } = useSessao()
   const executar = useExecutar()
@@ -66,7 +67,8 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
     if (modo !== 'enviar' && coladas.length) {
       if (await executar(() => registrarVarias(lead.id, coladas, eu!.email), `${coladas.length} ${coladas.length === 1 ? 'mensagem registrada' : 'mensagens registradas'}`)) setTexto('')
     } else if (modo === 'enviar') {
-      const ok = await executar(() => abrirWhatsApp(lead, texto, eu!, texto === sugerida?.texto ? followupId : undefined))
+      const daSugestao = texto === sugerida?.texto
+      const ok = await executar(() => abrirWhatsApp(lead, texto, eu!, daSugestao ? followupId : undefined, daSugestao && sugerida?.rascunho ? { rascunhoId: sugerida.rascunho.id, variante: sugerida.rascunho.variante } : undefined))
       if (ok) setTexto('')
     } else if (texto.trim()) {
       const minha = modo === 'minha'
@@ -102,7 +104,7 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
                         aberta && 'ring-2 ring-sinal/60 ring-offset-2 ring-offset-fundo')}>
                       {m.texto ?? <em className="opacity-60">[mídia]</em>}
                       <span className={cx('block text-[10px] mt-1 text-right font-mono', nossa ? 'text-fundo/50' : 'text-tinta-3')}>
-                        {nossa && m.autor && `${nomeDe(m.autor).split(' ')[0]} · `}{hora(m.enviada_em)}{m.origem !== 'whatsapp' && ` · ${m.origem}`}
+                        {nossa && m.autor && `${nomeDe(m.autor).split(' ')[0]} · `}{hora(m.enviada_em)}{m.origem !== 'whatsapp' && ` · ${m.origem}`}{nossa && m.confirmada == null && m.origem === 'manual' && ' · envio não confirmado'}
                       </span>
                     </button>
                     {aberta && (
@@ -170,7 +172,7 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId }: 
               : modo === 'minha' ? 'Entra como enviada por você, com o horário de agora.' : 'Fica no histórico e move o lead para Respondeu.'}
           </span>
           {modo === 'enviar'
-            ? <button className="btn-wa ml-auto" onClick={confirmar} disabled={!lead.whatsapp && !lead.telefone}><MessageCircle size={15} /> Abrir no WhatsApp</button>
+            ? <button className="btn-wa ml-auto" onClick={confirmar} disabled={bloqueado || (!lead.whatsapp && !lead.telefone)} title={bloqueado ? 'Contato bloqueado' : undefined}><MessageCircle size={15} /> Abrir no WhatsApp</button>
             : <button className="btn-pri ml-auto" onClick={confirmar} disabled={!texto.trim()}>{coladas.length > 1 ? `Registrar ${coladas.length} mensagens` : 'Registrar'}</button>}
         </div>
       </div>

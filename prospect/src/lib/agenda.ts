@@ -121,11 +121,15 @@ export async function carregarHoje(email: string) {
 }
 
 // Mensagem padrão para follow-up que a IA ainda não sugeriu.
+/**
+ * Texto de reserva para follow-up quando ainda não há sugestão da IA válida para o momento.
+ * Sem cobrança ("conseguiu ver?"), sem exemplo que não existe e sem promessa de Google.
+ */
 export function textoFollowup(tentativa: number, nome: string) {
   const n = nomeCurto(nome)
-  if (tentativa <= 1) return `Oi, tudo bem? Passando pra saber se você conseguiu ver minha mensagem sobre a ${n}. Posso te mostrar em 2 minutos como ficaria?`
-  if (tentativa === 2) return `Oi! Separei um exemplo de site que fizemos pra um negócio parecido com a ${n}. Quer que eu te mande aqui?`
-  return `Última vez que te chamo por aqui, prometo. Se fizer sentido conversar sobre a ${n} aparecer melhor no Google, é só me responder. Se não for o momento, tudo bem também!`
+  if (tentativa <= 1) return `Oi, tudo bem? Me tira uma dúvida rápida sobre a ${n}: hoje os pedidos chegam mais pelo WhatsApp ou pelo Instagram?`
+  if (tentativa === 2) return `Oi! Se ajudar, consigo te mostrar uma ideia de como os produtos da ${n} ficariam organizados numa página só, sem compromisso. Faz sentido pra vocês?`
+  return `Oi! Não quero encher sua caixa de mensagens. Se em algum momento fizer sentido organizar a apresentação da ${n}, é só me chamar por aqui.`
 }
 
 export const etapaAtiva = (e: Etapa) => !['fechado', 'perdido', 'descartado'].includes(e)

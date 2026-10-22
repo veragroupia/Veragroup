@@ -9,6 +9,7 @@ import { invalidar } from './lib/dados'
 import { cx } from './lib/util'
 import { AvisoProvider } from './components/Aviso'
 import { Comando } from './components/Comando'
+import { ConfirmarEnvios } from './components/ConfirmarEnvios'
 import { Avatar, Esqueleto } from './components/ui'
 import { Marca } from './components/Marca'
 import Login from './pages/Login'
@@ -67,6 +68,7 @@ function useTema() {
 const TEMPO_REAL: Record<string, string> = {
   leads: 'leads', mensagens: 'mensagens', followups: 'followups', agenda: 'agenda',
   clientes: 'clientes', projetos: 'projetos', propostas: 'propostas', fin_lancamentos: 'fin', rascunhos_ia: 'rascunhos_ia',
+  lead_inteligencia: 'lead_inteligencia', envios: 'envios', contatos_bloqueados: 'contatos_bloqueados',
 }
 
 function useRealtime(ativo: boolean) {
@@ -232,6 +234,7 @@ function Shell() {
       )}
 
       {comando && <Comando onFechar={() => setComando(false)} />}
+      <ConfirmarEnvios />
     </div>
   )
 }
