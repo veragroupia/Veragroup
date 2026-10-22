@@ -34,7 +34,7 @@ async function inserirMensagens(linhas: Record<string, unknown>[]) {
 export async function abrirWhatsApp(
   lead: Pick<Lead, 'id' | 'whatsapp' | 'telefone' | 'responsavel'>, texto: string, eu: Membro, followupId?: string,
   origem: { rascunhoId?: string; variante?: 'a' | 'b' } = {},
-): Promise<{ id: string } | null> {
+): Promise<{ id: string } | { id: null; semRegistro: true } | null> {
   const numero = numeroWa(lead.whatsapp, lead.telefone)
   if (!numero) throw new Error('Este lead não tem telefone.')
   await garantirNaoBloqueado(lead)
@@ -54,11 +54,10 @@ export async function abrirWhatsApp(
   }).select('id').single()
 
   if (error) {
-    // Sem a tabela `envios` (migration 0004 não aplicada): comportamento antigo, para nada parar de funcionar.
-    if (!leitura && msg.trim()) await supabase.from('mensagens').insert({ lead_id: lead.id, direcao: 'enviada', texto: msg, origem: 'manual', autor: eu.email })
-    if (followupId) await supabase.from('followups').update({ status: 'feito', feito_em: new Date().toISOString(), feito_por: eu.email }).eq('id', followupId)
-    invalidar('leads', 'mensagens', 'followups', 'atividades')
-    return null
+    // Sem a tabela `envios` (migration 0004 não aplicada) não há como pedir a confirmação depois.
+    // Abrir o WhatsApp não prova envio: nada é gravado como enviado. Quem enviou registra na Conversa ("Minha mensagem").
+    invalidar('leads', 'atividades')
+    return { id: null, semRegistro: true }
   }
   invalidar('leads', 'envios', 'atividades')
   return leitura ? null : (data as { id: string })
@@ -69,7 +68,9 @@ async function garantirNaoBloqueado(lead: Pick<Lead, 'id' | 'whatsapp' | 'telefo
   const chaves = [telefoneChave(lead.whatsapp), telefoneChave(lead.telefone)].filter(Boolean) as string[]
   const filtro = [`lead_id.eq.${lead.id}`, ...chaves.map((c) => `telefone_chave.eq.${c}`)].join(',')
   const { data, error } = await supabase.from('contatos_bloqueados').select('motivo').or(filtro).limit(1)
-  if (!error && data?.length) throw new Error(`Contato bloqueado: ${data[0].motivo}. Nenhuma mensagem comercial.`)
+  // Tabela ainda não criada (migration 0004 não aplicada): não há bloqueio registrado. Qualquer outra falha: não arrisca.
+  if (error && !['42P01', 'PGRST205'].includes(error.code ?? '')) throw new Error('Não deu para conferir se o contato pediu para não receber mensagens. Tente de novo em instantes.')
+  if (data?.length) throw new Error(`Contato bloqueado: ${data[0].motivo}. Nenhuma mensagem comercial.`)
 }
 
 /** A pessoa confirmou que enviou: agora sim a mensagem entra no histórico (e o banco agenda o follow-up). */
@@ -223,4 +224,10 @@ export async function importarConversa(lead_id: string, msgs: MensagemImportada[
   }
   invalidar('mensagens', 'leads', 'followups')
   return novas.length
+}
+
+/** Aviso depois de abrir o WhatsApp sem tabela de envios: nada foi registrado como enviado. */
+export const AVISO_SEM_REGISTRO = 'WhatsApp aberto. O envio não foi registrado: se você mandou, registre na Conversa em "Minha mensagem".'
+export function semRegistro(r: unknown): boolean {
+  return !!r && typeof r === 'object' && 'semRegistro' in r
 }

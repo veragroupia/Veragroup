@@ -4,8 +4,10 @@ import type { Confianca, JanelaContato, TipoJanela } from './tipos.ts'
 
 /* Melhor momento para falar com o lead, em ordem de força:
    1. data que o cliente pediu · 2. pergunta dele esperando resposta · 3. padrão real de respostas
-   4. hábito do segmento (hipótese) · 5. janela comercial genérica (hipótese).
-   Nunca sai das janelas permitidas na configuração e nunca recomenda horário para quem pediu para parar. */
+   4. horário de funcionamento verificado pela equipe · 5. hábito do segmento (hipótese) · 6. janela comercial genérica (hipótese).
+   Prospecção nunca sai das janelas permitidas na configuração. Responder quem escreveu não é prospecção:
+   vale de 08:00 às 21:00, qualquer dia, para não atrasar um cliente que está esperando.
+   Nunca recomenda horário para quem pediu para parar. */
 
 interface Faixa { inicio: string; fim: string }
 
@@ -27,7 +29,14 @@ export interface EntradaHorario {
   leadAguarda: boolean
   respostas: { em: string }[]
   nicho: string | null
+  /** false = o cliente falou "semana que vem" sem dizer o dia. */
+  retornoExato?: boolean
+  /** Horário de funcionamento verificado pela equipe. */
+  funcionamento?: { inicio: string; fim: string } | null
 }
+
+/** Janela para responder quem escreveu: não é prospecção, então não espera a janela comercial ideal. */
+const RESPOSTA = { inicio: '08:00', fim: '21:00' }
 
 export function recomendarHorario(e: EntradaHorario): JanelaContato | null {
   if (e.bloqueado) return null
@@ -39,16 +48,19 @@ export function recomendarHorario(e: EntradaHorario): JanelaContato | null {
     const venceu = r <= agora
     const base = venceu ? agora : r
     const j = proximaJanela(base, { inicio: hhmm(base, fuso), fim: '23:59' }, config)
-    if (j) return montar('compromisso', j, fuso, venceu ? 'Retorno combinado (venceu, faça hoje)' : `Retorno combinado para ${dia(r, fuso)}`,
-      'O cliente pediu para conversar nessa data', 'alta', true)
+    const exato = e.retornoExato !== false
+    if (j) return montar('compromisso', j, fuso,
+      venceu ? 'Retorno combinado (venceu, faça hoje)' : exato ? `Retorno combinado para ${dia(r, fuso)}` : `A partir de ${dia(r, fuso)} (dia não combinado)`,
+      exato ? 'O cliente pediu para conversar nessa data' : 'O cliente falou em um período ("semana que vem"), sem dia certo. A data é só referência',
+      exato ? 'alta' : 'media', exato)
   }
 
   if (e.leadAguarda) {
-    const j = proximaJanela(agora, { inicio: '00:00', fim: '23:59' }, config)
+    const j = proximaJanela(agora, RESPOSTA, { ...config, janelas: [RESPOSTA], apenas_dias_uteis: false })
     if (j) {
       const ja = j.inicio <= new Date(agora.getTime() + 60e3)
-      return montar('agora', j, fuso, ja ? 'Agora' : `Assim que abrir a janela: ${dia(j.inicio, fuso)} às ${hhmm(j.inicio, fuso)}`,
-        'O cliente escreveu e está esperando resposta', 'alta', false)
+      return montar('agora', j, fuso, ja ? 'Agora' : `${dia(j.inicio, fuso)} a partir das ${hhmm(j.inicio, fuso)}`,
+        'O cliente escreveu e está esperando resposta. Responder não precisa esperar a janela de prospecção', 'alta', false)
     }
   }
 
@@ -57,6 +69,12 @@ export function recomendarHorario(e: EntradaHorario): JanelaContato | null {
     const j = proximaJanela(agora, padrao.faixa, config)
     if (j) return montar('historico', j, fuso, `${dia(j.inicio, fuso)}, ${padrao.faixa.inicio}–${padrao.faixa.fim}`,
       `${padrao.dentro} de ${padrao.total} respostas do cliente chegaram nessa faixa`, padrao.confianca, false)
+  }
+
+  if (e.funcionamento && /^\d{2}:\d{2}$/.test(e.funcionamento.inicio) && /^\d{2}:\d{2}$/.test(e.funcionamento.fim)) {
+    const j = proximaJanela(agora, e.funcionamento, config)
+    if (j) return montar('funcionamento', j, fuso, `${dia(j.inicio, fuso)}, ${hhmm(j.inicio, fuso)}–${hhmm(j.fim, fuso)}`,
+      'Dentro do horário de funcionamento verificado pela equipe. Ainda sem histórico de respostas deste cliente', 'media', false)
   }
 
   const nicho = normalizar(e.nicho)

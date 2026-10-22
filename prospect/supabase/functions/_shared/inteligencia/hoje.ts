@@ -18,6 +18,8 @@ export interface EntradaHoje {
   reuniaoHoje: { data_hora: string } | null
   followup: { agendado_para: string; tentativa: number; motivo: string | null } | null
   proposta: { status: string; enviada_em: string | null; created_at: string } | null
+  /** Quem falou por último pela conversa registrada (mais confiável que as datas do lead, quando disponível). */
+  ultimaDe?: 'lead' | 'vera' | null
 }
 
 export interface ItemHoje { grupo: GrupoHoje; motivo: string; quando: string | null }
@@ -40,7 +42,11 @@ export function classificarHoje(e: EntradaHoje): ItemHoje | null {
     return { grupo: 'compromisso', motivo: 'Retorno agendado pela equipe', quando: e.followup.agendado_para }
   }
 
-  const leadFalouPorUltimo = !!l.ultima_resposta_em && (!l.ultimo_contato_em || new Date(l.ultima_resposta_em) > new Date(l.ultimo_contato_em))
+  // Promessa da Vera ainda não entregue (a regra mandou apresentar a solução sem o cliente ter falado por último).
+  if (e.proximaAcao === 'apresentar_solucao' && e.ultimaDe === 'vera') return { grupo: 'compromisso', motivo: 'Você prometeu mandar algo ao cliente', quando: null }
+
+  const leadFalouPorUltimo = e.ultimaDe !== undefined && e.ultimaDe !== null ? e.ultimaDe === 'lead'
+    : !!l.ultima_resposta_em && (!l.ultimo_contato_em || new Date(l.ultima_resposta_em) > new Date(l.ultimo_contato_em))
   if (leadFalouPorUltimo) return { grupo: 'resposta', motivo: e.temperatura === 'quente' ? 'Pedido do cliente esperando resposta' : 'Cliente respondeu e espera retorno', quando: l.ultima_resposta_em }
 
   if (e.proposta?.status === 'enviada' && e.proposta.enviada_em && dias(e.proposta.enviada_em, e.agora) >= e.diasAguardar) {
@@ -59,9 +65,11 @@ export function classificarHoje(e: EntradaHoje): ItemHoje | null {
     return { grupo: 'acompanhar', motivo: `${e.followup.tentativa}ª tentativa${venceu ? ' (atrasada)' : ''}`, quando: e.followup.agendado_para }
   }
 
+  if (e.proximaAcao === 'fazer_followup') return { grupo: 'acompanhar', motivo: 'Sem resposta: retomar só com algo útil', quando: l.ultimo_contato_em }
+
   if (l.etapa === 'novo' && (l.whatsapp || l.telefone) && !l.ultimo_contato_em) return { grupo: 'primeiro', motivo: 'Novo no radar', quando: null }
 
-  if (l.ultimo_contato_em && (e.temperatura === 'quente' || e.temperatura === 'morno')) {
+  if (l.ultimo_contato_em && (e.temperatura === 'quente' || e.temperatura === 'morno' || e.temperatura === 'desconhecido')) {
     return { grupo: 'aguardar', motivo: `Aguardando resposta desde ${new Date(l.ultimo_contato_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}`, quando: l.ultimo_contato_em }
   }
   return null

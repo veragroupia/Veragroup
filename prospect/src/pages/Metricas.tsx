@@ -5,7 +5,8 @@ import { useSessao } from '../lib/sessao'
 import { ETAPAS, type Atividade, type Etapa, type Lead, type RadarExecucao } from '../lib/tipos'
 import { brl, cx, data, dataHora, nichoValido, pct } from '../lib/util'
 import { Avatar, Erro, Esqueleto, Kpi, Pagina, Secao, Segmentos } from '../components/ui'
-import { AMOSTRA_MINIMA, calcular, enviada, type MsgM, type Taxa } from '../lib/metricas'
+import { AMOSTRA_MINIMA, calcular, enviada, type MsgM, type RascM, type RecebidoM, type Taxa } from '../lib/metricas'
+import { NOME_ACAO, NOME_TEMPERATURA } from '../lib/inteligencia'
 
 type L = Pick<Lead, 'id' | 'etapa' | 'created_at' | 'responsavel' | 'ultimo_contato_em' | 'ultima_resposta_em' | 'fechado_em' | 'valor_mensal' | 'valor_setup' | 'motivo_perda' | 'nicho' | 'cidade' | 'whatsapp' | 'telefone'>
 type Periodo = '7' | '30' | '90'
@@ -22,18 +23,23 @@ export default function Metricas() {
     // Sem a migration 0004, cai para as colunas antigas (todos os envios contam como não confirmados).
     let msgs = await supabase.from('mensagens').select('id, lead_id, direcao, confirmada, origem, enviada_em, autor').limit(50000)
     if (msgs.error) msgs = await supabase.from('mensagens').select('id, lead_id, direcao, origem, enviada_em, autor').limit(50000) as typeof msgs
-    const [envios, intel, hist, rasc, props] = await Promise.all([
+    const [envios, intel, hist, rasc, props, recebidos] = await Promise.all([
       supabase.from('envios').select('status, aberto_em').gte('aberto_em', desdeIso),
-      supabase.from('lead_inteligencia').select('lead_id, estagio, necessidade, sinais'),
+      supabase.from('lead_inteligencia').select('lead_id, estagio, necessidade, sinais, analisado_em'),
       supabase.from('lead_inteligencia_historico').select('lead_id, temperatura, created_at').in('origem', ['ia', 'regra']).order('created_at').limit(20000),
-      supabase.from('rascunhos_ia').select('lead_id, usada, enviada_confirmada_em').not('usada', 'is', null),
+      supabase.from('rascunhos_ia').select('lead_id, usada, enviada_confirmada_em, acao, avaliacao_humana, created_at').limit(20000),
       supabase.from('propostas').select('status, enviada_em'),
+      // Receita efetivamente recebida: lançamentos de receita pagos no período (Financeiro).
+      supabase.from('fin_lancamentos').select('valor, pago_em').eq('tipo', 'receita').gte('pago_em', desdeIso),
     ])
+    // Sem as colunas novas de rascunhos (migration 0005), cai para as antigas.
+    let rascunhos = rasc.data as RascM[] | null
+    if (rasc.error) rascunhos = ((await supabase.from('rascunhos_ia').select('lead_id, usada, enviada_confirmada_em, acao, created_at').limit(20000)).data ?? []) as RascM[]
     return {
       mensagens: (msgs.data ?? []) as MsgM[], envios: envios.data ?? [], intel: intel.data ?? [], historico: hist.data ?? [],
-      rascunhos: (rasc.error ? [] : rasc.data ?? []) as { lead_id: string; usada: 'a' | 'b' | null; enviada_confirmada_em: string | null }[], propostas: props.data ?? [],
+      rascunhos: rascunhos ?? [], propostas: props.data ?? [], recebidos: (recebidos.data ?? []) as RecebidoM[],
     }
-  }, ['mensagens', 'envios', 'lead_inteligencia', 'rascunhos_ia', 'propostas'])
+  }, ['mensagens', 'envios', 'lead_inteligencia', 'rascunhos_ia', 'propostas', 'fin'])
   const ativ = useConsulta(`met:ativ:${periodo}`, () => q<Atividade[]>(supabase.from('atividades')
     .select('id, lead_id, tipo, detalhe, usuario, created_at').gte('created_at', desdeIso).limit(20000)), ['atividades'])
   const notas = useConsulta(`met:av:${periodo}`, () => q<{ nota_geral: number | null }[]>(supabase.from('avaliacoes').select('nota_geral').gte('created_at', desdeIso)), ['avaliacoes'])
@@ -240,12 +246,17 @@ function Comercial({ c }: { c: ReturnType<typeof calcular> }) {
     <div className="grid lg:grid-cols-3 gap-6">
       <Secao titulo="Do radar à conversa">
         {linha('Leads pesquisados', c.pesquisados, 'novos no radar no período')}
+        {linha('Leads analisados', c.analisados, 'pela inteligência comercial, no período')}
         {linha('Aptos a contato', c.aptos, 'abertos e com telefone, agora')}
         {linha('Primeiros contatos confirmados', c.primeirosContatos)}
-        {linha('Resposta humana', fmtTaxa(c.respostaHumana), `${c.respostaHumana.sim} de ${c.respostaHumana.n}`)}
-        {linha('Respostas com informação útil', c.respostasUteis, 'segundo a análise da IA')}
+        {linha('Resposta humana', fmtTaxa(c.respostaHumana), `${c.respostaHumana.sim} de ${c.respostaHumana.n}, qualquer resposta`)}
+        {linha('Resposta sem recusa', fmtTaxa(c.respostaPositiva), `${c.respostasNegativas} ${c.respostasNegativas === 1 ? 'resposta negativa fica' : 'respostas negativas ficam'} fora`)}
+        {linha('Respostas com informação útil', c.respostasUteis, 'segundo a análise da conversa')}
         {linha('Tempo até a resposta (mediana)', horas(c.medianaHorasResposta), `${c.amostraTempo} respostas`)}
-        {(c.legados > 0 || c.naoEnviados > 0) && <p className="text-xs text-tinta-3 mt-2">{c.legados > 0 && c.legados === 1 ? '1 mensagem antiga sem envio comprovado fica fora das contas. ' : `${c.legados} mensagens antigas sem envio comprovado ficam fora das contas. `}{c.naoEnviados > 0 && c.naoEnviados === 1 ? '1 abertura marcada como não enviada.' : `${c.naoEnviados} aberturas marcadas como não enviadas.`}</p>}
+        {(c.legados > 0 || c.naoEnviados > 0) && <p className="text-xs text-tinta-3 mt-2">
+          {c.legados > 0 && (c.legados === 1 ? '1 mensagem antiga sem envio comprovado fica fora das contas. ' : `${c.legados} mensagens antigas sem envio comprovado ficam fora das contas. `)}
+          {c.naoEnviados > 0 && (c.naoEnviados === 1 ? '1 abertura marcada como não enviada.' : `${c.naoEnviados} aberturas marcadas como não enviadas.`)}
+        </p>}
       </Secao>
       <Secao titulo="Da conversa ao contrato">
         {linha('Conversas qualificadas', c.conversasQualificadas, 'retrato de agora')}
@@ -254,18 +265,28 @@ function Comercial({ c }: { c: ReturnType<typeof calcular> }) {
         {linha('Oportunidades ganhas', c.ganhas)}
         {linha('Oportunidades perdidas', c.perdidas, 'no funil hoje')}
         {linha('Receita contratada', c.receitaSetup || c.receitaMensal ? `${brl(c.receitaSetup)} + ${brl(c.receitaMensal)}/mês` : '-', c.fechadosSemValor ? `${c.fechadosSemValor} fechados sem valor informado` : 'quando informada')}
+        {linha('Receita recebida', c.receitaRecebida ? brl(c.receitaRecebida) : '-', 'pagamentos registrados no Financeiro')}
       </Secao>
       <Secao titulo="O que funciona">
         <div className="rotulo mb-1">Por variante de mensagem</div>
-        {linha('Opção A · conversa natural', fmtTaxa(c.variantes.a), `${c.variantes.a.n} envios confirmados`)}
-        {linha('Opção B · abordagem estratégica', fmtTaxa(c.variantes.b), `${c.variantes.b.n} envios confirmados`)}
+        {linha('Opção A · natural', fmtTaxa(c.variantes.a), `${c.variantes.a.n} envios confirmados`)}
+        {linha('Opção B · estratégica', fmtTaxa(c.variantes.b), `${c.variantes.b.n} envios confirmados`)}
+        {c.abordagens.length > 0 && <>
+          <div className="rotulo mt-4 mb-1">Por abordagem</div>
+          {c.abordagens.slice(0, 5).map((x) => linha(NOME_ACAO[x.acao as keyof typeof NOME_ACAO] ?? x.acao, fmtTaxa(x), `${x.sim} de ${x.n} responderam`))}
+        </>}
         <div className="rotulo mt-4 mb-1">Por temperatura inicial</div>
-        {c.porTemperatura.map((t) => linha(t.temperatura[0].toUpperCase() + t.temperatura.slice(1), fmtTaxa(t.resposta), `${t.resposta.n} leads · ${t.fechados} fechados`))}
+        {c.porTemperatura.filter((t) => t.temperatura !== 'desconhecido' || t.resposta.n > 0).map((t) => linha(NOME_TEMPERATURA[t.temperatura as keyof typeof NOME_TEMPERATURA] ?? t.temperatura, fmtTaxa(t.resposta), `${t.resposta.n} leads · ${t.fechados} fechados`))}
         {c.segmentos.length > 0 && <>
           <div className="rotulo mt-4 mb-1">Por segmento</div>
           {c.segmentos.slice(0, 5).map((x) => linha(x.nome, fmtTaxa(x), `${x.sim} de ${x.n} responderam`))}
         </>}
-        <p className="text-xs text-tinta-3 mt-2">Taxas só aparecem com {AMOSTRA_MINIMA} ou mais casos.</p>
+        {(c.avaliacaoHumana.boas + c.avaliacaoHumana.ruins) > 0 && <>
+          <div className="rotulo mt-4 mb-1">Qualidade das sugestões (equipe)</div>
+          {linha('Marcadas como boas', c.avaliacaoHumana.boas)}
+          {linha('Marcadas como ruins', c.avaliacaoHumana.ruins)}
+        </>}
+        <p className="text-xs text-tinta-3 mt-2">Taxas só aparecem com {AMOSTRA_MINIMA} ou mais casos. Notas dadas pela própria IA não entram como resultado.</p>
       </Secao>
     </div>
   )

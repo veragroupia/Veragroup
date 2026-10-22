@@ -4,17 +4,21 @@ import { ArrowLeft, CalendarPlus, ExternalLink, AtSign, FileText, Globe, MapPin,
 import { supabase, chamarFuncao } from '../lib/supabase'
 import { invalidar, q, useConsulta } from '../lib/dados'
 import { useSessao } from '../lib/sessao'
-import { abrirWhatsApp, agendarFollowup, atualizarLead, pularFollowup } from '../lib/acoes'
+import { agendarFollowup, atualizarLead, pularFollowup } from '../lib/acoes'
 import { ETAPAS, ETAPAS_ENCERRADAS, type Avaliacao, type Followup, type Lead, type Mensagem, type RascunhoIA } from '../lib/tipos'
 import { brl, cx, dataHora, diasDesde, nomeCurto, relativo, telefoneBonito } from '../lib/util'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { useMudarEtapa } from '../components/MudarEtapa'
+import { useAbrirWhatsApp } from '../components/useWhatsApp'
 import { clienteDoLead } from '../lib/gestao'
 import { Abas, Campo, Erro, Esqueleto, EtapaTag, Modal, Score } from '../components/ui'
 import { Conversa } from '../components/lead/Conversa'
 import { Avaliacoes } from '../components/lead/Avaliacoes'
-import { PainelInteligencia, ResumoInteligencia, useRecomendacao, type DadosInteligencia } from '../components/lead/Inteligencia'
-import { rascunhoObsoleto, textoRecomendado, useBloqueios, useConfigComercial, type LeadIntel } from '../lib/inteligencia'
+import { PainelInteligencia, ResumoInteligencia, useRecomendacao, type DadosInteligencia, type EstadoPreparo } from '../components/lead/Inteligencia'
+import {
+  analisar, analiseAtual, hashAtual, marcarTentativa, opcaoEscolhida, pausarPreparoAuto, podePrepararAuto, rascunhoObsoleto, textoRecomendado,
+  useBloqueios, useConfigComercial, type LeadIntel,
+} from '../lib/inteligencia'
 import { Reunioes } from '../components/lead/Reunioes'
 import { Historico } from '../components/lead/Historico'
 
@@ -52,31 +56,47 @@ export default function LeadDetalhe() {
   const ultimaAv = avs.data?.[0]
   const mensagens = msgs.data ?? []
   const d: DadosInteligencia = { lead: l, mensagens, intel: intel.data ?? null, bloqueios: bloqueios.data ?? [], config, proposta: proposta.data ?? null }
-  return <Detalhe d={d} aba={aba} setAba={setAba} rascunhos={ras.data} avaliacoes={avs.data} followups={fus.data ?? []} pendente={pendente} ultimaAv={ultimaAv} carregandoMsgs={msgs.carregando} />
+  // Só prepara com tudo carregado (conversa, inteligência, rascunhos, proposta, bloqueios): senão o contexto estaria incompleto.
+  const pronto = !!msgs.data && intel.data !== undefined && !!ras.data && proposta.data !== undefined && !!bloqueios.data
+  return <Detalhe d={d} aba={aba} setAba={setAba} rascunhos={ras.data} avaliacoes={avs.data} followups={fus.data ?? []} pendente={pendente} ultimaAv={ultimaAv} carregandoMsgs={msgs.carregando} pronto={pronto} />
 }
 
-function Detalhe({ d, aba, setAba, rascunhos, avaliacoes, followups, pendente, ultimaAv, carregandoMsgs }: {
+function Detalhe({ d, aba, setAba, rascunhos, avaliacoes, followups, pendente, ultimaAv, carregandoMsgs, pronto }: {
   d: DadosInteligencia; aba: Aba; setAba: (a: Aba) => void; rascunhos?: RascunhoIA[]; avaliacoes?: Avaliacao[]; followups: Followup[]
-  pendente?: Followup; ultimaAv?: Avaliacao; carregandoMsgs: boolean
+  pendente?: Followup; ultimaAv?: Avaliacao; carregandoMsgs: boolean; pronto: boolean
 }) {
   const l = d.lead, mensagens = d.mensagens
   const rec = useRecomendacao(d)
   const ultimaMsg = mensagens[mensagens.length - 1]?.enviada_em ?? null
-  // Sugestão para o botão do WhatsApp: só o que ainda vale para a conversa de agora.
+  const hash = hashAtual(d)
+  const ras = rascunhos?.[0]
+  const valido = !!ras && !rascunhoObsoleto(ras, l, rec.bloqueado, d.config, ultimaMsg, hash)
+  // Sugestão para o botão do WhatsApp: só um rascunho que vale para a conversa de agora.
+  // Textos antigos (radar, follow-up fixo, avaliação antiga) não aparecem como mensagem atual sem reavaliação.
   const sugerida = ((): Sugerida | null => {
-    if (rec.bloqueado) return null
-    const ras = rascunhos?.[0]
-    const valido = ras && !rascunhoObsoleto(ras, l, false, d.config, ultimaMsg)
-    // A última análise disse que não é hora de escrever: nada de sugestão antiga no botão.
-    if (valido && ras.prompt_version && !ras.mensagem_a) return null
-    const texto = valido ? textoRecomendado(ras) : null
-    if (ras && texto) return { texto, origem: `Mensagem da IA (opção ${(ras.melhor_opcao ?? 'A')})`, rascunho: { id: ras.id, variante: (ras.melhor_opcao ?? 'A').toLowerCase() as 'a' | 'b' } }
-    if (pendente?.mensagem_sugerida) return { texto: pendente.mensagem_sugerida, origem: 'Sugestão do follow-up' }
-    if (ultimaAv?.proxima_mensagem && (!ultimaMsg || new Date(ultimaAv.created_at) >= new Date(ultimaMsg)))
-      return { texto: ultimaAv.proxima_mensagem, origem: 'Sugestão da avaliação' }
-    if (!mensagens.length && l.mensagem_inicial) return { texto: l.mensagem_inicial, origem: 'Primeira mensagem do radar' }
-    return null
+    if (rec.bloqueado || !rec.decisao.gerarMensagem || !valido) return null
+    const texto = textoRecomendado(ras)
+    if (!texto) return null
+    const v = opcaoEscolhida(ras)
+    return { texto, origem: `${ras.aprovada_variante ? 'Aprovada' : 'Mensagem da IA'} (opção ${v.toUpperCase()})`, rascunho: { id: ras.id, variante: v } }
   })()
+
+  // Preparo automático: ao abrir um lead elegível sem rascunho válido, prepara uma vez para este contexto.
+  const [preparo, setPreparo] = useState<EstadoPreparo | null>(null)
+  useEffect(() => {
+    if (!pronto || !d.config.preparo_automatico || rec.bloqueado || !(l.whatsapp || l.telefone)) return
+    const precisaRascunho = rec.decisao.gerarMensagem && !valido
+    const precisaAnalise = !rec.decisao.gerarMensagem && mensagens.length > 0 && !analiseAtual(d.intel, mensagens)
+    if (!precisaRascunho && !precisaAnalise) return
+    if (!podePrepararAuto(l.id, hash)) return
+    marcarTentativa(l.id, hash)
+    let vivo = true
+    setPreparo({ estado: 'preparando' })
+    analisar(l.id, precisaRascunho ? 'preparar' : 'analisar', { origem: 'automatico' })
+      .then(() => { if (vivo) setPreparo(null) })
+      .catch((e: Error) => { pausarPreparoAuto(); if (vivo) setPreparo({ estado: 'erro', msg: e.message }) })
+    return () => { vivo = false }
+  }, [pronto, hash, valido, rec.decisao.gerarMensagem, rec.bloqueado]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-28 md:pb-12 animate-entra">
@@ -93,7 +113,7 @@ function Detalhe({ d, aba, setAba, rascunhos, avaliacoes, followups, pendente, u
           ]} />
           <div className="pt-4">
             {aba === 'conversa' && <Conversa lead={l} mensagens={mensagens} carregando={carregandoMsgs} sugerida={sugerida} followupId={pendente?.id} bloqueado={rec.bloqueado} />}
-            {aba === 'inteligencia' && <PainelInteligencia d={d} rascunhos={rascunhos} />}
+            {aba === 'inteligencia' && <PainelInteligencia d={d} rascunhos={rascunhos} preparo={preparo} />}
             {aba === 'avaliacao' && <Avaliacoes lead={l} avaliacoes={avaliacoes} temMensagens={mensagens.length > 0} />}
             {aba === 'reunioes' && <Reunioes lead={l} />}
             {aba === 'historico' && <Historico leadId={l.id} followups={followups} />}
@@ -113,6 +133,7 @@ function Cabecalho({ l, sugerida, followupId, bloqueado, onMensagem }: { l: Lead
   const avisar = useAviso()
   const nav = useNavigate()
   const { mudar, dialogo } = useMudarEtapa()
+  const abrirWa = useAbrirWhatsApp()
   const [menu, setMenu] = useState(false)
   const [avaliando, setAvaliando] = useState(false)
   const idxAtual = ETAPAS.findIndex((e) => e.id === l.etapa)
@@ -146,7 +167,7 @@ function Cabecalho({ l, sugerida, followupId, bloqueado, onMensagem }: { l: Lead
           <button className="btn-sec" onClick={onMensagem}><PenLine size={15} /> Gerar mensagem</button>
           <button className="btn-sec" onClick={avaliar} disabled={avaliando}><Sparkles size={15} className={cx(avaliando && 'animate-pulsa')} /> {avaliando ? 'Avaliando…' : 'Avaliar'}</button>
           {(l.whatsapp || l.telefone) && (
-            <button className="btn-wa" disabled={bloqueado} title={bloqueado ? 'Contato bloqueado' : undefined} onClick={() => executar(() => abrirWhatsApp(l, sugerida?.texto ?? '', eu!, sugerida ? followupId : undefined, sugerida?.rascunho ? { rascunhoId: sugerida.rascunho.id, variante: sugerida.rascunho.variante } : undefined))}>
+            <button className="btn-wa" disabled={bloqueado} title={bloqueado ? 'Contato bloqueado' : undefined} onClick={() => abrirWa(l, sugerida?.texto ?? '', sugerida ? followupId : undefined, sugerida?.rascunho ? { rascunhoId: sugerida.rascunho.id, variante: sugerida.rascunho.variante } : undefined)}>
               <MessageCircle size={16} /> WhatsApp
             </button>
           )}

@@ -7,32 +7,79 @@ export function normalizar(s: string | null | undefined) {
   return (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()
 }
 
+/* Interpretação de falas do cliente. Não decide por palavra solta: "já tenho site, mas quero melhorar"
+   não é desinteresse, "não preciso agora" não é pedido para parar, "não quero perder tempo mandando foto"
+   é uma dificuldade. Só o que é explícito vira regra; o resto fica para a análise da IA, validada depois. */
+
 // Pedido explícito para não receber mais mensagens. Bloqueia qualquer recomendação comercial.
 const PARAR = [
-  /nao (me |nos )?(chame|chamem|mande|mandem|procure|procurem|contate|contatem|liguem?|envie|enviem)( mais)?/,
-  /\b(pare|para|parem) de (me |nos )?(mandar|enviar|chamar|ligar)/,
-  /nao (quero|queremos) (mais )?(receber|ser contatad|que (me|nos) chame)/,
-  /(me |nos )?(tira|tire|remove|remova|exclui|exclua)( (meu|o meu|nosso) (numero|contato))? da (sua |de )?lista/,
+  /\bnao (me |nos )?(chame|chamem|chama|procure|procurem|contate|contatem|ligue|liguem|mande|mandem|manda|envie|enviem) mais\b/,
+  /\bnunca mais (me |nos )?(chame|chamem|procure|procurem|mande|mandem|envie|enviem|ligue|liguem)\b/,
+  /\bnao (me |nos )?(procure|procurem|contate|contatem)\b/,
+  /\bnao (me |nos )?(mande|mandem|envie|enviem) (mais )?(mensage|propaganda|promoc|oferta)/,
+  /\b(pare|parem|para) de (me |nos )?(mandar|enviar|chamar|ligar|encher|perturbar)/,
+  /\bnao (quero|queremos) (mais )?(receber|ser contatad|ser incomodad|que (me|nos) (chame|chamem|mande|mandem|ligue|liguem|procure))/,
+  /\b(me |nos )?(tira|tire|tirar|remove|remova|remover|exclui|exclua|excluir)( (meu|o meu|nosso|o nosso) (numero|contato))? d(a|essa|esta) (sua |de )?lista/,
   /\bsair da lista\b/,
   /\bdescadastr/,
   /\bvou (te )?bloquear\b/,
   /\bisso (e|eh) spam\b/,
-  /nao entre(m)? (mais )?em contato/,
+  /\bnao entre(m)? (mais )?em contato/,
 ]
-// Sem interesse, mas sem pedir para parar: encerra a oportunidade, não bloqueia o contato.
-const SEM_INTERESSE = [
-  /\bnao (tenho|temos|ha) interesse\b/,
+const CONTRASTE = /\b(mas|porem|so que|entretanto|contudo|no entanto|agora)\b(.*)$/
+const QUER_MUDAR = /\b(quero|queria|quer|queremos|gostaria|gostariamos|preciso|precisava|precisamos|pensando em) (melhorar|atualizar|refazer|mudar|trocar|reformular|um novo|uma nova|outro|outra|arrumar|modernizar|deixar melhor)|\bdesatualizad|\b(antig|ultrapassad|feio|fraco|ruim|largad|abandonad|parad)[oa]s?\b|\bnao (funciona|atende|ta bom|esta bom|ta legal|gosto)\b|\bquanto (fica|custa|sai|seria|cobra)|\bvalor|\bpreco|\borcamento|\bcomo funciona/
+const JA_TEM = /\bja (tenho|temos|tem|uso|usamos|fazemos|possuo|possuimos)\b.{0,30}\b(site|cardapio|catalogo|alguem|quem faz|empresa|sistema|pagina|app|aplicativo|landing|loja)/
+const SATISFEITO = /\b(atende|funciona|resolve|serve|da conta|ta otimo|esta otimo|ta bom|esta bom|ta de boa|gosto|gostamos|satisfeit|suficiente|tranquilo)\b/
+const DIFICULDADE = /\bnao (quero|aguento|consigo|da (mais )?pra) (mais )?(perder|ficar perdendo|gastar|ficar gastando|ficar mandando|mandar (foto|tudo)|responder tudo)|\b(perco|perde|perdemos|gasto|gastamos|toma|tomando) (muito )?tempo\b|\bcorreria\b|\bnao (dou|damos) conta\b|\bmuita (gente|mensagem|demanda)\b/
+const SEM_NECESSIDADE_AGORA = [
+  /\bnao (preciso|precisamos|e (o |um bom )?momento|vai dar|da)\b.{0,40}\b(agora|no momento|por enquanto|ainda|esse mes|este mes|esse ano|este ano|nesse momento|neste momento)\b/,
+  /\b(agora|no momento|por enquanto|nesse momento|neste momento),? (nao|ainda nao)\b/,
+  /\bmais (pra|para) frente\b/,
+  /\bnao (e|eh) (o|um bom) momento\b/,
+  /\bfica (pra|para) (depois|outra hora|a proxima|uma proxima)\b/,
+  /\bsem (verba|dinheiro|orcamento) (agora|no momento|por enquanto)/,
+]
+const RECUSA = [
+  /\bnao (tenho|temos|ha) (nenhum )?interesse\b/,
   /\bsem interesse\b/,
-  /\bnao (preciso|precisamos)\b/,
-  /\bnao (quero|queremos)( nao)?[.!]?$/,
-  /\b(obrigad[oa]|valeu),? mas nao\b/,
-  /\bja (tenho|temos) (site|cardapio|catalogo|alguem|quem faz|uma empresa)/,
-  /\bnao e (o )?momento\b/,
+  /\bnao (me |nos )?interessa\b/,
+  /\b(obrigad[oa]|valeu|agradeco),? mas nao\b/,
+  /^nao,? obrigad[oa]/,
+  /^nao (quero|queremos)( nao)?[.!]*$/,
+  /^nao (preciso|precisamos)( nao| disso| de nada)?[,.!]*( obrigad[oa])?[.!]*$/,
+  /\bnao (precisamos|preciso) de (site|cardapio|catalogo|pagina|landing|sistema|nada disso)\b(?!.*\b(agora|momento|ainda)\b)/,
 ]
+const SEM_DIFICULDADE = /\b(funciona|ta funcionando|esta funcionando|da|ta|esta|fica|vai) (bem|tranquilo|de boa|certinho|direitinho)\b|\b(nao|sem) (temos |tenho )?(problema|dificuldade)s?\b|\bda conta\b|\batende (bem|direitinho|tranquilo)\b/
+const PEDIU_TEMPO = /\b(vou|vamos) (pensar|ver|analisar|avaliar|conversar|falar com|decidir|dar uma olhada|ver direitinho)\b|\bdeixa (eu|a gente) (ver|pensar)\b|\b(te|lhe) (falo|aviso|retorno|dou (um )?retorno)\b|\bdepois (te |a gente )?(falo|vejo|retorno|conversa)\b|\bpreciso (pensar|ver com|conversar com|falar com)\b/
+
+/** Pergunta de preço explícita: dá para afirmar sem IA (e a resposta precisa trazer o valor). */
+const PRECO = /\bquanto (custa|fica|sai|cobra|cobram|seria|e|eh|ficaria|sairia)\b|\bqual (e |eh )?(o )?(valor|preco|investimento)\b|\b(me passa|manda|tem) (os |o )?(valores|valor|precos|preco|orcamento)\b|\bvalores\?|\bpreco\?|\borcamento\b/
+
+export type TipoFala = 'parar' | 'quer_melhorar' | 'dificuldade' | 'sem_necessidade_agora' | 'recusa' | 'ja_tem_satisfeito' | 'sem_dificuldade' | 'ja_tem' | 'pediu_tempo'
+
+/** O que uma fala do cliente quer dizer, quando é claro. null = nada explícito (a IA analisa). */
+export function interpretarFala(texto: string | null | undefined): TipoFala | null {
+  const t = normalizar(texto).replace(/[“”"]/g, '')
+  if (!t) return null
+  if (PARAR.some((r) => r.test(t))) return 'parar'
+  const contraste = t.match(CONTRASTE)
+  const jaTem = JA_TEM.test(t)
+  // "já tenho, mas quero melhorar", "está desatualizado", "quanto fica?": interesse, não recusa.
+  if ((contraste && QUER_MUDAR.test(contraste[2])) || (jaTem && QUER_MUDAR.test(t)) || /\bdesatualizad/.test(t)) return 'quer_melhorar'
+  if (DIFICULDADE.test(t)) return 'dificuldade'
+  if (SEM_NECESSIDADE_AGORA.some((r) => r.test(t))) return 'sem_necessidade_agora'
+  if (RECUSA.some((r) => r.test(t))) return 'recusa'
+  if (jaTem && SATISFEITO.test(t)) return 'ja_tem_satisfeito'
+  if (SEM_DIFICULDADE.test(t)) return 'sem_dificuldade'
+  if (jaTem) return 'ja_tem'
+  if (PEDIU_TEMPO.test(t)) return 'pediu_tempo'
+  return null
+}
+
 // O vendedor prometeu entregar algo.
 const PROMESSA = /\b(vou (te |lhe |)?(mandar|enviar|passar|preparar|montar|separar|fazer)|te (mando|envio|passo)|ja (te )?(mando|envio|passo)|preparo (uma|um|o|a))\b/
 // Intenção de combinar retorno ("me chama", "fala comigo"...)
-const RETORNO = /\b(me chama|chama (a gente|nos|de novo)|pode chamar|fala comigo|falamos|conversamos|volt(a|amos|e) a falar|retorna|me procura|entra em contato|me liga|chama ai|me lembra)\b/
+const RETORNO = /\b(me chama|chama (a gente|nos|de novo)|pode chamar|fala comigo|falamos|conversamos|volt(a|amos|e) a falar|retorna|me procura|entra em contato|me liga|chama ai|me lembra|te (chamo|falo|aviso|procuro|retorno)|a gente (se )?fala|vejo isso|vemos isso|decido|resolvo isso)\b/
 const INTERROGATIVA = /^(quanto|qual|quais|como|onde|quando|por ?que|voces (fazem|tem|trabalham)|tem como|da pra|pode|poderia|manda|me (manda|envia|passa)|consegue)\b/
 
 export interface Leitura {
@@ -47,9 +94,21 @@ export interface Leitura {
   perguntaPendente: string | null
   horasDesdeUltima: number | null
   pediuParaParar: Msg | null
+  /** Recusa clara na fala mais recente do cliente. */
   semInteresse: Msg | null
+  /** Interpretação do que o cliente disse desde a nossa última mensagem (o "bloco" atual). */
+  falaAtual: { tipo: TipoFala; msg: Msg } | null
+  /** Ids das mensagens do cliente desde a nossa última mensagem. */
+  blocoAtual: string[]
+  /** Nossa última mensagem fez uma pergunta que ainda não teve resposta. */
+  perguntaNossaPendente: string | null
+  /** Perguntas que a Vera já fez na conversa (para não repetir). */
+  perguntasFeitas: string[]
+  /** Mensagem mais recente do cliente perguntando preço. */
+  pediuPreco: Msg | null
   compromissoVendedor: string | null
-  retornoPedido: { em: string; texto: string; mensagem_id: string } | null
+  /** `exato` = o cliente disse o dia ("amanhã", "dia 12", "quinta"). "Semana que vem" não é dia combinado. */
+  retornoPedido: { em: string; texto: string; mensagem_id: string; exato: boolean } | null
   /** Horários em que o lead respondeu a uma mensagem nossa. */
   respostas: { em: string; aposHoras: number }[]
 }
@@ -80,8 +139,25 @@ export function lerConversa(msgsEntrada: Msg[], agora = new Date(), opcoes: { li
   const ultimaDoLead = recebidas[recebidas.length - 1] ?? null
   // Pedido para parar vale para sempre, até a equipe liberar o contato de propósito.
   const liberado = opcoes.liberadoEm ? +new Date(opcoes.liberadoEm) : -Infinity
-  const pediuParaParar = recebidas.slice().reverse().find((m) => +new Date(m.enviada_em) > liberado && PARAR.some((r) => r.test(normalizar(m.texto)))) ?? null
-  const semInteresse = ultimaDoLead && SEM_INTERESSE.some((r) => r.test(normalizar(ultimaDoLead.texto))) ? ultimaDoLead : null
+  const pediuParaParar = recebidas.slice().reverse().find((m) => +new Date(m.enviada_em) > liberado && interpretarFala(m.texto) === 'parar') ?? null
+
+  // O bloco atual é lido junto ("Já temos cardápio." + "Mas tá desatualizado") e mensagem por mensagem.
+  let falaAtual: Leitura['falaAtual'] = null
+  if (trechoLead.length) {
+    const junto = interpretarFala(trechoLead.map((m) => m.texto ?? '').join('. '))
+    const individual = [...trechoLead].reverse().map((m) => ({ tipo: interpretarFala(m.texto), msg: m })).find((x) => x.tipo)
+    if (junto) falaAtual = { tipo: junto, msg: individual?.tipo === junto ? individual.msg : trechoLead[trechoLead.length - 1] }
+    else if (individual?.tipo) falaAtual = individual as { tipo: TipoFala; msg: Msg }
+  } else if (ultimaDoLead) {
+    const tipo = interpretarFala(ultimaDoLead.texto)
+    if (tipo) falaAtual = { tipo, msg: ultimaDoLead }
+  }
+  const semInteresse = falaAtual?.tipo === 'recusa' ? falaAtual.msg : null
+
+  const pediuPreco = recebidas.slice().reverse().find((m) => PRECO.test(normalizar(m.texto))) ?? null
+  const perguntasFeitas = msgs.filter((m) => m.direcao === 'enviada').flatMap((m) => perguntasDoTexto(m.texto))
+  const ultimaNossa = ultimaDe === 'vera' ? ultima : null
+  const perguntaNossaPendente = ultimaNossa ? perguntasDoTexto(ultimaNossa.texto).pop() ?? null : null
 
   // Promessa só conta se a Vera falou por último (ainda não entregou nada depois).
   let compromissoVendedor: string | null = null
@@ -93,8 +169,8 @@ export function lerConversa(msgsEntrada: Msg[], agora = new Date(), opcoes: { li
 
   let retornoPedido: Leitura['retornoPedido'] = null
   for (const m of recebidas.slice().reverse()) {
-    const em = dataDeRetorno(m.texto, new Date(m.enviada_em))
-    if (em) { retornoPedido = { em: em.toISOString(), texto: (m.texto ?? '').slice(0, 200), mensagem_id: m.id }; break }
+    const r = lerRetorno(m.texto, new Date(m.enviada_em))
+    if (r) { retornoPedido = { em: r.em.toISOString(), texto: (m.texto ?? '').slice(0, 200), mensagem_id: m.id, exato: r.exato }; break }
   }
 
   const respostas: Leitura['respostas'] = []
@@ -111,7 +187,8 @@ export function lerConversa(msgsEntrada: Msg[], agora = new Date(), opcoes: { li
     ultimaDe, ultima, nossasSemResposta, perguntaPendente,
     horasDesdeUltima: ultima ? (agora.getTime() - new Date(ultima.enviada_em).getTime()) / 3600e3 : null,
     pediuParaParar,
-    semInteresse, compromissoVendedor, retornoPedido, respostas,
+    semInteresse, falaAtual, blocoAtual: trechoLead.map((m) => m.id), perguntaNossaPendente, perguntasFeitas, pediuPreco,
+    compromissoVendedor, retornoPedido, respostas,
   }
 }
 
@@ -119,7 +196,20 @@ export function lerConversa(msgsEntrada: Msg[], agora = new Date(), opcoes: { li
 
 const DIAS_SEMANA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
 
-/** Lê a data que o cliente pediu, relativa a quando ele escreveu. Devolve 09:00 no fuso de Brasília. */
+/** Perguntas de um texto (frases terminadas em "?"). */
+export function perguntasDoTexto(texto: string | null | undefined): string[] {
+  return (texto ?? '').split(/(?<=[?.!])\s+|\n+/).map((x) => x.trim()).filter((x) => x.endsWith('?') && x.length > 3)
+}
+
+/** Data que o cliente pediu e se ele disse o dia de fato. */
+export function lerRetorno(texto: string | null, base: Date): { em: Date; exato: boolean } | null {
+  const em = dataDeRetorno(texto, base)
+  if (!em) return null
+  return { em, exato: !/(semana que vem|proxima semana|mes que vem|proximo mes)/.test(normalizar(texto)) }
+}
+
+/** Lê a data que o cliente pediu, relativa a quando ele escreveu. Devolve 09:00 no fuso de Brasília.
+    "Semana que vem" vira a segunda seguinte só como referência: não é horário combinado (ver lerRetorno). */
 export function dataDeRetorno(texto: string | null, base: Date): Date | null {
   const t = normalizar(texto)
   if (!t || !RETORNO.test(t)) return null

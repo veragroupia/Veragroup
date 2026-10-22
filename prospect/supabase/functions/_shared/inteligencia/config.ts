@@ -22,6 +22,10 @@ export interface ConfigComercial {
   catalogo_versao: string
   politica_previas: 'nao_oferecer' | 'demonstracao_quando_pedido' | 'demonstracao_quando_apropriado'
   prompt_version: string
+  /** Preparar o rascunho sozinho ao abrir um lead elegível (sem enviar nada). */
+  preparo_automatico: boolean
+  /** Máximo de leads por preparação em lote (controle de custo de IA). */
+  limite_lote: number
 }
 
 export const PESOS_INTERESSE: Partial<Record<CodigoSinal, number>> = {
@@ -38,6 +42,9 @@ export const PESOS_INTERESSE: Partial<Record<CodigoSinal, number>> = {
   quer_iniciar: 35,
   objecao: 5,
   pediu_retorno_futuro: 0,
+  pediu_tempo: 0,
+  quer_melhorar_atual: 15,
+  sem_necessidade_agora: -15,
   resposta_educada_sem_interesse: -10,
   sem_interesse: -40,
   pediu_para_parar: -100,
@@ -47,7 +54,9 @@ export const PESOS_ADEQUACAO: Partial<Record<CodigoSinal, number>> = {
   necessidade_compativel: 30,
   oferta_no_catalogo: 15,
   relatou_dificuldade: 10,
+  quer_melhorar_atual: 20,
   ja_tem_solucao_satisfatoria: -35,
+  sem_dificuldade: -20,
   fora_do_escopo: -40,
   projeto_complexo: -10,
 }
@@ -68,7 +77,9 @@ export const CONFIG_PADRAO: ConfigComercial = {
   catalogo: null,
   catalogo_versao: CATALOGO_VERSAO_PADRAO,
   politica_previas: 'demonstracao_quando_apropriado',
-  prompt_version: 'vera-sales-v4',
+  prompt_version: 'vera-sales-v5',
+  preparo_automatico: true,
+  limite_lote: 20,
 }
 
 /** Junta a linha do banco com os padrões, ignorando campos vazios ou de tipo errado. */
@@ -97,5 +108,7 @@ export function lerConfig(linha: Partial<Record<keyof ConfigComercial, unknown>>
   set('catalogo_versao', (v) => typeof v === 'string' && v.length > 0)
   set('politica_previas', um('nao_oferecer', 'demonstracao_quando_pedido', 'demonstracao_quando_apropriado'))
   set('prompt_version', (v) => typeof v === 'string' && v.length > 0)
+  set('preparo_automatico', (v) => typeof v === 'boolean')
+  set('limite_lote', inteiro(1, 100))
   return c
 }

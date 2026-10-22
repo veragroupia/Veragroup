@@ -2,24 +2,37 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CalendarCheck, CalendarClock, Check, ChevronDown, Clock, FileText, Flame, Hourglass, MessageCircle, MoreHorizontal, Play, Reply, Sparkles, Trash2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { q, useConsulta } from '../lib/dados'
+import { invalidar, q, useConsulta } from '../lib/dados'
 import { useSessao } from '../lib/sessao'
-import { abrirWhatsApp, adiarFollowup, confirmarEnvio, marcarNaoEnviado, mudarEtapa, pularFollowup } from '../lib/acoes'
-import type { Followup, Lead, RascunhoIA, Reuniao } from '../lib/tipos'
+import { adiarFollowup, confirmarEnvio, marcarNaoEnviado, mudarEtapa, pularFollowup } from '../lib/acoes'
+import type { Followup, Lead, Mensagem, RascunhoIA, Reuniao } from '../lib/tipos'
 import { brl, cx, fimDoDia, hora, inicioDoDia, nomeCurto, preencher as preencherVendedor, relativo, saudacao } from '../lib/util'
-import { carregarHoje, concluido, ehConteudo, mudarStatus, proximoStatus, textoFollowup, type ItemAgenda } from '../lib/agenda'
+import { carregarHoje, concluido, ehConteudo, mudarStatus, proximoStatus, type ItemAgenda } from '../lib/agenda'
 import { situacao, type Lancamento } from '../lib/gestao'
-import { carregarIntel, NOME_ACAO, rascunhoObsoleto, textoRecomendado, useBloqueios, useConfigComercial, type Acao, type JanelaContato, type LeadIntel, type Temperatura } from '../lib/inteligencia'
+import { ERRO_GERAL, prepararEmLote } from '../lib/lote'
+import {
+  analisar, avaliarNoPainel, carregarIntel, hashAtual, NOME_ACAO, opcaoEscolhida, pausarPreparoAuto, rascunhoObsoleto, textoRecomendado, useBloqueios, useConfigComercial,
+  type Acao, type JanelaContato, type LeadIntel, type Temperatura,
+} from '../lib/inteligencia'
 import { classificarHoje, ordenarHoje, type GrupoHoje, type ItemHoje } from '../../supabase/functions/_shared/inteligencia/hoje.ts'
-import { bloqueioDoLead } from '../../supabase/functions/_shared/inteligencia/conversa.ts'
-import { maisRecente } from '../../supabase/functions/_shared/inteligencia/validade.ts'
 import { useAviso, useExecutar } from '../components/Aviso'
 import { useEnviosAbertos } from '../components/ConfirmarEnvios'
+import { useAbrirWhatsApp } from '../components/useWhatsApp'
 import { Temperatura as TagTemperatura } from '../components/lead/Inteligencia'
 import { Erro, EtapaTag, Linhas, Modal, Pagina, Score, Sinal, Vazio } from '../components/ui'
 
-type LeadMin = Pick<Lead, 'id' | 'nome' | 'nicho' | 'cidade' | 'telefone' | 'whatsapp' | 'place_id' | 'score' | 'score_motivos' | 'etapa' | 'responsavel' | 'mensagem_inicial' | 'ultimo_contato_em' | 'ultima_resposta_em' | 'rating' | 'avaliacoes'>
-const CAMPOS = 'id, nome, nicho, cidade, telefone, whatsapp, place_id, score, score_motivos, etapa, responsavel, mensagem_inicial, ultimo_contato_em, ultima_resposta_em, rating, avaliacoes'
+type LeadMin = Pick<Lead, 'id' | 'nome' | 'nicho' | 'cidade' | 'telefone' | 'whatsapp' | 'place_id' | 'score' | 'score_motivos' | 'etapa' | 'responsavel' | 'ultimo_contato_em' | 'ultima_resposta_em' | 'rating' | 'avaliacoes' | 'site' | 'instagram' | 'observacoes' | 'motivo_perda'>
+const CAMPOS = 'id, nome, nicho, cidade, telefone, whatsapp, place_id, score, score_motivos, etapa, responsavel, ultimo_contato_em, ultima_resposta_em, rating, avaliacoes, site, instagram, observacoes, motivo_perda'
+type MsgMin = Pick<Mensagem, 'id' | 'lead_id' | 'direcao' | 'texto' | 'enviada_em' | 'confirmada' | 'origem'>
+
+/** Situação da mensagem de cada item da fila. */
+type SituacaoMsg = 'aprovada' | 'pronta' | 'revisar' | 'preparar' | 'nao_enviar' | 'aberta' | 'reuniao' | 'sem_conversa'
+const NOME_SITUACAO: Record<SituacaoMsg, string> = {
+  aprovada: 'Mensagem aprovada', pronta: 'Rascunho pronto', revisar: 'Rascunho para revisar', preparar: 'Sem rascunho para a conversa de agora',
+  nao_enviar: 'Não enviar agora', aberta: 'WhatsApp aberto, envio ainda não confirmado', reuniao: 'Confirmação da reunião pronta',
+  sem_conversa: 'Conversa não registrada no painel: registre ou importe antes de a IA sugerir',
+}
+const COR_SITUACAO: Record<SituacaoMsg, string> = { aprovada: 'text-ok', pronta: 'text-ok', revisar: 'text-alerta', preparar: 'text-tinta-3', nao_enviar: 'text-tinta-3', aberta: 'text-alerta', reuniao: 'text-ok', sem_conversa: 'text-alerta' }
 
 interface Tarefa {
   chave: string
@@ -30,9 +43,13 @@ interface Tarefa {
   mensagem: string
   temperatura: Temperatura | null
   acao: Acao | null
+  /** A decisão comercial permite escrever agora. */
+  gerarMensagem: boolean
+  situacaoMsg: SituacaoMsg
   janela: JanelaContato | null
   ultimaInteracao: string | null
-  envioPendente: boolean
+  /** Taxa de resposta do segmento, quando há casos suficientes. */
+  segmento: { pct: number; n: number } | null
   followup?: Followup
   reuniao?: Reuniao
   rascunho?: { id: string; variante: 'a' | 'b' }
@@ -43,18 +60,32 @@ const GRUPOS: { grupo: GrupoHoje; titulo: string; dica: string; icone: typeof Re
   { grupo: 'resposta', titulo: 'Esperando a sua resposta', dica: 'O cliente escreveu por último.', icone: Reply },
   { grupo: 'proposta', titulo: 'Propostas pendentes', dica: 'Rascunho sem enviar ou proposta parada.', icone: FileText },
   { grupo: 'quente', titulo: 'Oportunidades quentes', dica: 'Pedido concreto e próximo passo claro.', icone: Flame },
-  { grupo: 'acompanhar', titulo: 'Acompanhar conversas', dica: 'Follow-up do dia, só com algo útil.', icone: Clock },
-  { grupo: 'primeiro', titulo: 'Primeiro contato', dica: 'Os melhores do radar, pelo score.', icone: Sparkles },
+  { grupo: 'acompanhar', titulo: 'Acompanhar conversas', dica: 'Retomar só com algo útil.', icone: Clock },
+  { grupo: 'primeiro', titulo: 'Primeiro contato', dica: 'Os melhores do radar, pelo score e pela resposta do segmento.', icone: Sparkles },
   { grupo: 'aguardar', titulo: 'Aguardando', dica: 'Não mande nada agora.', icone: Hourglass, recolhido: true },
 ]
-const SEM_MENSAGEM: GrupoHoje[] = ['aguardar']
 
 const META_PADRAO = 15
 function lerMeta() {
   try { return Number(localStorage.getItem('vp-meta')) || META_PADRAO } catch { return META_PADRAO }
 }
 
-type RascunhoMin = Pick<RascunhoIA, 'id' | 'lead_id' | 'mensagem_a' | 'mensagem_b' | 'melhor_opcao' | 'created_at' | 'etapa' | 'prompt_version' | 'catalogo_versao' | 'status' | 'enviada_confirmada_em'>
+type RascunhoMin = Pick<RascunhoIA, 'id' | 'lead_id' | 'mensagem_a' | 'mensagem_b' | 'melhor_opcao' | 'created_at' | 'etapa' | 'prompt_version' | 'catalogo_versao' | 'status' | 'enviada_confirmada_em' | 'contexto_hash' | 'texto_editado_a' | 'texto_editado_b' | 'aprovada_variante'>
+const CAMPOS_RASCUNHO = 'id, lead_id, mensagem_a, mensagem_b, melhor_opcao, created_at, etapa, prompt_version, catalogo_versao, status, enviada_confirmada_em, contexto_hash, texto_editado_a, texto_editado_b, aprovada_variante'
+
+/** Mensagens dos leads que já conversaram: a tela Hoje decide com a mesma regra do painel do lead. */
+async function carregarConversas(ids: string[]): Promise<Map<string, MsgMin[]>> {
+  const m = new Map<string, MsgMin[]>()
+  for (let i = 0; i < ids.length; i += 150) {
+    const parte = ids.slice(i, i + 150)
+    let { data, error } = await supabase.from('mensagens').select('id, lead_id, direcao, texto, enviada_em, confirmada, origem').in('lead_id', parte).order('enviada_em')
+    // Banco sem a coluna `confirmada` (migration 0004 não aplicada).
+    if (error) ({ data, error } = await supabase.from('mensagens').select('id, lead_id, direcao, texto, enviada_em, origem').in('lead_id', parte).order('enviada_em') as never)
+    if (error) throw error
+    for (const msg of (data ?? []) as MsgMin[]) (m.get(msg.lead_id) ?? m.set(msg.lead_id, []).get(msg.lead_id)!).push(msg)
+  }
+  return m
+}
 
 export default function Hoje() {
   const { eu, nomeDe } = useSessao()
@@ -62,6 +93,7 @@ export default function Hoje() {
   const [meta, setMeta] = useState(lerMeta)
   const [feitos, setFeitos] = useState<Set<string>>(new Set())
   const [sequencia, setSequencia] = useState<number | null>(null)
+  const [lote, setLote] = useState(false)
   const [verAguardando, setVerAguardando] = useState(false)
   const { config } = useConfigComercial()
   const bloqueios = useBloqueios()
@@ -81,12 +113,12 @@ export default function Hoje() {
     ['reunioes'])
   const intel = useConsulta('hoje:intel', () => carregarIntel(), ['lead_inteligencia'])
   const propostas = useConsulta('hoje:propostas', () =>
-    q<{ lead_id: string | null; status: string; enviada_em: string | null; created_at: string }[]>(supabase.from('propostas').select('lead_id, status, enviada_em, created_at').in('status', ['rascunho', 'enviada']).not('lead_id', 'is', null)),
+    q<{ lead_id: string | null; status: string; enviada_em: string | null; created_at: string }[]>(supabase.from('propostas').select('lead_id, status, enviada_em, created_at').not('lead_id', 'is', null).order('created_at', { ascending: false })),
     ['propostas'])
   const rascunhos = useConsulta('hoje:rascunhos', async () => {
     const desde = new Date(Date.now() - 14 * 86400e3).toISOString()
-    const { data } = await supabase.from('rascunhos_ia').select('id, lead_id, mensagem_a, mensagem_b, melhor_opcao, created_at, etapa, prompt_version, catalogo_versao, status, enviada_confirmada_em')
-      .gte('created_at', desde).order('created_at', { ascending: false })
+    let { data, error } = await supabase.from('rascunhos_ia').select(CAMPOS_RASCUNHO).gte('created_at', desde).order('created_at', { ascending: false })
+    if (error) ({ data } = await supabase.from('rascunhos_ia').select('id, lead_id, mensagem_a, mensagem_b, melhor_opcao, created_at, status').gte('created_at', desde).order('created_at', { ascending: false }) as never)
     const m = new Map<string, RascunhoMin>()
     for (const r of (data ?? []) as RascunhoMin[]) if (!m.has(r.lead_id)) m.set(r.lead_id, r)
     return m
@@ -98,16 +130,21 @@ export default function Hoje() {
     return error ? 0 : count ?? 0
   }, ['mensagens'])
 
-  // Sugestões da avaliação antiga (função avaliar) para quem respondeu, enquanto não houver rascunho válido.
-  const respondidos = useMemo(() => (leads.data ?? []).filter((l) =>
-    l.ultima_resposta_em && (!l.ultimo_contato_em || new Date(l.ultima_resposta_em) > new Date(l.ultimo_contato_em))), [leads.data])
-  const avaliacoes = useConsulta(respondidos.length ? `hoje:sugestoes:${respondidos.map((l) => l.id).join(',')}` : null, async () => {
-    const data = await q<{ lead_id: string; proxima_mensagem: string | null; created_at: string }[]>(supabase.from('avaliacoes')
-      .select('lead_id, proxima_mensagem, created_at').in('lead_id', respondidos.map((l) => l.id)).order('created_at', { ascending: false }))
-    const m = new Map<string, { texto: string; em: string }>()
-    for (const a of data) if (a.proxima_mensagem && !m.has(a.lead_id)) m.set(a.lead_id, { texto: a.proxima_mensagem, em: a.created_at })
+  // Conversa de quem já teve contato: a decisão de cada item sai da mesma regra do painel do lead.
+  const comConversa = useMemo(() => (leads.data ?? []).filter((l) => l.ultimo_contato_em || l.ultima_resposta_em).map((l) => l.id), [leads.data])
+  const conversas = useConsulta(leads.data ? `hoje:conversas:${comConversa.length}:${comConversa[0] ?? ''}` : null, () => carregarConversas(comConversa), ['mensagens'])
+
+  // Aprender com o que já aconteceu: taxa de resposta por segmento (só com 5 casos ou mais).
+  const segmentos = useMemo(() => {
+    const m = new Map<string, { n: number; sim: number }>()
+    for (const l of leads.data ?? []) {
+      if (!l.nicho || !l.ultimo_contato_em) continue
+      const s = m.get(l.nicho) ?? { n: 0, sim: 0 }
+      s.n++; if (l.ultima_resposta_em) s.sim++
+      m.set(l.nicho, s)
+    }
     return m
-  }, ['avaliacoes'])
+  }, [leads.data])
 
   const tarefas = useMemo<Tarefa[]>(() => {
     if (!leads.data) return []
@@ -116,44 +153,51 @@ export default function Hoje() {
     const fuDe = new Map<string, Followup>()
     for (const f of followups.data ?? []) if (!fuDe.has(f.lead_id)) fuDe.set(f.lead_id, f)
     const propDe = new Map<string, { status: string; enviada_em: string | null; created_at: string }>()
+    // A mais recente de cada lead (a mesma que a função usa no hash do contexto).
     for (const p of propostas.data ?? []) if (p.lead_id && !propDe.has(p.lead_id)) propDe.set(p.lead_id, p)
     const enviosDe = new Set((envios.data ?? []).map((e) => e.lead_id))
     const lista: { t: Tarefa; item: ItemHoje; score: number }[] = []
 
     for (const l of leads.data) {
-      const i: LeadIntel | undefined = intel.data?.get(l.id)
-      const bloqueado = !!bloqueioDoLead(l, bloqueios.data ?? [])
-      const ultimaAtividade = maisRecente(l.ultimo_contato_em, l.ultima_resposta_em)
-      // A classificação gravada só vale se for posterior à última mensagem.
-      const fresca = !!i?.analisado_em && (!ultimaAtividade || new Date(i.analisado_em) >= new Date(ultimaAtividade))
-      const temperatura = i?.temperatura_manual ?? i?.temperatura ?? null
-      const acao = fresca ? i?.proxima_acao ?? null : null
+      const i: LeadIntel | null = intel.data?.get(l.id) ?? null
+      const msgs = conversas.data?.get(l.id) ?? []
+      const leadCompleto = l as unknown as Lead
+      const proposta = propDe.get(l.id) ?? null
+      const dados = { lead: leadCompleto, mensagens: msgs as Mensagem[], intel: i, bloqueios: bloqueios.data ?? [], config, proposta }
+      const rec = avaliarNoPainel(dados)
+      // Lead com datas de contato, mas sem nenhuma mensagem registrada: a regra não tem o que ler.
+      const semConversa = !msgs.length && !!(l.ultimo_contato_em || l.ultima_resposta_em)
       const item = classificarHoje({
-        agora, fimDoDia: fimDia, diasAguardar: config.dias_aguardar, lead: l, bloqueado, temperatura, proximaAcao: acao,
-        retornoEm: i?.retorno_em ?? null, reuniaoHoje: reuniaoDe.get(l.id) ?? null, followup: fuDe.get(l.id) ?? null, proposta: propDe.get(l.id) ?? null,
+        agora, fimDoDia: fimDia, diasAguardar: config.dias_aguardar, lead: l, bloqueado: rec.bloqueado, temperatura: rec.temperatura,
+        proximaAcao: semConversa ? null : rec.decisao.acao, retornoEm: rec.retorno_em, reuniaoHoje: reuniaoDe.get(l.id) ?? null, followup: fuDe.get(l.id) ?? null,
+        proposta, ultimaDe: msgs.length ? rec.leitura.ultimaDe : undefined,
       })
       if (!item) continue
-      // Retorno marcado pela equipe depois da última análise: vale a data combinada, não a ação gravada.
-      const acaoFinal: Acao | null = item.grupo === 'compromisso' && i?.retorno_em ? 'retomar_na_data' : acao
       if (item.grupo === 'primeiro' && l.responsavel && l.responsavel !== eu!.email) continue
 
       const ras = rascunhos.data?.get(l.id)
-      const valido = ras && !rascunhoObsoleto(ras as RascunhoIA, l, bloqueado, config)
-      const texto = valido ? textoRecomendado(ras as RascunhoIA) : null
-      const fu = fuDe.get(l.id)
-      const av = avaliacoes.data?.get(l.id)
-      const mensagem = SEM_MENSAGEM.includes(item.grupo) || (valido && ras!.prompt_version && !ras!.mensagem_a) ? ''
-        : texto ?? (item.grupo === 'acompanhar' && fu ? fu.mensagem_sugerida || textoFollowup(fu.tentativa, l.nome) : null)
-        ?? (reuniaoDe.get(l.id) ? `Oi! Tudo certo pra nossa conversa hoje às ${hora(reuniaoDe.get(l.id)!.data_hora)}?` : null)
-        ?? (item.grupo === 'resposta' && av && (!l.ultima_resposta_em || new Date(av.em) >= new Date(l.ultima_resposta_em)) ? av.texto : null)
-        ?? (item.grupo === 'primeiro' ? l.mensagem_inicial ?? '' : '')
+      const ultima = msgs[msgs.length - 1]?.enviada_em ?? null
+      const valido = !!ras && !rascunhoObsoleto(ras, l, rec.bloqueado, config, ultima, hashAtual(dados))
+      const texto = valido && rec.decisao.gerarMensagem ? textoRecomendado(ras as RascunhoIA) : null
+      const reuniao = reuniaoDe.get(l.id)
+      // Só rascunho reavaliado para a conversa de agora. Confirmação de reunião é o único texto fixo (é um fato da agenda).
+      const mensagem = !rec.decisao.gerarMensagem && !reuniao ? '' : texto ?? (reuniao ? `Oi! Tudo certo pra nossa conversa hoje às ${hora(reuniao.data_hora)}?` : '')
+      const gerarMensagem = rec.decisao.gerarMensagem || !!reuniao
+      const situacaoMsg: SituacaoMsg = enviosDe.has(l.id) ? 'aberta' : semConversa && !reuniao ? 'sem_conversa' : !gerarMensagem ? 'nao_enviar'
+        : texto ? (ras!.aprovada_variante ? 'aprovada' : ras!.status === 'revisar' ? 'revisar' : 'pronta') : reuniao ? 'reuniao' : 'preparar'
+      const seg = l.nicho ? segmentos.get(l.nicho) : undefined
+      const segmento = seg && seg.n >= 5 ? { pct: Math.round((seg.sim / seg.n) * 100), n: seg.n } : null
+      // Primeiro contato: score do radar ajustado pela resposta real do segmento (aprendizado), quando há casos suficientes.
+      const score = item.grupo === 'primeiro' && segmento ? l.score * (0.75 + segmento.pct / 200) : l.score
       lista.push({
-        item, score: l.score,
+        item, score,
         t: {
           chave: `${item.grupo}:${l.id}`, grupo: item.grupo, lead: l, item, motivo: item.motivo, mensagem,
-          temperatura, acao: acaoFinal, janela: fresca ? i?.janela ?? null : null, ultimaInteracao: ultimaAtividade, envioPendente: enviosDe.has(l.id),
-          followup: fu, reuniao: reuniaoDe.get(l.id),
-          rascunho: texto && ras ? { id: ras.id, variante: (ras.melhor_opcao ?? 'A').toLowerCase() as 'a' | 'b' } : undefined,
+          temperatura: semConversa ? i?.temperatura_manual ?? i?.temperatura ?? null : rec.temperatura, acao: semConversa ? null : rec.decisao.acao,
+          gerarMensagem: semConversa ? item.grupo !== 'aguardar' : gerarMensagem, situacaoMsg,
+          janela: semConversa ? null : rec.horario, ultimaInteracao: msgs.length ? msgs[msgs.length - 1].enviada_em : [l.ultima_resposta_em, l.ultimo_contato_em].filter(Boolean).sort().pop() ?? null, segmento,
+          followup: fuDe.get(l.id), reuniao,
+          rascunho: texto && ras ? { id: ras.id, variante: opcaoEscolhida(ras) } : undefined,
         },
       })
     }
@@ -162,10 +206,11 @@ export default function Hoje() {
     const vagas = Math.max(0, meta - (contatosHoje.data ?? 0)) + 3
     let primeiros = 0
     return ordenada.filter((x) => x.item.grupo !== 'primeiro' || primeiros++ < vagas).map((x) => x.t)
-  }, [leads.data, followups.data, reunioes.data, intel.data, propostas.data, rascunhos.data, avaliacoes.data, bloqueios.data, envios.data, config, meta, contatosHoje.data, eu])
+  }, [leads.data, followups.data, reunioes.data, intel.data, propostas.data, rascunhos.data, conversas.data, bloqueios.data, envios.data, config, meta, contatosHoje.data, segmentos, eu])
 
   const abertas = tarefas.filter((t) => !feitos.has(t.chave))
-  const acionaveis = abertas.filter((t) => !SEM_MENSAGEM.includes(t.grupo))
+  const acionaveis = abertas.filter((t) => t.gerarMensagem && t.grupo !== 'aguardar')
+  const paraPreparar = acionaveis.filter((t) => t.situacaoMsg === 'preparar')
   const feito = (chave: string) => setFeitos((s) => new Set(s).add(chave))
   const erro = leads.erro ?? followups.erro
 
@@ -178,9 +223,16 @@ export default function Hoje() {
       titulo={`${saudacao()}, ${eu!.nome.split(' ')[0]}.`}
       sub={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
       acoes={acionaveis.length > 0 && (
-        <button className="btn-sinal btn-lg" onClick={() => setSequencia(0)}>
-          <Play size={16} fill="currentColor" /> Começar sequência <span className="numero opacity-80">{acionaveis.length}</span>
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {paraPreparar.length > 0 && (
+            <button className="btn-sec btn-lg" onClick={() => setLote(true)} title="Prepara rascunhos com a IA. Nada é enviado.">
+              <Sparkles size={16} /> Preparar mensagens <span className="numero opacity-70">{paraPreparar.length}</span>
+            </button>
+          )}
+          <button className="btn-sinal btn-lg" onClick={() => setSequencia(0)}>
+            <Play size={16} fill="currentColor" /> Começar sequência <span className="numero opacity-80">{acionaveis.length}</span>
+          </button>
+        </div>
       )}
     >
       {/* Placar do dia */}
@@ -205,12 +257,13 @@ export default function Hoje() {
       <AgendaDeHoje />
 
       {erro && <Erro msg={erro} onTentar={() => { leads.recarregar(); followups.recarregar() }} />}
-      {leads.carregando ? <Linhas n={6} /> : abertas.length === 0 ? (
+      {leads.carregando || (comConversa.length > 0 && !conversas.data && !conversas.erro) ? <Linhas n={6} /> : abertas.length === 0 ? (
         <div className="folha"><Vazio titulo="Fila zerada." icone={<Check size={18} />}>
           Nada pendente agora. Veja o <Link className="underline" to="/funil">funil</Link> ou rode o radar em Configurações para trazer leads novos.
         </Vazio></div>
       ) : (
         <div className="space-y-8">
+          {conversas.erro && <Erro msg={`Não deu para ler as conversas: ${conversas.erro}. A fila usa só as datas dos leads.`} onTentar={conversas.recarregar} />}
           {GRUPOS.map((g) => {
             const itens = abertas.filter((t) => t.grupo === g.grupo)
             if (!itens.length) return null
@@ -243,6 +296,7 @@ export default function Hoje() {
       {sequencia !== null && acionaveis.length > 0 && (
         <Sequencia tarefas={acionaveis} inicio={Math.min(sequencia, acionaveis.length - 1)} onFeito={feito} onFechar={() => setSequencia(null)} />
       )}
+      {lote && <PreparoLote tarefas={paraPreparar} limite={config.limite_lote} onFechar={() => setLote(false)} />}
     </Pagina>
   )
 }
@@ -256,18 +310,21 @@ function Placar({ rotulo, valor, quente, ultimo }: { rotulo: string; valor: numb
   )
 }
 
+
 function LinhaTarefa({ t, responsavel, onAbrir, onSequencia, onFeito }: {
   t: Tarefa; responsavel: string | null; onAbrir: () => void; onSequencia: () => void; onFeito: () => void
 }) {
-  const { eu } = useSessao()
   const executar = useExecutar()
   const avisar = useAviso()
+  const abrirWa = useAbrirWhatsApp()
   const [menu, setMenu] = useState(false)
-  const semMensagem = SEM_MENSAGEM.includes(t.grupo)
+  const semMensagem = !t.gerarMensagem || t.grupo === 'aguardar'
 
   async function whatsapp(e: React.MouseEvent) {
     e.stopPropagation()
-    if (await executar(() => abrirWhatsApp(t.lead, t.mensagem, eu!, t.followup?.id, t.rascunho ? { rascunhoId: t.rascunho.id, variante: t.rascunho.variante } : undefined))) onFeito()
+    // Sem rascunho para a conversa de agora: abre o lead, onde a mensagem é preparada com o contexto atual.
+    if (!t.mensagem) return onAbrir()
+    if (await abrirWa(t.lead, t.mensagem, t.followup?.id, t.rascunho ? { rascunhoId: t.rascunho.id, variante: t.rascunho.variante } : undefined) !== false) onFeito()
   }
 
   return (
@@ -283,10 +340,11 @@ function LinhaTarefa({ t, responsavel, onAbrir, onSequencia, onFeito }: {
           {t.acao && <> · {NOME_ACAO[t.acao]}</>}
           {t.janela && t.grupo !== 'resposta' && <> · {t.janela.rotulo}</>}
           {t.ultimaInteracao && <> · última {relativo(t.ultimaInteracao)}</>}
+          {t.segmento && t.grupo === 'primeiro' && <span title={`${t.segmento.n} contatos neste segmento`}> · segmento responde {t.segmento.pct}%</span>}
           {[t.lead.nicho, t.lead.cidade].filter(Boolean).length > 0 && <span className="hidden lg:inline"> · {[t.lead.nicho, t.lead.cidade].filter(Boolean).join(' · ')}</span>}
           {responsavel && <> · {responsavel}</>}
         </div>
-        {t.envioPendente && <div className="text-[12px] text-alerta mt-0.5">WhatsApp aberto, envio ainda não confirmado</div>}
+        <div className={cx('text-[12px] mt-0.5', COR_SITUACAO[t.situacaoMsg])}>{NOME_SITUACAO[t.situacaoMsg]}</div>
       </div>
       {t.grupo === 'primeiro' && <span className="hidden sm:block"><Score v={t.lead.score} /></span>}
       {!semMensagem && (
@@ -296,7 +354,9 @@ function LinhaTarefa({ t, responsavel, onAbrir, onSequencia, onFeito }: {
       )}
       {semMensagem
         ? <button className="btn-sec btn-sm" onClick={(e) => { e.stopPropagation(); onAbrir() }}>Ver</button>
-        : <button className={t.grupo === 'resposta' ? 'btn-wa btn-sm' : 'btn-sec btn-sm !text-[#1d8f4e] hover:!border-[#1d8f4e]'} onClick={whatsapp}><MessageCircle size={15} /><span className="hidden sm:inline">{t.grupo === 'resposta' ? 'Responder' : 'WhatsApp'}</span></button>}
+        : !t.mensagem
+          ? <button className="btn-sec btn-sm" onClick={(e) => { e.stopPropagation(); onAbrir() }} title="Abrir o lead: a mensagem é preparada ali"><Sparkles size={14} /><span className="hidden sm:inline">Preparar</span></button>
+          : <button className={t.grupo === 'resposta' ? 'btn-wa btn-sm' : 'btn-sec btn-sm !text-[#1d8f4e] hover:!border-[#1d8f4e]'} onClick={whatsapp}><MessageCircle size={15} /><span className="hidden sm:inline">{t.grupo === 'resposta' ? 'Responder' : 'WhatsApp'}</span></button>}
       <div className="relative" onClick={(e) => e.stopPropagation()}>
         <button className="btn-icone w-8 h-8" onClick={() => setMenu((v) => !v)} aria-label="Mais ações"><MoreHorizontal size={16} /></button>
         {menu && (
@@ -331,32 +391,56 @@ function ItemMenu({ children, onClick }: { children: React.ReactNode; onClick: (
 
 /* Modo sequência: um lead por vez, com a mensagem pronta e atalhos de teclado.
    Enter abre o WhatsApp e já passa para o próximo. */
+
+/* Modo sequência: um lead por vez, com a mensagem pronta e atalhos de teclado.
+   Enter abre o WhatsApp; depois a sequência pergunta se a mensagem saiu antes de avançar. */
 function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; inicio: number; onFeito: (c: string) => void; onFechar: () => void }) {
   const { eu } = useSessao()
   const executar = useExecutar()
   const avisar = useAviso()
+  const abrirWa = useAbrirWhatsApp()
   const nav = useNavigate()
   const [lista] = useState(tarefas) // fila congelada: o Realtime não embaralha o que está na tela
   const [i, setI] = useState(inicio)
   const [feitosAqui, setFeitosAqui] = useState(0)
   const t = lista[i]
   const [texto, setTexto] = useState(t?.mensagem ?? '')
-  // Depois de abrir o WhatsApp, a sequência pergunta se a mensagem saiu antes de avançar.
+  // Rascunho preparado aqui mesmo (quando a fila ainda não tinha um para este lead).
+  const [preparados, setPreparados] = useState<Record<string, { texto: string; rascunho: { id: string; variante: 'a' | 'b' } } | 'sem'>>({})
+  const [preparando, setPreparando] = useState(false)
   const [confirmando, setConfirmando] = useState<{ id: string } | null>(null)
   const ocupado = useRef(false)
+  const preparado = t ? preparados[t.lead.id] : undefined
+  const rascunho = preparado && preparado !== 'sem' ? preparado.rascunho : t?.rascunho
+  const original = preparado && preparado !== 'sem' ? preparado.texto : t?.mensagem ?? ''
 
-  useEffect(() => { setTexto(lista[i]?.mensagem ?? ''); setConfirmando(null) }, [i, lista])
+  useEffect(() => { setTexto(original); setConfirmando(null) }, [i, lista, original])
 
   const proximo = () => (i + 1 < lista.length ? setI(i + 1) : (avisar(`Sequência concluída: ${feitosAqui} contatos.`), onFechar()))
+
+  async function preparar() {
+    if (!t || preparando) return
+    setPreparando(true)
+    try {
+      const r = await analisar(t.lead.id, 'preparar', { origem: 'lote' })
+      const ras = r.rascunho
+      const txt = ras ? textoRecomendado(ras) : null
+      setPreparados((p) => ({ ...p, [t.lead.id]: ras && txt ? { texto: txt, rascunho: { id: ras.id, variante: opcaoEscolhida(ras) } } : 'sem' }))
+      if (!txt) avisar('A análise indicou que não é hora de mandar mensagem para este lead.')
+    } catch (e) {
+      avisar((e as Error).message, 'erro')
+    }
+    setPreparando(false)
+  }
 
   async function enviar() {
     if (!t || ocupado.current) return
     if (confirmando) return confirmar(true)
+    if (!texto.trim()) return avisar('Escreva a mensagem ou prepare com a IA antes de abrir o WhatsApp.', 'erro')
     ocupado.current = true
-    let envio: { id: string } | null = null
-    const ok = await executar(async () => { envio = await abrirWhatsApp(t.lead, texto, eu!, t.followup?.id, texto === t.mensagem && t.rascunho ? { rascunhoId: t.rascunho.id, variante: t.rascunho.variante } : undefined) })
+    const envio = await abrirWa(t.lead, texto, t.followup?.id, texto === original && rascunho ? { rascunhoId: rascunho.id, variante: rascunho.variante } : undefined)
     ocupado.current = false
-    if (!ok) return
+    if (envio === false) return
     if (envio) setConfirmando(envio)
     else { onFeito(t.chave); setFeitosAqui((n) => n + 1); proximo() }
   }
@@ -364,7 +448,7 @@ function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; 
     if (!t || !confirmando || ocupado.current) return
     ocupado.current = true
     const ok = await executar(() => enviou
-      ? confirmarEnvio({ id: confirmando.id, lead_id: t.lead.id, texto: preencherVendedor(texto, eu!.nome), followup_id: t.followup?.id ?? null, rascunho_id: t.rascunho?.id ?? null, variante: t.rascunho?.variante ?? null }, eu!)
+      ? confirmarEnvio({ id: confirmando.id, lead_id: t.lead.id, texto: preencherVendedor(texto, eu!.nome), followup_id: t.followup?.id ?? null, rascunho_id: rascunho?.id ?? null, variante: rascunho?.variante ?? null }, eu!)
       : marcarNaoEnviado(confirmando.id))
     ocupado.current = false
     if (!ok) return
@@ -390,6 +474,7 @@ function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; 
       if (e.key === 'ArrowLeft' && i > 0) setI(i - 1)
       if (e.key.toLowerCase() === 'd' && !confirmando) descartar()
       if (e.key.toLowerCase() === 'n' && confirmando) confirmar(false)
+      if (e.key.toLowerCase() === 'g' && !texto.trim()) preparar()
     }
     window.addEventListener('keydown', f)
     return () => window.removeEventListener('keydown', f)
@@ -414,7 +499,7 @@ function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; 
       </> : <>
         {t.grupo === 'primeiro' && <button className="btn-sec" onClick={descartar}>Descartar <span className="tecla hidden md:inline-flex">D</span></button>}
         <button className="btn-sec" onClick={pular}>{t.followup ? 'Adiar' : 'Pular'} <span className="tecla hidden md:inline-flex">→</span></button>
-        <button className="btn-wa" onClick={enviar}><MessageCircle size={16} /> Abrir WhatsApp <span className="tecla hidden md:inline-flex !bg-white/15 !border-white/20 !text-white">Enter</span></button>
+        <button className="btn-wa" onClick={enviar} disabled={!texto.trim()}><MessageCircle size={16} /> Abrir WhatsApp <span className="tecla hidden md:inline-flex !bg-white/15 !border-white/20 !text-white">Enter</span></button>
       </>}
     </>}>
       <div key={t.chave} className="animate-entra">
@@ -423,7 +508,10 @@ function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; 
             <button className="text-xl font-semibold hover:underline text-left" onClick={() => { onFechar(); nav(`/leads/${l.id}`) }}>{nomeCurto(l.nome)}</button>
             <div className="text-sm text-tinta-3 mt-0.5">{[l.nicho, l.cidade].filter(Boolean).join(' · ')}{l.rating ? ` · nota ${String(l.rating).replace('.', ',')} (${l.avaliacoes})` : ''}</div>
           </div>
-          <div className="text-right shrink-0"><EtapaTag etapa={l.etapa} /><div className="mt-1.5"><Score v={l.score} /></div></div>
+          <div className="text-right shrink-0">
+            <EtapaTag etapa={l.etapa} />
+            <div className="mt-1.5 flex items-center justify-end gap-2">{t.temperatura && <TagTemperatura t={t.temperatura} />}<Score v={l.score} /></div>
+          </div>
         </div>
 
         <div className={cx('mt-4 text-sm', t.grupo === 'resposta' ? 'text-sinal' : 'text-tinta-2')}>{t.motivo}{t.acao && <span className="text-tinta-3"> · {NOME_ACAO[t.acao]}</span>}{t.janela && <span className="text-tinta-3"> · {t.janela.rotulo}</span>}</div>
@@ -435,12 +523,83 @@ function Sequencia({ tarefas, inicio, onFeito, onFechar }: { tarefas: Tarefa[]; 
         <label className="block mt-5">
           <span className="lbl flex justify-between"><span>Mensagem</span><span className="normal-case tracking-normal">{'{vendedor}'} vira {eu!.nome.split(' ')[0]}</span></span>
           <textarea className="inp text-[15px]" rows={6} value={texto} onChange={(e) => setTexto(e.target.value)}
-            placeholder={t.grupo === 'resposta' ? 'Leia a conversa e responda. A aba Inteligência do lead sugere a próxima mensagem.' : ''} />
+            placeholder={preparado === 'sem' ? 'A análise indicou que não é hora de mandar mensagem. Pule ou escreva você mesmo.' : 'Ainda sem rascunho para a conversa de agora. Prepare com a IA ou escreva você mesmo.'} />
         </label>
+        {!texto.trim() && preparado !== 'sem' && (
+          <button className="btn-sec btn-sm mt-2" onClick={preparar} disabled={preparando}>
+            <Sparkles size={14} className={cx(preparando && 'animate-pulsa')} /> {preparando ? 'Preparando…' : 'Preparar com IA'} <span className="tecla hidden md:inline-flex">G</span>
+          </button>
+        )}
         <p className="hidden md:block text-xs text-tinta-3 mt-4">
-          <span className="tecla">Enter</span> abre o WhatsApp e avança · <span className="tecla">→</span> {t.followup ? 'adia 1 dia' : 'pula'} · <span className="tecla">←</span> volta · dentro do texto use <span className="tecla">Ctrl Enter</span>
+          <span className="tecla">Enter</span> abre o WhatsApp · <span className="tecla">→</span> {t.followup ? 'adia 1 dia' : 'pula'} · <span className="tecla">←</span> volta · dentro do texto use <span className="tecla">Ctrl Enter</span>
         </p>
       </div>
+    </Modal>
+  )
+}
+
+/* Preparação em lote: rascunhos para a fila do dia. Nada é enviado: a equipe revisa cada um na sequência ou no lead. */
+type EstadoLote = 'na_fila' | 'preparando' | 'pronto' | 'sem_mensagem' | 'reaproveitado' | 'erro' | 'cancelado'
+const NOME_LOTE: Record<EstadoLote, string> = {
+  na_fila: 'Na fila', preparando: 'Preparando…', pronto: 'Rascunho pronto', sem_mensagem: 'Não é hora de mensagem',
+  reaproveitado: 'Já tinha rascunho válido', erro: 'Erro', cancelado: 'Cancelado',
+}
+
+function PreparoLote({ tarefas, limite, onFechar }: { tarefas: Tarefa[]; limite: number; onFechar: () => void }) {
+  const [marcados, setMarcados] = useState<Set<string>>(() => new Set(tarefas.slice(0, limite).map((t) => t.lead.id)))
+  const [estado, setEstado] = useState<Record<string, { e: EstadoLote; msg?: string }>>({})
+  const [rodando, setRodando] = useState(false)
+  const parar = useRef(false)
+  const feitos = Object.values(estado).filter((x) => !['na_fila', 'preparando'].includes(x.e)).length
+  const total = Object.keys(estado).length
+
+  async function rodar() {
+    const ids = tarefas.map((t) => t.lead.id).filter((id) => marcados.has(id)).slice(0, limite)
+    if (!ids.length) return
+    parar.current = false
+    setRodando(true)
+    setEstado(Object.fromEntries(ids.map((id) => [id, { e: 'na_fila' as EstadoLote }])))
+    const res = await prepararEmLote(ids, (id) => analisar(id, 'preparar', { origem: 'lote', semInvalidar: true }), {
+      concorrencia: 2, limite, parar: () => parar.current,
+      aoMudar: (id, e, msg) => setEstado((s) => ({ ...s, [id]: { e, msg } })),
+    })
+    if (res.some((r) => r.estado === 'erro' && ERRO_GERAL.test(r.erro ?? ''))) pausarPreparoAuto()
+    setRodando(false)
+    invalidar('rascunhos_ia', 'lead_inteligencia', 'atividades')
+  }
+
+  return (
+    <Modal largura="max-w-xl" onFechar={() => { parar.current = true; onFechar() }} titulo="Preparar mensagens"
+      rodape={<>
+        <button className="btn-fantasma mr-auto" onClick={() => { parar.current = true; onFechar() }}>{total && !rodando ? 'Fechar' : 'Cancelar'}</button>
+        {rodando
+          ? <button className="btn-sec" onClick={() => { parar.current = true }}>Parar</button>
+          : <button className="btn-pri" disabled={!marcados.size} onClick={rodar}><Sparkles size={15} /> Preparar {Math.min(marcados.size, limite)}</button>}
+      </>}>
+      <p className="text-sm text-tinta-2">A IA prepara um rascunho para cada lead marcado, com a conversa de agora. <b className="font-medium">Nada é enviado.</b> Leads bloqueados não entram, e quem já tem rascunho válido não gasta IA de novo.</p>
+      <p className="text-xs text-tinta-3 mt-1">Até {limite} por vez (ajuste em Configurações › Inteligência).</p>
+      {total > 0 && (
+        <div className="mt-4">
+          <div className="h-1.5 rounded-full bg-realce overflow-hidden"><div className="h-full bg-tinta transition-all" style={{ width: `${(feitos / total) * 100}%` }} /></div>
+          <p className="text-xs text-tinta-3 mt-1 numero">{feitos}/{total}</p>
+        </div>
+      )}
+      <ul className="mt-4 divide-y divide-fio max-h-[50vh] overflow-y-auto -mx-1">
+        {tarefas.map((t, n) => {
+          const st = estado[t.lead.id]
+          return (
+            <li key={t.lead.id} className="flex items-center gap-3 px-1 py-2">
+              <input type="checkbox" className="accent-current" disabled={rodando || n >= limite && !marcados.has(t.lead.id)} checked={marcados.has(t.lead.id)}
+                onChange={(e) => setMarcados((m) => { const x = new Set(m); if (e.target.checked) x.add(t.lead.id); else x.delete(t.lead.id); return x })} />
+              <span className="flex-1 min-w-0 truncate text-sm">{nomeCurto(t.lead.nome)} <span className="text-tinta-3">· {t.motivo}</span></span>
+              {st && <span className={cx('text-xs whitespace-nowrap', st.e === 'erro' ? 'text-sinal' : st.e === 'pronto' || st.e === 'reaproveitado' ? 'text-ok' : 'text-tinta-3')} title={st.msg}>{NOME_LOTE[st.e]}</span>}
+            </li>
+          )
+        })}
+      </ul>
+      {Object.values(estado).some((x) => x.e === 'erro') && (
+        <p className="text-sm text-sinal mt-3">Erro: {Object.values(estado).find((x) => x.e === 'erro')?.msg}</p>
+      )}
     </Modal>
   )
 }

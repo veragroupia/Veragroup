@@ -25,50 +25,77 @@ Centro de gestão da Vera Group (antes Vera Prospect): prospecção, propostas, 
 
 As tabelas ficam em `supabase/migrations/0002_gestao.sql`. Nenhuma tabela da prospecção foi alterada.
 
-## Inteligência comercial (V4)
+## Inteligência comercial (V5)
 
-Aba **Inteligência** na página do lead. Ela substitui a antiga "Mensagem IA". Cada lead recebe:
+Ao abrir um lead, o painel responde: **qual é a melhor coisa a fazer agora?** A resposta pode ser:
+- perguntar;
+- responder o preço;
+- apresentar a solução;
+- enviar a proposta;
+- aguardar;
+- encerrar.
 
-- temperatura (frio, morno, quente) por evidência;
-- interesse e adequação de 0 a 100, separados;
-- confiança da análise;
-- situação do contato;
-- a próxima ação, que pode ser "aguardar";
-- o melhor horário, com o nível de certeza;
-- quando faz sentido escrever, duas opções de mensagem: A (conversa natural) e B (abordagem estratégica).
+Quando faz sentido escrever, o rascunho aparece pronto na aba **Inteligência**. **Nada é enviado sozinho.**
 
-**Onde está cada coisa**
+**Como funciona (cinco etapas)**
+1. **Compreender.** As regras leem a conversa: quem falou por último, o que ficou pendente, retornos combinados e frases como "não preciso agora" ou "já tenho, mas quero melhorar".
+2. **Qualificar.** A IA classifica sinais, sempre citando a mensagem **do cliente** que prova cada um. Ela também atualiza a **memória do lead**:
+   - o que já foi respondido;
+   - necessidades e objeções;
+   - compromissos;
+   - ofertas já feitas;
+   - o que se sabe de situação, problema, impacto e valor (SPIN) e de desafio, quem decide, condições e prioridade (CHAMP).
+3. **Decidir.** As regras definem a temperatura (frio, interesse desconhecido, morno, quente), a ação e o melhor horário. Também decidem se ainda é hora de descobrir ou já é **hora de vender**, se cabe uma pergunta e sobre o quê. Intenção antiga ou desmentida depois não conta.
+4. **Comunicar.** A IA escreve até duas opções diferentes (A natural, B estratégica) dentro dessas diretrizes. Cada opção passa por uma **checagem objetiva**:
+   - preço fora do catálogo;
+   - elogio ou "vi seu site" sem verificação;
+   - pergunta repetida;
+   - pedido de preço ignorado;
+   - jargão e tamanho.
 
-- `supabase/functions/_shared/inteligencia/`: as regras, em TypeScript puro, usadas pelo painel e pela função.
-  - `pontuacao.ts`: pesos, temperatura e confiança.
-  - `decisao.ts`: próxima ação.
-  - `horario.ts`: melhor momento.
-  - `conversa.ts`: leitura da conversa, pedidos para parar e datas combinadas.
-  - `validade.ts`: quando uma sugestão fica velha.
-  - `contrato.ts`: validação Zod da resposta da IA.
-  - `prompts.ts`: instruções versionadas (`vera-sales-v4`).
-  - `motor.ts`: junta regras e IA.
-- `supabase/functions/mensagem/`: a função faz duas chamadas.
-  1. Análise: classifica sinais com o id da mensagem que prova cada um. Ela é reaproveitada enquanto a conversa não muda.
-  2. Redação: só roda quando as regras permitem uma mensagem.
-- `src/lib/inteligencia.ts`: leitura das tabelas e ajustes manuais (temperatura, retorno combinado, não contatar).
-- `src/components/lead/Inteligencia.tsx`: o painel do lead.
-- `src/components/ConfigInteligencia.tsx`: estilo, catálogo, pesos e lista de "não contatar" (Configurações › Inteligência).
-- `src/lib/metricas.ts`: as contas da tela Métricas.
+   Problema grave deixa o rascunho em "revisar".
+5. **Aprender.**
+   - Só contam envios confirmados e respostas reais.
+   - Respostas negativas não contam como sucesso.
+   - A taxa de resposta por segmento ajusta a ordem do primeiro contato quando há 5 casos ou mais.
+   - A equipe marca cada sugestão como boa ou ruim.
 
-**Envio confirmado.** Abrir o WhatsApp não conta mais como envio. Fica um registro em `envios` e o painel pergunta "Você enviou a mensagem?". Só o "Enviei" grava a mensagem como enviada e cria o follow-up. Mensagens antigas ficam como "envio não confirmado" e não entram nas taxas.
+**No painel**
+- **Lead:** o rascunho é preparado sozinho ao abrir um lead elegível, uma vez por contexto: não gera de novo a cada visita. A edição é salva sem apagar o texto gerado, e dá para aprovar, copiar, regenerar e abrir no WhatsApp. A memória do lead pode ser corrigida pela equipe:
+  - confirmar uma hipótese;
+  - marcar um item como errado;
+  - adicionar um fato;
+  - informar o horário de funcionamento.
+- **Hoje:** a fila usa a mesma decisão do lead e mostra a situação da mensagem de cada item. **Preparar mensagens** faz o lote, até 20 por vez, dois em paralelo, e para se a IA estiver fora. Na sequência, quando ainda não há rascunho, use **G** (Preparar com IA).
+- **Textos antigos** (mensagem do radar, follow-up fixo, sugestão da avaliação antiga) não aparecem mais como mensagem atual.
+- **Abrir o WhatsApp não é envio.** Só o "Enviei" grava a mensagem. Sem a tabela de envios, nada é registrado sozinho.
+- **Sem as variáveis de ambiente**, o app mostra o que configurar, em vez de tela branca.
 
-**Não contatar.** Vale por telefone e pelo cadastro do Google. Um lead reimportado já entra descartado.
+**Onde está cada coisa** (`supabase/functions/_shared/inteligencia/`, usado pelo painel e pela função)
+- `conversa.ts`: leitura e interpretação das falas.
+- `pontuacao.ts`: pesos, recência e temperatura.
+- `decisao.ts`: próxima ação.
+- `diretrizes.ts`: descobrir ou vender, e qual pergunta.
+- `memoria.ts`: memória do lead com as correções da equipe.
+- `horario.ts`: melhor momento.
+- `qualidade.ts`: checagem das mensagens.
+- `contrato.ts`: validação Zod e de evidências.
+- `prompts.ts`: instruções `vera-sales-v5`.
+- `motor.ts`: junta regras e IA.
+- `validade.ts`: hash do contexto.
 
-**Banco.** `supabase/migrations/0004_inteligencia_comercial.sql` só adiciona coisas: tabelas e colunas novas. Nada é apagado. O fim do arquivo tem o rollback comentado. Sem a migration, o painel continua funcionando só com as regras.
+A função fica em `supabase/functions/mensagem/` (modos `analisar`, `gerar` e `preparar`). No painel: `src/lib/inteligencia.ts`, `src/lib/lote.ts`, `src/components/lead/Inteligencia.tsx`, `src/pages/Hoje.tsx`.
 
-**Ativar em produção** (nesta ordem):
+**Banco.** As migrations `0004_inteligencia_comercial.sql` e `0005_inteligencia_v5.sql` só acrescentam (o rollback está comentado no fim de cada uma). Sem elas, o painel funciona só com as regras.
 
-1. Aplicar a migration 0004.
-2. Publicar a função `mensagem`. A pasta `_shared` precisa ir junto, e o `deno.json` resolve o `zod`. Comando: `supabase functions deploy mensagem`.
+**Ativar em produção**, nesta ordem:
+1. Aplicar as migrations 0004 e 0005.
+2. Publicar a função `mensagem` com a pasta `_shared`: `supabase functions deploy mensagem`.
 3. Publicar o painel.
 
-**Testes.** `npm test` roda os cenários com Vitest: temperatura, decisão, horário, contrato da IA, Hoje, métricas e envio confirmado.
+**Testes**
+- `npm test` roda 103 testes, incluindo os 40 cenários da especificação.
+- `ANTHROPIC_API_KEY=... npx vitest run tests/ia-real.test.ts` gera rascunhos com o modelo de verdade para revisão, sem enviar nada.
 
 ## Desempenho
 

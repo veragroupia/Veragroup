@@ -14,10 +14,16 @@ export interface EntradaDecisao {
   bloqueado: boolean
   /** Retorno combinado com o cliente (data definida pela equipe ou lida da conversa). */
   retornoEm: string | null
+  /** false = "semana que vem", sem dia certo. */
+  retornoExato?: boolean
   /** Proposta já enviada e sem resposta formal. */
   propostaEnviadaEm: string | null
   sinais: Sinal[]
   temperatura: Temperatura
+  /** Ids de evidência (msg_*) das mensagens do cliente desde a nossa última. */
+  idsBlocoAtual?: Set<string>
+  /** A análise da IA entendeu um pedido para parar (a regra não pegou). Vale até a equipe conferir. */
+  pararPelaIA?: boolean
 }
 
 export interface Decisao {
@@ -39,9 +45,11 @@ export function decidir(e: EntradaDecisao): Decisao {
   const { leitura: l, config } = e
   const base = { iaEscolheAcao: false, condicaoRetomar: null, compromissoPendente: l.compromissoVendedor }
 
-  if (e.bloqueado || l.pediuParaParar) {
+  if (e.bloqueado || l.pediuParaParar || e.pararPelaIA) {
     return { ...base, acao: 'nao_contatar', estado: 'nao_contatar', gerarMensagem: false, compromissoPendente: null,
-      motivo: l.pediuParaParar ? 'O cliente pediu para não receber mensagens. Nenhum contato comercial.' : 'Contato bloqueado pela equipe. Nenhum contato comercial.' }
+      motivo: l.pediuParaParar ? 'O cliente pediu para não receber mensagens. Nenhum contato comercial.'
+        : e.pararPelaIA && !e.bloqueado ? 'A análise entendeu que o cliente pediu para não receber mensagens. Confira a conversa: registre o bloqueio ou libere o contato.'
+        : 'Contato bloqueado pela equipe. Nenhum contato comercial.' }
   }
   if (e.etapa === 'fechado') {
     return { ...base, acao: 'encerrar', estado: 'encerrado', gerarMensagem: false, motivo: 'Venda fechada. O acompanhamento segue em Clientes e Projetos.' }
@@ -56,9 +64,35 @@ export function decidir(e: EntradaDecisao): Decisao {
 
   // O cliente falou por último: responder vem antes de qualquer outra regra, inclusive do retorno combinado.
   if (l.ultimaDe === 'lead') {
-    if (l.semInteresse) {
+    const bloco = e.idsBlocoAtual
+    const noBloco = (c: Sinal['codigo']) => e.sinais.some((s) => s.codigo === c && (!bloco || !s.evidencia_id || bloco.has(s.evidencia_id)))
+    const fala = l.falaAtual?.tipo
+    if (l.semInteresse || fala === 'recusa') {
       return { ...base, acao: 'encerrar', estado: 'sem_oportunidade', gerarMensagem: true,
         motivo: 'O cliente disse que não tem interesse. Vale só um agradecimento curto, sem insistir, e encerrar.' }
+    }
+    if (fala === 'sem_necessidade_agora' || noBloco('sem_necessidade_agora')) {
+      return { ...base, acao: 'encerrar', estado: 'sem_oportunidade', gerarMensagem: true,
+        motivo: 'O cliente não precisa disso agora. Não é um pedido para parar: agradeça, deixe a porta aberta e não insista.',
+        condicaoRetomar: 'Só se o cliente voltar a falar ou se surgir algo realmente novo para ele, daqui a alguns meses.' }
+    }
+    if ((fala === 'ja_tem_satisfeito' || fala === 'sem_dificuldade' || noBloco('ja_tem_solucao_satisfatoria') || noBloco('sem_dificuldade'))
+      && !['quer_melhorar_atual', 'relatou_dificuldade', 'pediu_preco', 'perguntou_servico', 'pediu_proposta', 'pediu_demonstracao'].some((c) => noBloco(c as Sinal['codigo']))) {
+      return { ...base, acao: 'encerrar', estado: 'sem_oportunidade', gerarMensagem: true,
+        motivo: 'O cliente disse que o que tem hoje atende. Não insista na venda: reconheça e deixe a porta aberta.' }
+    }
+    if (fala === 'pediu_tempo' && !l.perguntaPendente?.includes('?')) {
+      return { ...base, acao: 'aguardar', estado: 'aguardando_resposta', gerarMensagem: false,
+        motivo: 'O cliente pediu um tempo para pensar. Mandar outra mensagem agora vira pressão.',
+        condicaoRetomar: `Se o cliente escrever, ou depois de ${config.dias_aguardar + 1} dias com algo útil para a decisão dele.` }
+    }
+    if (noBloco('pediu_proposta')) {
+      return { ...base, acao: 'enviar_proposta', estado: 'ativo', gerarMensagem: true,
+        motivo: 'O cliente pediu proposta. Entregue escopo, valor e prazo do catálogo, sem rodeio e sem reunião desnecessária.' }
+    }
+    if (noBloco('pediu_preco')) {
+      return { ...base, acao: 'responder_agora', estado: 'ativo', gerarMensagem: true, iaEscolheAcao: true,
+        motivo: 'O cliente perguntou o preço. Responda o valor do catálogo e o que está incluído antes de qualquer pergunta.' }
     }
     const motivo = e.temperatura === 'quente'
       ? 'Cliente com pedido concreto esperando resposta. Responda direto e facilite o próximo passo.'
@@ -70,7 +104,9 @@ export function decidir(e: EntradaDecisao): Decisao {
     const r = new Date(e.retornoEm)
     if (r > e.agora) {
       return { ...base, acao: 'retomar_na_data', estado: 'retorno_combinado', gerarMensagem: false,
-        motivo: `Retorno combinado para ${r.toLocaleDateString('pt-BR', { timeZone: config.fuso, day: '2-digit', month: '2-digit' })}. Respeite a data.`,
+        motivo: e.retornoExato === false
+          ? `O cliente pediu para falar mais pra frente, sem dia certo. Aguarde até ${r.toLocaleDateString('pt-BR', { timeZone: config.fuso, day: '2-digit', month: '2-digit' })}.`
+          : `Retorno combinado para ${r.toLocaleDateString('pt-BR', { timeZone: config.fuso, day: '2-digit', month: '2-digit' })}. Respeite a data.`,
         condicaoRetomar: 'Na data combinada, ou antes se o cliente escrever.' }
     }
     return { ...base, acao: 'retomar_na_data', estado: 'retorno_combinado', gerarMensagem: true,
@@ -90,7 +126,9 @@ export function decidir(e: EntradaDecisao): Decisao {
     return { ...base, acao: 'apresentar_solucao', estado: 'aguardando_resposta', gerarMensagem: true,
       motivo: `Você prometeu: "${l.compromissoVendedor.slice(0, 90)}". Entregue antes de pedir qualquer coisa.` }
   }
-  if (l.nossasSemResposta >= config.limite_followups) {
+  // Lead frio que nunca respondeu: um retorno no máximo, e só com outro ângulo.
+  const limite = e.temperatura === 'frio' && l.doLead === 0 ? Math.min(2, config.limite_followups) : config.limite_followups
+  if (l.nossasSemResposta >= limite) {
     return { ...base, acao: 'encerrar', estado: 'sem_oportunidade', gerarMensagem: false,
       motivo: `${l.nossasSemResposta} mensagens seguidas sem resposta. Insistir mais tende a queimar o contato.`,
       condicaoRetomar: 'Só se o cliente escrever ou houver uma informação nova e útil para ele.' }
@@ -98,13 +136,17 @@ export function decidir(e: EntradaDecisao): Decisao {
   if (horas < espera) {
     const quando = new Date(+new Date(l.ultima!.enviada_em) + espera * H)
     return { ...base, acao: 'aguardar', estado: 'aguardando_resposta', gerarMensagem: false,
-      motivo: e.propostaEnviadaEm ? 'A proposta foi enviada há pouco. Dê tempo para o cliente avaliar.' : 'Sua última mensagem ainda não teve resposta. Mandar outra agora soa como cobrança.',
+      motivo: e.propostaEnviadaEm ? 'A proposta foi enviada há pouco. Dê tempo para o cliente avaliar.'
+        : l.perguntaNossaPendente ? 'Você fez uma pergunta e ela ainda não teve resposta. Outra mensagem agora soa como cobrança.'
+        : 'Sua última mensagem ainda não teve resposta. Mandar outra agora soa como cobrança.',
       condicaoRetomar: `Se o cliente responder, ou a partir de ${quando.toLocaleDateString('pt-BR', { timeZone: config.fuso, weekday: 'short', day: '2-digit', month: '2-digit' })}.` }
   }
   return { ...base, acao: 'fazer_followup', estado: 'aguardando_resposta', gerarMensagem: true,
     motivo: e.propostaEnviadaEm
       ? 'A proposta está sem resposta. Facilite a decisão sem reenviar a mesma proposta.'
-      : `Sem resposta há ${Math.floor(horas / 24)} dias. Um novo contato só se trouxer algo útil.` }
+      : l.perguntaNossaPendente
+        ? `Sem resposta há ${Math.floor(horas / 24)} dias para a sua pergunta. Não repita a pergunta: traga algo útil ou um ângulo novo.`
+        : `Sem resposta há ${Math.floor(horas / 24)} dias. Um novo contato só se trouxer algo útil.` }
 }
 
 /** Estágio comercial a partir da etapa do funil e dos sinais. */

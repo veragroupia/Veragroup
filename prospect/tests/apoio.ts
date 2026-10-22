@@ -1,6 +1,7 @@
 import { CONFIG_PADRAO, type ConfigComercial } from '../supabase/functions/_shared/inteligencia/config.ts'
 import { idEvidencia, type ChamarIA, type EntradaGeracao, type EntradaMotor } from '../supabase/functions/_shared/inteligencia/motor.ts'
 import type { LeadBase, Msg } from '../supabase/functions/_shared/inteligencia/tipos.ts'
+import type { Evidencia } from '../supabase/functions/_shared/inteligencia/contrato.ts'
 
 /** Quinta-feira, 22/10/2026, 13h em Brasília. */
 export const AGORA = new Date('2026-10-22T13:00:00-03:00')
@@ -19,9 +20,20 @@ let seq = 0
 /** Mensagem `horasAtras` antes de AGORA. */
 export function msg(direcao: 'enviada' | 'recebida', texto: string, horasAtras: number, id?: string): Msg {
   seq++
-  return { id: id ?? `00000000-0000-0000-0000-${String(seq).padStart(12, '0')}`, direcao, texto, enviada_em: new Date(AGORA.getTime() - horasAtras * 3600e3).toISOString(), confirmada: true }
+  // O id de evidência usa o começo do uuid: o número sequencial vai no começo para não colidir.
+  return { id: id ?? `${String(seq).padStart(8, '0')}-0000-4000-8000-000000000000`, direcao, texto, enviada_em: new Date(AGORA.getTime() - horasAtras * 3600e3).toISOString(), confirmada: true }
 }
 export const ev = (m: Msg) => idEvidencia(m.id)
+
+/** Evidências como a função monta: ids de mensagem com direção e data; o resto (lead.*, equipe) sem direção.
+    `msgs` define de quem é cada mensagem; ids msg_* sem mensagem correspondente são tratados como do cliente. */
+export function evidencias(ids: string[], msgs: Msg[] = []): Map<string, Evidencia> {
+  const m = new Map<string, Evidencia>()
+  for (const x of msgs) m.set(idEvidencia(x.id), { direcao: x.direcao, texto: x.texto ?? '', em: x.enviada_em })
+  // Sem a mensagem real, o texto é genérico o bastante para passar na checagem de pertinência.
+  for (const id of ids) if (!m.has(id)) m.set(id, { direcao: id.startsWith('msg_') ? 'recebida' : null, texto: 'quero orçamento, quanto custa? me manda proposta', em: AGORA.toISOString() })
+  return m
+}
 
 export function entrada(extra: Partial<EntradaMotor> = {}): EntradaMotor {
   return { agora: AGORA, config: config(), lead: lead(), mensagens: [], bloqueios: [], ...extra }

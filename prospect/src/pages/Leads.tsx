@@ -192,7 +192,7 @@ export default function Leads() {
                     <td className="text-right" onClick={(e) => e.stopPropagation()}>
                       {(l.whatsapp || l.telefone) && (
                         <button className="btn-fantasma btn-sm text-[#1d8f4e]" title="Abrir WhatsApp"
-                          onClick={() => executar(() => abrirWhatsApp(l, l.etapa === 'novo' ? l.mensagem_inicial ?? '' : '', eu!))}>
+                          onClick={() => executar(() => abrirWhatsApp(l, '', eu!))}>
                           <MessageCircle size={15} />
                         </button>
                       )}

@@ -24,7 +24,9 @@ export function Historico({ leadId, followups }: { leadId: string; followups: Fo
       if (a.tipo === 'analise_ia') return { ...base, icone: Sparkles, texto: <>Análise comercial atualizada{a.detalhe.acao ? <>: <b>{String(a.detalhe.acao).replace(/_/g, ' ')}</b></> : null}</> }
       if (a.tipo === 'bloqueio') return { ...base, icone: Clock, texto: <>Contato bloqueado: <b>{a.detalhe.motivo}</b></> }
       if (a.tipo === 'desbloqueio') return { ...base, icone: Clock, texto: 'Contato liberado pela equipe' }
-      if (a.tipo === 'rascunho_ia') return { ...base, icone: Sparkles, texto: <>Sugestão da IA: <b>{a.detalhe.status === 'nao_contatar' ? 'não contatar' : a.detalhe.status === 'sem_mensagem' ? 'sem mensagem agora' : a.detalhe.status}</b></> }
+      if (a.tipo === 'rascunho_ia') return { ...base, icone: Sparkles, texto: <>{a.detalhe.origem === 'automatico' ? 'Rascunho preparado ao abrir o lead' : a.detalhe.origem === 'lote' ? 'Rascunho preparado em lote' : 'Sugestão da IA'}: <b>{a.detalhe.status === 'nao_contatar' ? 'não contatar' : a.detalhe.status === 'sem_mensagem' ? 'sem mensagem agora' : a.detalhe.status}</b></> }
+      if (a.tipo === 'rascunho_aprovado') return { ...base, icone: Sparkles, texto: <>Mensagem aprovada: opção <b>{String(a.detalhe.variante ?? '').toUpperCase()}</b></> }
+      if (a.tipo === 'rascunho_copiado') return { ...base, icone: Sparkles, texto: <>Mensagem copiada: opção <b>{String(a.detalhe.variante ?? '').toUpperCase()}</b> (copiar não é envio)</> }
       if (a.tipo === 'reuniao') return { ...base, icone: CalendarCheck, texto: <>Reunião agendada para {dataHora(a.detalhe.data_hora)}</> }
       return { ...base, icone: Clock, texto: a.tipo }
     }),

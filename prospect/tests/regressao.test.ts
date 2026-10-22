@@ -6,10 +6,12 @@ import { CATALOGO_PADRAO } from '../supabase/functions/_shared/inteligencia/cata
 import { motivoObsoleta } from '../supabase/functions/_shared/inteligencia/validade.ts'
 import { recomendarHorario } from '../supabase/functions/_shared/inteligencia/horario.ts'
 import { lerConfig } from '../supabase/functions/_shared/inteligencia/config.ts'
-import { AGORA, analiseBase, config, entrada, ev, geracao, iaFalsa, lead, msg } from './apoio.ts'
+import { AGORA, analiseBase, config, entrada, ev, evidencias, geracao, iaFalsa, lead, msg } from './apoio.ts'
+
+/* Regressão: cenários da V4 que continuam valendo na V5 (com os ajustes de comportamento pedidos na V5). */
 
 const analiseCom = (sinais: { codigo: string; evidencia_id: string }[], extra: object = {}) =>
-  validarAnalise(analiseBase({ sinais, ...extra }), { evidencias: new Set(sinais.map((s) => s.evidencia_id).concat(['lead.nome', 'observacao_vendedor'])), catalogo: CATALOGO_PADRAO }).analise
+  validarAnalise(analiseBase({ sinais, ...extra }), { evidencias: evidencias(sinais.map((s) => s.evidencia_id).concat(['lead.nome', 'observacao_vendedor'])), catalogo: CATALOGO_PADRAO }).analise
 
 describe('temperatura e pontuação', () => {
   it('1. lead novo sem resposta é frio, com confiança baixa e primeira abordagem', () => {
@@ -90,8 +92,9 @@ describe('leitura da conversa e decisão', () => {
     )
     const r = await gerarRecomendacao(geracao({ lead: lead({ etapa: 'respondeu' }), mensagens: [v, c] }), ia.fn)
     const entradaRedacao = JSON.parse(ia.chamadas[1].user)
-    expect(entradaRedacao.analise.assuntos_resolvidos).toEqual(['Se têm catálogo de sabores: sim'])
-    expect(ia.chamadas[1].system).toContain('Não repita a apresentação nem refaça pergunta já respondida')
+    expect(entradaRedacao.diretrizes.nao_perguntar).toContain('Se têm catálogo de sabores: sim')
+    expect(entradaRedacao.diretrizes.nao_perguntar).toContain('Vocês já têm algum catálogo com os sabores?')
+    expect(ia.chamadas[1].system).toContain('Não repita a apresentação')
     expect(r.redacao?.mensagem_a).not.toMatch(/já têm algum catálogo/)
   })
 
@@ -127,7 +130,9 @@ describe('leitura da conversa e decisão', () => {
     expect(r.decisao.gerarMensagem).toBe(false)
     expect(r.estado).toBe('retorno_combinado')
     expect(r.horario?.tipo).toBe('compromisso')
-    expect(r.horario?.confirmado).toBe(true)
+    // V5: "semana que vem" não é dia combinado. A data é só referência.
+    expect(r.horario?.confirmado).toBe(false)
+    expect(r.horario?.confianca).toBe('media')
   })
 
   it('11. pedido para não receber mensagens bloqueia tudo, sem chamar a IA', async () => {
@@ -159,7 +164,7 @@ describe('leitura da conversa e decisão', () => {
     const a = validarAnalise(analiseBase({
       sinais: [{ codigo: 'ja_tem_solucao_satisfatoria', evidencia_id: ev(c) }],
       solucao: 'nenhuma', oferta_id: 'site_completo',
-    }), { evidencias: new Set([ev(c)]), catalogo: CATALOGO_PADRAO })
+    }), { evidencias: evidencias([ev(c)]), catalogo: CATALOGO_PADRAO })
     expect(a.analise.oferta_id).toBeNull()
     expect(a.descartados.join(' ')).toMatch(/site_completo/)
     const r = avaliarLead(entrada({ mensagens: [msg('enviada', 'Oi!', 3), c], analise: a.analise, analisadoPorIA: true }))
@@ -190,16 +195,22 @@ describe('horário recomendado', () => {
     expect(j?.confianca).toBe('baixa')
   })
 
-  it('cliente esperando resposta: agora, sem esperar janela "ideal"', () => {
+  it('cliente esperando resposta: agora, sem esperar a janela de prospecção', () => {
     const j = recomendarHorario({ agora: AGORA, config: config(), bloqueado: false, retornoEm: null, leadAguarda: true, respostas: [], nicho: 'confeitaria' })
     expect(j?.tipo).toBe('agora')
-    expect(+new Date(j!.inicio)).toBe(+AGORA + 3600e3) // 13h está fora; a próxima janela permitida abre às 14h
+    expect(+new Date(j!.inicio)).toBe(+AGORA) // 13h está fora da janela de prospecção, mas responder não espera
   })
 
-  it('nunca recomenda fim de semana nem fora das janelas permitidas', () => {
+  it('prospecção nunca vai para fim de semana nem fora das janelas permitidas', () => {
     const sexta18h = new Date('2026-10-23T18:00:00-03:00')
-    const j = recomendarHorario({ agora: sexta18h, config: config(), bloqueado: false, retornoEm: null, leadAguarda: true, respostas: [], nicho: null })
+    const j = recomendarHorario({ agora: sexta18h, config: config(), bloqueado: false, retornoEm: null, leadAguarda: false, respostas: [], nicho: null })
     expect(new Date(j!.inicio).toISOString()).toBe(new Date('2026-10-26T09:00:00-03:00').toISOString())
+  })
+
+  it('resposta a cliente tarde da noite fica para as 8h do dia seguinte', () => {
+    const sexta22h = new Date('2026-10-23T22:00:00-03:00')
+    const j = recomendarHorario({ agora: sexta22h, config: config(), bloqueado: false, retornoEm: null, leadAguarda: true, respostas: [], nicho: null })
+    expect(new Date(j!.inicio).toISOString()).toBe(new Date('2026-10-24T08:00:00-03:00').toISOString())
   })
 
   it('contato bloqueado não recebe horário', () => {
@@ -248,7 +259,7 @@ describe('dados insuficientes, contrato e falhas da IA', () => {
       ],
       oferta_id: 'plano_premium', solucao: 'landing_page',
       conhecido: [{ fato: 'Fatura R$ 50 mil por mês', fonte: 'cliente', evidencia_id: null }],
-    }), { evidencias: new Set([ev(c), 'lead.nicho']), catalogo: CATALOGO_PADRAO })
+    }), { evidencias: evidencias([ev(c), 'lead.nicho']), catalogo: CATALOGO_PADRAO })
     expect(a.analise.sinais).toEqual([])
     expect(a.analise.oferta_id).toBeNull()
     expect(a.analise.conhecido[0].fonte).toBe('hipotese')
@@ -314,7 +325,7 @@ describe('dados insuficientes, contrato e falhas da IA', () => {
     const ia1 = iaFalsa(analiseBase({ sinais: [{ codigo: 'pediu_preco', evidencia_id: ev(c) }] }))
     const r1 = await gerarRecomendacao(geracao({ mensagens: [v, c], modo: 'analisar' }), ia1.fn)
     const ia2 = iaFalsa()
-    const r2 = await gerarRecomendacao(geracao({ mensagens: [v, c], modo: 'analisar', cache: { analise: r1.analise, contexto_hash: r1.contexto_hash } }), ia2.fn)
+    const r2 = await gerarRecomendacao(geracao({ mensagens: [v, c], modo: 'analisar', cache: { analise: r1.analise, contexto_hash: r1.cache_chave } }), ia2.fn)
     expect(ia2.chamadas.length).toBe(0)
     expect(r2.analiseReaproveitada).toBe(true)
     expect(r2.recomendacao.temperatura).toBe(r1.recomendacao.temperatura)

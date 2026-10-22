@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { Copy, Sparkles } from 'lucide-react'
 import { chamarFuncao } from '../../lib/supabase'
 import { invalidar } from '../../lib/dados'
-import { useSessao } from '../../lib/sessao'
-import { abrirWhatsApp } from '../../lib/acoes'
 import type { Avaliacao, Lead } from '../../lib/tipos'
 import { cx, dataHora } from '../../lib/util'
 import { useAviso, useExecutar } from '../Aviso'
@@ -24,7 +22,7 @@ const TEMPERATURA = { frio: 'text-info', morno: 'text-alerta', quente: 'text-sin
 export function Avaliacoes({ lead, avaliacoes, temMensagens }: { lead: Lead; avaliacoes?: Avaliacao[]; temMensagens: boolean }) {
   const executar = useExecutar()
   const avisar = useAviso()
-  const { eu } = useSessao()
+
   const [avaliando, setAvaliando] = useState(false)
   const [sel, setSel] = useState(0)
 
@@ -70,10 +68,10 @@ export function Avaliacoes({ lead, avaliacoes, temMensagens }: { lead: Lead; ava
           {a.proxima_acao && <><div className="rotulo">Próxima ação</div><p className="mt-1.5 font-medium">{a.proxima_acao}</p></>}
           {a.proxima_mensagem && (
             <>
-              <div className="rotulo mt-4">Mensagem sugerida</div>
-              <p className="mt-1.5 text-[14px] leading-relaxed whitespace-pre-wrap bg-realce rounded p-3">{a.proxima_mensagem}</p>
+              <div className="rotulo mt-4">Mensagem sugerida nesta avaliação</div>
+              <p className="mt-1.5 text-[14px] leading-relaxed whitespace-pre-wrap bg-realce rounded p-3 text-tinta-2">{a.proxima_mensagem}</p>
+              <p className="text-xs text-tinta-3 mt-2">Registro da avaliação de {dataHora(a.created_at)}. Não é reavaliada com a conversa de agora: a mensagem atual sai da aba Inteligência.</p>
               <div className="flex gap-2 mt-3">
-                <button className="btn-wa btn-sm" onClick={() => executar(() => abrirWhatsApp(lead, a.proxima_mensagem!, eu!))}>Enviar pelo WhatsApp</button>
                 <button className="btn-sec btn-sm" onClick={() => { navigator.clipboard.writeText(a.proxima_mensagem!); avisar('Mensagem copiada') }}><Copy size={13} /> Copiar</button>
               </div>
             </>

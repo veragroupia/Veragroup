@@ -42,7 +42,7 @@ function Estilo({ c, admin }: { c: ConfigComercial; admin: boolean }) {
   const executar = useExecutar()
   const [f, setF] = useState(c)
   useEffect(() => setF(c), [c])
-  const campos = ['estilo', 'formalidade', 'emojis', 'objetivo', 'preferir_qualificacao', 'janelas', 'apenas_dias_uteis', 'limite_followups', 'dias_aguardar', 'min_respostas_padrao', 'politica_previas'] as const
+  const campos = ['estilo', 'formalidade', 'emojis', 'objetivo', 'preferir_qualificacao', 'janelas', 'apenas_dias_uteis', 'limite_followups', 'dias_aguardar', 'min_respostas_padrao', 'politica_previas', 'preparo_automatico', 'limite_lote'] as const
   const mudou = campos.some((k) => JSON.stringify(f[k]) !== JSON.stringify(c[k]))
   const set = <K extends keyof ConfigComercial>(k: K, v: ConfigComercial[K]) => setF((x) => ({ ...x, [k]: v }))
 
@@ -75,7 +75,7 @@ function Estilo({ c, admin }: { c: ConfigComercial; admin: boolean }) {
             ))}
             <button className="btn-fantasma btn-sm" onClick={() => set('janelas', [...f.janelas, { inicio: '14:00', fim: '17:00' }])}><Plus size={13} /> Janela</button>
           </div>
-          <p className="text-xs text-tinta-3 mt-1">Nenhuma recomendação de horário sai destas faixas. Pergunta do cliente esperando resposta é atendida na próxima janela aberta.</p>
+          <p className="text-xs text-tinta-3 mt-1">Prospecção nunca sai destas faixas. Responder um cliente que escreveu não espera a janela: vale das 8h às 21h.</p>
         </div>
         <Interruptor ligado={f.apenas_dias_uteis} onChange={(v) => set('apenas_dias_uteis', v)} rotulo={<span className="text-sm">Só dias úteis</span>} />
         <div className="grid sm:grid-cols-3 gap-4">
@@ -83,6 +83,14 @@ function Estilo({ c, admin }: { c: ConfigComercial; admin: boolean }) {
           <Campo rotulo="Dias para aguardar" dica="Tempo mínimo antes de um novo contato."><input type="number" min={1} max={30} className="inp numero" value={f.dias_aguardar} onChange={(e) => set('dias_aguardar', Number(e.target.value))} /></Campo>
           <Campo rotulo="Respostas para padrão" dica="Mínimo para confiar no horário em que o cliente responde."><input type="number" min={2} max={20} className="inp numero" value={f.min_respostas_padrao} onChange={(e) => set('min_respostas_padrao', Number(e.target.value))} /></Campo>
         </div>
+      </fieldset>
+
+      <fieldset disabled={!admin} className="border-t border-fio pt-5 grid sm:grid-cols-[1fr_200px] gap-4 items-end">
+        <div>
+          <Interruptor ligado={f.preparo_automatico} onChange={(v) => set('preparo_automatico', v)} rotulo={<span className="text-sm">Preparar o rascunho sozinho ao abrir um lead</span>} />
+          <p className="text-xs text-tinta-3 mt-1">Só quando a regra diz que vale escrever e ainda não há rascunho para a conversa de agora. Uma vez por contexto: não gera de novo a cada visita. Nada é enviado.</p>
+        </div>
+        <Campo rotulo="Máximo por lote" dica="Preparação em lote na tela Hoje."><input type="number" min={1} max={100} className="inp numero" value={f.limite_lote} onChange={(e) => set('limite_lote', Number(e.target.value))} /></Campo>
       </fieldset>
 
       {admin && (

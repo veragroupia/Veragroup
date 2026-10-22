@@ -6,9 +6,10 @@ export const AMOSTRA_MINIMA = 5
 export interface MsgM { id: string; lead_id: string; direcao: 'enviada' | 'recebida'; confirmada?: boolean | null; origem: string; enviada_em: string; autor: string | null }
 export interface EnvioM { status: string; aberto_em: string }
 export interface LeadM { id: string; etapa: string; created_at: string; fechado_em: string | null; valor_setup: number | null; valor_mensal: number | null; nicho: string | null; whatsapp?: string | null; telefone?: string | null }
-export interface IntelM { lead_id: string; estagio: string | null; necessidade: string | null; sinais: { codigo: string }[] }
+export interface IntelM { lead_id: string; estagio: string | null; necessidade: string | null; sinais: { codigo: string }[]; analisado_em?: string | null }
 export interface HistM { lead_id: string; temperatura: string | null; created_at: string }
-export interface RascM { lead_id: string; usada: 'a' | 'b' | null; enviada_confirmada_em: string | null }
+export interface RascM { lead_id: string; usada: 'a' | 'b' | null; enviada_confirmada_em: string | null; acao?: string | null; avaliacao_humana?: -1 | 1 | null; created_at?: string }
+export interface RecebidoM { valor: number; pago_em: string | null }
 export interface PropostaM { status: string; enviada_em: string | null }
 
 /** Envio comprovado: confirmado pela equipe, lido do WhatsApp ou exportado dele. */
@@ -18,6 +19,8 @@ export const legado = (m: MsgM) => m.direcao === 'enviada' && m.confirmada == nu
 
 const CONTEUDO = ['compartilhou_operacao', 'relatou_dificuldade', 'perguntou_servico', 'pediu_preco', 'pediu_exemplo', 'pediu_demonstracao', 'pediu_proposta', 'discutiu_prazo_ou_condicoes', 'quer_iniciar', 'objecao']
 const QUALIFICADA = ['diagnostico', 'demonstracao', 'proposta', 'negociacao', 'fechado']
+/** Resposta que fecha a porta: conta como resposta humana, nunca como sucesso comercial. */
+const NEGATIVA = ['sem_interesse', 'pediu_para_parar', 'sem_necessidade_agora', 'resposta_educada_sem_interesse']
 
 export interface Taxa { n: number; sim: number; pct: number | null }
 const taxa = (sim: number, n: number): Taxa => ({ n, sim, pct: n >= AMOSTRA_MINIMA ? Math.round((sim / n) * 100) : null })
@@ -31,6 +34,7 @@ function mediana(xs: number[]) {
 
 export function calcular(p: {
   desde: Date; mensagens: MsgM[]; envios: EnvioM[]; leads: LeadM[]; intel: IntelM[]; historico: HistM[]; rascunhos: RascM[]; propostas: PropostaM[]
+  recebidos?: RecebidoM[]
 }) {
   const noPeriodo = (s?: string | null) => !!s && new Date(s) >= p.desde
   const porLead = new Map<string, MsgM[]>()
@@ -63,6 +67,7 @@ export function calcular(p: {
 
   const intelDe = new Map(p.intel.map((i) => [i.lead_id, i]))
   const uteis = responderam.filter(([id]) => intelDe.get(id)?.sinais?.some((s) => CONTEUDO.includes(s.codigo))).length
+  const negativas = responderam.filter(([id]) => intelDe.get(id)?.sinais?.some((s) => NEGATIVA.includes(s.codigo))).length
   const qualificadas = p.intel.filter((i) => QUALIFICADA.includes(i.estagio ?? '') || !!i.necessidade).length
   const demonstracoes = p.intel.filter((i) => i.sinais?.some((s) => s.codigo === 'pediu_demonstracao')).length
 
@@ -79,7 +84,7 @@ export function calcular(p: {
   const inicial = new Map<string, string>()
   for (const h of [...p.historico].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at))) if (h.temperatura && !inicial.has(h.lead_id)) inicial.set(h.lead_id, h.temperatura)
   const leadDe = new Map(p.leads.map((l) => [l.id, l]))
-  const porTemperatura = ['frio', 'morno', 'quente'].map((t) => {
+  const porTemperatura = ['frio', 'desconhecido', 'morno', 'quente'].map((t) => {
     const ids = [...inicial].filter(([, x]) => x === t).map(([id]) => id)
     return { temperatura: t, resposta: taxa(ids.filter((id) => (porLead.get(id) ?? []).some((m) => m.direcao === 'recebida')).length, ids.length), fechados: ids.filter((id) => leadDe.get(id)?.etapa === 'fechado').length }
   })
@@ -93,7 +98,23 @@ export function calcular(p: {
     segmentos.set(nicho, x)
   }
 
+  // Por abordagem (ação recomendada quando a mensagem foi preparada): só envios confirmados, resposta depois do envio.
+  const porAcao = new Map<string, { n: number; sim: number }>()
+  for (const r of p.rascunhos) {
+    if (!r.acao || !r.enviada_confirmada_em || !noPeriodo(r.enviada_confirmada_em)) continue
+    const x = porAcao.get(r.acao) ?? { n: 0, sim: 0 }
+    x.n++; if (respondeuDepois(r.lead_id, r.enviada_confirmada_em)) x.sim++
+    porAcao.set(r.acao, x)
+  }
+  const avaliadas = p.rascunhos.filter((r) => r.avaliacao_humana && noPeriodo(r.created_at))
+
   return {
+    analisados: p.intel.filter((i) => noPeriodo(i.analisado_em)).length,
+    respostasNegativas: negativas,
+    respostaPositiva: taxa(responderam.length - negativas, primeiros.length),
+    receitaRecebida: (p.recebidos ?? []).filter((x) => noPeriodo(x.pago_em)).reduce((s, x) => s + (Number(x.valor) || 0), 0),
+    abordagens: [...porAcao].map(([acao, x]) => ({ acao, ...taxa(x.sim, x.n) })).sort((a, b) => b.n - a.n),
+    avaliacaoHumana: { boas: avaliadas.filter((r) => r.avaliacao_humana === 1).length, ruins: avaliadas.filter((r) => r.avaliacao_humana === -1).length },
     pesquisados: p.leads.filter((l) => noPeriodo(l.created_at)).length,
     aptos: p.leads.filter((l) => !['fechado', 'perdido', 'descartado'].includes(l.etapa) && (l.whatsapp || l.telefone)).length,
     enviosConfirmados: enviosConfirmados.length, semConfirmacao, naoEnviados, legados,

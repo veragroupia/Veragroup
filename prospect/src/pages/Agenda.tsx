@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Copy, LayoutGrid, List, MessageCircle, Pencil, Plus, Trash2, Video } from 'lucide-react'
 import { useConsulta } from '../lib/dados'
 import { useSessao } from '../lib/sessao'
-import { abrirWhatsApp } from '../lib/acoes'
 import {
   carregarMes, concluido, ehConteudo, excluirItem, hojeIso, mesDe, montarSemanas, mudarStatus, nomeDoMes, proximoStatus,
-  rotuloDia, salvarItem, somarMes, statusDe, textoFollowup, PLATAFORMAS, TIPOS,
+  rotuloDia, salvarItem, somarMes, statusDe, PLATAFORMAS, TIPOS,
   type FollowupDia, type ItemAgenda, type ReuniaoDia, type TipoItem,
 } from '../lib/agenda'
 import { cx, hora, isoDia, nomeCurto } from '../lib/util'
@@ -341,11 +340,9 @@ function legendaDe(roteiro: string) {
 }
 
 function LinhaFollowup({ f, atrasado }: { f: FollowupDia; atrasado: boolean }) {
-  const { eu, nomeDe } = useSessao()
-  const executar = useExecutar()
+  const { nomeDe } = useSessao()
   const nav = useNavigate()
   const l = f.lead!
-  const msg = f.mensagem_sugerida || textoFollowup(f.tentativa, l.nome)
   return (
     <div className="px-4 py-3">
       <div className="flex items-start gap-3">
@@ -356,11 +353,11 @@ function LinhaFollowup({ f, atrasado }: { f: FollowupDia; atrasado: boolean }) {
             {l.responsavel && ` · ${nomeDe(l.responsavel).split(' ')[0]}`}
           </div>
         </div>
-        <button className="btn-wa btn-sm" onClick={() => executar(() => abrirWhatsApp(l, msg, eu!, f.id), 'Follow-up enviado')}>
-          <MessageCircle size={14} /> <span className="hidden sm:inline">WhatsApp</span>
+        <button className="btn-sec btn-sm" onClick={() => nav(`/leads/${l.id}`)} title="A mensagem é preparada para a conversa de agora, na aba Inteligência">
+          <MessageCircle size={14} /> <span className="hidden sm:inline">Ver mensagem</span>
         </button>
       </div>
-      <p className="text-[13px] text-tinta-2 mt-2 bg-realce/60 rounded px-3 py-2 leading-relaxed">{msg}</p>
+      <p className="text-[13px] text-tinta-3 mt-2">A Inteligência decide se vale escrever agora e prepara a mensagem com o contexto atual.</p>
     </div>
   )
 }

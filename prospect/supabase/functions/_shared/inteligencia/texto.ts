@@ -16,6 +16,22 @@ export const EXPRESSOES_PROIBIDAS = [
   'transformar sua presenca online',
   'gostaria de apresentar uma proposta',
   'grande potencial',
+  'oportunidade de otimizacao',
+  'potencializar a presenca digital',
+  'potencializar a sua presenca',
+  'elevar o posicionamento',
+  'impulsionar os resultados',
+  'impulsionar o seu negocio',
+  'desenvolvemos solucoes',
+  'solucoes inovadoras',
+  'transformar a experiencia',
+  'oportunidade de melhorar a apresentacao',
+  'gostaria de entender melhor',
+  'passando pra saber',
+  'oi, conseguiu ver',
+  'so passando para',
+  'sobre aquela minha mensagem',
+  'passando novamente',
   'conseguiu ver minha mensagem',
   'passando para saber se tem interesse',
   'estou aguardando seu retorno',
@@ -24,10 +40,11 @@ export const EXPRESSOES_PROIBIDAS = [
   'conforme conversamos',
   'sobre o que falamos anteriormente',
   'so retomando aquele assunto',
+  'voltando ao nosso ultimo assunto',
 ] as const
 
 /** Frases que só fazem sentido quando a IA decidiu retomar o assunto anterior. */
-const RETOMADA = ['voltando a nossa conversa', 'conforme conversamos', 'sobre o que falamos anteriormente', 'so retomando aquele assunto']
+const RETOMADA = ['voltando a nossa conversa', 'conforme conversamos', 'sobre o que falamos anteriormente', 'so retomando aquele assunto', 'voltando ao nosso ultimo assunto']
 
 export function expressoesProibidas(texto: string, permitirRetomada = false): string[] {
   const t = normalizar(texto)

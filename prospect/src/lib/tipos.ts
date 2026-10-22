@@ -60,12 +60,19 @@ export interface RascunhoIA {
   justificativa_curta: string | null; proxima_acao_sugerida: string | null; observacao_vendedor: string | null
   vendedor: string | null; usada: 'a' | 'b' | null; modelo: string | null; created_at: string
   // v4 (vera-sales-v4). Rascunhos antigos não têm estes campos.
-  acao?: string | null; motivo?: string | null; temperatura?: 'frio' | 'morno' | 'quente' | null
+  acao?: string | null; motivo?: string | null; temperatura?: 'frio' | 'desconhecido' | 'morno' | 'quente' | null
   score_interesse?: number | null; score_adequacao?: number | null; confianca?: 'baixa' | 'media' | 'alta' | null
   melhor_opcao?: 'A' | 'B' | null; mencionar_assunto_anterior?: boolean | null; horario?: import('../../supabase/functions/_shared/inteligencia/tipos.ts').JanelaContato | null
   condicao_retomar?: string | null; alertas?: string[]; contexto_hash?: string | null; ultima_mensagem_id?: string | null
   etapa?: string | null; prompt_version?: string | null; catalogo_versao?: string | null; texto_final?: string | null
   copiada_em?: string | null; enviada_confirmada_em?: string | null; mensagem_id?: string | null
+  // v5 (vera-sales-v5): edição, aprovação, avaliação humana e objetiva.
+  texto_editado_a?: string | null; texto_editado_b?: string | null; editada_em?: string | null
+  aprovada_em?: string | null; aprovada_por?: string | null; aprovada_variante?: 'a' | 'b' | null
+  avaliacao_humana?: -1 | 1 | null; avaliacao_nota?: string | null; avaliada_por?: string | null
+  qualidade?: { a: import('../../supabase/functions/_shared/inteligencia/qualidade.ts').AvaliacaoMensagem | null; b: import('../../supabase/functions/_shared/inteligencia/qualidade.ts').AvaliacaoMensagem | null } | null
+  diretrizes?: import('../../supabase/functions/_shared/inteligencia/diretrizes.ts').Diretrizes | null
+  origem?: 'manual' | 'automatico' | 'lote' | null
 }
 
 export interface Atividade { id: number; lead_id: string | null; tipo: string; detalhe: Record<string, any>; usuario: string | null; created_at: string }

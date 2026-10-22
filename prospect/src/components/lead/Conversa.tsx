@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FileUp, MessageCircle, NotebookPen, Scissors, SendHorizontal, Trash2 } from 'lucide-react'
 import { useSessao } from '../../lib/sessao'
-import { abrirWhatsApp, excluirMensagem, importarConversa, parseConversa, registrarMensagem, registrarVarias, restaurarMensagem, separarColadas, separarMensagem, type MensagemImportada } from '../../lib/acoes'
+import { excluirMensagem, importarConversa, parseConversa, registrarMensagem, registrarVarias, restaurarMensagem, separarColadas, separarMensagem, type MensagemImportada } from '../../lib/acoes'
 import type { Lead, Mensagem } from '../../lib/tipos'
 import type { Sugerida } from '../../pages/LeadDetalhe'
 import { cx, dataHora, hora, nomeCurto } from '../../lib/util'
 import { useAviso, useExecutar } from '../Aviso'
+import { useAbrirWhatsApp } from '../useWhatsApp'
 import { Modal, Segmentos, Vazio, Linhas } from '../ui'
 
 type Modo = 'enviar' | 'recebida' | 'minha'
@@ -15,6 +16,7 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId, bl
 }) {
   const { eu, nomeDe, equipe } = useSessao()
   const executar = useExecutar()
+  const abrirWa = useAbrirWhatsApp()
   const avisar = useAviso()
   const [texto, setTexto] = useState('')
   // enviar: abre o WhatsApp. recebida: registra o que o lead mandou. minha: registra o que você já mandou.
@@ -68,8 +70,8 @@ export function Conversa({ lead, mensagens, carregando, sugerida, followupId, bl
       if (await executar(() => registrarVarias(lead.id, coladas, eu!.email), `${coladas.length} ${coladas.length === 1 ? 'mensagem registrada' : 'mensagens registradas'}`)) setTexto('')
     } else if (modo === 'enviar') {
       const daSugestao = texto === sugerida?.texto
-      const ok = await executar(() => abrirWhatsApp(lead, texto, eu!, daSugestao ? followupId : undefined, daSugestao && sugerida?.rascunho ? { rascunhoId: sugerida.rascunho.id, variante: sugerida.rascunho.variante } : undefined))
-      if (ok) setTexto('')
+      const ok = await abrirWa(lead, texto, daSugestao ? followupId : undefined, daSugestao && sugerida?.rascunho ? { rascunhoId: sugerida.rascunho.id, variante: sugerida.rascunho.variante } : undefined)
+      if (ok !== false) setTexto('')
     } else if (texto.trim()) {
       const minha = modo === 'minha'
       if (await executar(() => registrarMensagem(lead.id, minha ? 'enviada' : 'recebida', texto.trim(), eu!.email), minha ? 'Mensagem registrada' : 'Resposta registrada')) setTexto('')
