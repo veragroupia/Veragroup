@@ -1,0 +1,94 @@
+---
+import T from '../T.astro';
+import { emHtml } from '../../lib/texto';
+interface Props {
+  perguntas: { p: string; r: string }[];
+  numero?: string;
+  titulo?: string;
+}
+const { perguntas, numero = '08', titulo = 'O que todo dono *pergunta antes*.' } = Astro.props;
+---
+<section id="duvidas" class="secao duv" aria-labelledby="duv-titulo" data-fora-demo>
+  <div class="envelope duv__grade">
+    <div>
+      <p class="rotulo"><b>{numero}</b> Dúvidas</p>
+      <h2 id="duv-titulo" class="titulo-m duv__titulo" set:html={emHtml(titulo)} />
+    </div>
+    <div class="duv__lista">
+      {perguntas.map((q) => (
+        <details class="duv__item">
+          <summary>{q.p}<span class="duv__mais" aria-hidden="true"></span></summary>
+          <p><T t={q.r} /></p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .duv__grade {
+    display: grid;
+    gap: 40px;
+  }
+  .duv__titulo {
+    margin-top: 16px;
+  }
+  .duv__item {
+    border-top: 1px solid var(--tinta);
+  }
+  .duv__item:last-child {
+    border-bottom: 1px solid var(--tinta);
+  }
+  .duv__item summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    min-height: 64px;
+    padding: 16px 0;
+    font-size: 19px;
+    font-weight: 560;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    cursor: pointer;
+    list-style: none;
+  }
+  .duv__item summary::-webkit-details-marker {
+    display: none;
+  }
+  .duv__mais {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+  .duv__mais::before,
+  .duv__mais::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.4s var(--curva);
+  }
+  .duv__mais::after {
+    transform: rotate(90deg);
+  }
+  .duv__item[open] .duv__mais::after {
+    transform: rotate(0);
+  }
+  .duv__item p {
+    max-width: 62ch;
+    padding: 0 0 24px;
+    font-size: 17px;
+    color: var(--tinta-2);
+  }
+  @media (min-width: 1000px) {
+    .duv__grade {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      gap: 64px;
+    }
+  }
+</style>

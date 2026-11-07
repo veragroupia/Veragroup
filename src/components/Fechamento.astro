@@ -1,0 +1,46 @@
+---
+import IconeWhats from './IconeWhats.astro';
+import { linkWhats, MSG } from '../lib/texto';
+interface Props {
+  mensagem?: string;
+  origem?: string;
+}
+const { mensagem = MSG.padrao, origem = 'fechamento' } = Astro.props;
+---
+<section class="fecha tema-noite" aria-labelledby="fecha-titulo" data-fora-demo>
+  <div class="envelope">
+    <h2 id="fecha-titulo" class="frase linhas fecha__frase" data-revela>
+      <span class="l" style="--n:0"><span>Seu próximo cliente</span></span>
+      <span class="l" style="--n:1"><span>já está <em>procurando.</em></span></span>
+      <span class="l" style="--n:2"><span>Que ele ache <em>você.</em></span></span>
+    </h2>
+    <div class="fecha__acoes">
+      <a class="btn btn--sinal btn--g" href={linkWhats(mensagem)} data-whats={origem} target="_blank" rel="noopener">
+        <IconeWhats />Falar com a Vera no WhatsApp
+      </a>
+      <a class="btn btn--linha btn--g" href="/#construtor">Montar a prévia do meu site</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .fecha {
+    padding-block: clamp(120px, 20vh, 240px) clamp(80px, 12vh, 140px);
+  }
+  .fecha__frase {
+    margin-bottom: 48px;
+  }
+  .fecha__frase em {
+    color: var(--sinal-noite);
+  }
+  .fecha__acoes {
+    display: grid;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .fecha__acoes {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+</style>

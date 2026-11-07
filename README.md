@@ -1,69 +1,64 @@
-# Vera Group · site portfólio
+# Vera Group · site oficial
 
-Site de apresentação e prospecção da Vera Group. Mostra os trabalhos no ar (ERK Pratas e Vó Neis Confeitaria), os sistemas próprios, a tabela de preços e leva a conversa para o WhatsApp.
+Site da Vera Group, agência de presença digital para negócios de Itu, Salto, Sorocaba e Indaiatuba. Serve para aparecer no Google da região, convencer quem chega por anúncio ou Instagram e como demonstração ao vivo na loja do cliente (`/?demo=1`).
 
-O raciocínio por trás de cada decisão está em [`docs/DIAGNOSTICO.md`](docs/DIAGNOSTICO.md).
+A entrega da reformulação, com a lista do que falta preencher e as decisões tomadas, está em [`docs/ENTREGA.md`](docs/ENTREGA.md).
 
 ## Como rodar
 
-É um site estático, sem etapa de build. Qualquer servidor serve:
-
 ```bash
-python3 -m http.server 8080
-# ou
-npx serve .
+npm install
+npm run dev       # http://localhost:4321, recarrega sozinho
+npm run build     # gera o site estático em dist/
+npm run preview   # serve o dist/ para conferir
 ```
 
-Abra `http://localhost:8080`.
+## Comandos úteis
 
-## Antes de publicar
+| Comando | O que faz |
+|---|---|
+| `npm run check:preencher` | Lista todos os `[[PREENCHER: ...]]` com arquivo e linha, e os projetos com `autorizado: false` |
+| `npm run testar` | Teste de ponta a ponta (com `npm run preview` rodando): construtor nos 7 segmentos, prévia, calculadora, modo demo, eventos, páginas |
+| `npm run og` | Gera as imagens de prévia de link de cada página em `public/og/` |
 
-1. **WhatsApp:** coloque o número comercial em `assets/js/config.js` (`whatsapp: '5511...'`). Sem ele, os botões levam para o formulário, e o formulário abre o WhatsApp para a pessoa escolher o contato.
-2. **Vídeos:** rode `sh scripts/baixar-videos.sh` para trazer os dois vídeos do Higgsfield para `assets/video/`. Enquanto isso não acontece, o site usa o endereço do CDN do Higgsfield.
-3. **Prévia do link:** o `<meta property="og:image">` do `index.html` aponta para `https://vera-group.vercel.app/assets/img/og.jpg`. Ao ligar o domínio próprio, troque esse endereço, porque o WhatsApp só mostra a imagem com endereço completo.
+Os dois últimos usam o Playwright com Chromium instalado na máquina.
 
-## Onde está no ar
+## Onde editar
 
-Projeto `vera-group` na Vercel, ligado a este repositório: **https://vera-group.vercel.app**
-
-Sem framework e sem comando de build. O `vercel.json` cuida de cache e cabeçalhos.
-
-## Link personalizado para prospecção
-
-A página aceita três parâmetros. O Maestro pode montar esse link em cada mensagem:
+Tudo que é conteúdo fica em `src/data/`, separado do layout:
 
 ```
-https://vera-group.vercel.app/?empresa=Clínica%20Sorriso&nicho=dentista&cidade=Itu
+src/data/empresa.ts     contatos, responsável, CNPJ (oculto se vazio), domínio, medição, oferta de lançamento
+src/data/portfolio.ts   projetos (só aparecem com autorizado: true) e o Vera Finances
+src/data/servicos.ts    serviços, preços dos dois de entrada, o que inclui, perguntas
+src/data/cidades.ts     páginas /itu, /salto, /sorocaba, /indaiatuba
+src/data/construtor.ts  segmentos e cores do Construtor ao vivo
+src/data/home.ts        faixa, calculadora, como funciona, equipe, dúvidas
 ```
 
-O que muda:
-
-- o topo mostra "Preparado para Clínica Sorriso" e a data com a cidade;
-- a pesquisa do topo fica fixa em "dentista em Itu";
-- no teste, a linha "Seu negócio" vira "Clínica Sorriso";
-- o formulário já vem com o nome do negócio e a cidade;
-- a mensagem de WhatsApp cita a empresa.
-
-Sem parâmetros, a pesquisa do topo alterna entre os nichos e cidades de `assets/js/config.js`.
+O que ainda não foi confirmado fica escrito como `[[PREENCHER: ...]]`. O site mostra esse marcador destacado e nunca o coloca em título, descrição ou dados do Google.
 
 ## Estrutura
 
 ```
-index.html                 a página
-assets/css/site.css        estilo (papel, tinta, vermelho de sinal)
-assets/js/config.js        número de WhatsApp e pesquisas do topo
-assets/js/site.js          personalização, teste, prévia, vídeos, 3D, formulário
-assets/js/erk-3d.js        visualizador 3D do projeto ERK Pratas
-assets/vendor/             three.js (licença MIT em THREE-LICENSE.txt)
-assets/fonts/              Archivo e IBM Plex Mono (SIL Open Font License)
-assets/img/                telas reais dos projetos, fotos da Vó Neis e og.jpg
-assets/video/              vídeos locais (ver scripts/baixar-videos.sh)
-tools/og.html              molde da imagem de prévia; gere com node tools/gerar-og.mjs
-docs/DIAGNOSTICO.md        diagnóstico e perguntas em aberto
+src/pages/            páginas (index, portfolio, servicos, servicos/[slug], [cidade], previa, privacidade, 404)
+src/components/       componentes; os da página inicial ficam em components/home/
+src/layouts/Base.astro  cabeçalho HTML, SEO, schema, fontes, cookies
+src/lib/              texto e links de WhatsApp, motor da prévia, schema.org, medição
+src/scripts/          comportamento comum e o visualizador 3D da ERK (three.js)
+src/styles/           base visual e o celular/mini-site do construtor
+public/fonts/         Instrument Serif, Geist e Geist Mono, recortadas para português (SIL OFL)
+public/og/            imagens de prévia de link
+tools/                gerar imagens de prévia, testar o site, listar marcadores
+docs/                 entrega, relatório Lighthouse e o diagnóstico da versão anterior
 ```
 
-## De onde vem cada imagem
+## Publicação
 
-- **ERK Pratas:** capturas do site no ar (`site-production-0686.up.railway.app`).
-- **Vó Neis:** o cardápio real (código do repositório do cliente) renderizado com os produtos e as fotos da própria loja, porque a versão no ar está temporariamente sem fotos cadastradas.
-- **Vídeos:** gerados no Higgsfield. O do topo é luz natural numa parede, sem produto. O da Vó Neis parte da foto real do bolo Chocolatudo.
+Projeto `vera-group` na Vercel, ligado a este repositório: **https://vera-group.vercel.app**. O `vercel.json` manda rodar `npm run build` e publicar `dist/`, com cache longo para fontes e arquivos do build.
+
+Ao ligar o domínio próprio, troque `url` em `src/data/empresa.ts` (canonical, sitemap, robots, Open Graph e schema saem dali) e rode `npm run og`.
+
+## Medição
+
+Os cliques de WhatsApp, o uso da calculadora e do construtor e o envio no modo demo vão para `window.dataLayer`. Nada sai do navegador até existir um ID de GA4 ou GTM em `src/data/empresa.ts` e o visitante aceitar os cookies. Nunca é enviado o que a pessoa digitou.

@@ -1,0 +1,416 @@
+---
+import Celular from '../Celular.astro';
+import IconeWhats from '../IconeWhats.astro';
+import { segmentos, cores, padrao } from '../../data/construtor';
+import { empresa } from '../../data/empresa';
+import { linkWhats } from '../../lib/texto';
+import { urlDaPrevia, segmento, nomeDaCor } from '../../lib/previa';
+
+const msgInicial = [
+  'Olá, Vera Group! Montei uma prévia no site de vocês e quero esse no ar.',
+  `Segmento: ${segmento(padrao.segmento).rotulo}`,
+  `Cor: ${nomeDaCor(padrao.cor)}`,
+  `Prévia: ${urlDaPrevia(empresa.url, padrao)}`,
+].join('\n');
+---
+<section id="construtor" class="secao cons" aria-labelledby="cons-titulo">
+  <div class="envelope cons__grade" data-cons>
+    <div class="cons__cab">
+      <p class="rotulo"><b>03</b> O potencial</p>
+      <h2 id="cons-titulo" class="titulo linhas" data-revela>
+        <span class="l" style="--n:0"><span>Veja o <em>seu</em> site</span></span>
+        <span class="l" style="--n:1"><span>antes de qualquer</span></span>
+        <span class="l" style="--n:2"><span>conversa.</span></span>
+      </h2>
+      <p class="corpo-g cons__intro">
+        Digite o nome, escolha o segmento e a cor. A prévia se monta na hora, aqui no seu navegador.
+      </p>
+    </div>
+
+    <div class="cons__controles">
+      <div class="campo">
+        <label class="campo__rotulo mono" for="cons-nome">1 · Nome do negócio</label>
+        <input id="cons-nome" name="nome" maxlength="40" autocomplete="organization" enterkeyhint="done" placeholder="Ex.: Doces da Ana" data-cons-nome />
+      </div>
+
+      <fieldset class="campo">
+        <legend class="campo__rotulo mono">2 · Segmento</legend>
+        <div class="chips">
+          {segmentos.map((s) => (
+            <label class="chip">
+              <input type="radio" name="segmento" value={s.id} checked={s.id === padrao.segmento} />
+              <span>{s.rotulo}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset class="campo">
+        <legend class="campo__rotulo mono">3 · Cor da marca</legend>
+        <div class="cores">
+          {cores.map((c) => (
+            <label class="cor" title={c.nome}>
+              <input type="radio" name="cor" value={c.hex} checked={c.hex === padrao.cor} />
+              <span style={`--c:${c.hex}`}></span>
+              <b class="visual-oculto">{c.nome}</b>
+            </label>
+          ))}
+          <label class="cor cor--livre" title="Outra cor">
+            <input type="color" value="#D4371C" data-cons-cor-livre aria-label="Escolher outra cor" />
+            <span aria-hidden="true">+</span>
+          </label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="cons__palco">
+      <div class="cons__moldura corte">
+        <Celular rola id="cons-cel" />
+      </div>
+      <p class="cons__legenda mono" aria-live="polite">
+        Prévia · <span data-cons-leg>{segmento(padrao.segmento).rotulo} · {nomeDaCor(padrao.cor)}</span>
+      </p>
+    </div>
+
+    <div class="cons__fim">
+      <div class="cons__acoes">
+        <a class="btn btn--sinal btn--g" href={linkWhats(msgInicial)} data-cons-quero data-whats="construtor" target="_blank" rel="noopener">
+          <IconeWhats />Quero esse no ar
+        </a>
+        <button type="button" class="btn btn--linha btn--g" data-cons-copiar>Copiar link da prévia</button>
+      </div>
+
+      <div class="cons__demo" data-so-demo>
+        <div class="campo">
+          <label class="campo__rotulo mono" for="cons-tel">WhatsApp do cliente (opcional)</label>
+          <input id="cons-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 99999-9999" data-cons-tel />
+        </div>
+        <a class="btn btn--tinta btn--g btn--bloco" href="https://wa.me/" data-cons-mandar target="_blank" rel="noopener">
+          <IconeWhats />Mandar no meu WhatsApp
+        </a>
+      </div>
+
+      <p class="cons__aviso" role="status" data-cons-aviso>
+        Prévia montada com um modelo por segmento. Endereço, horário, fotos e avaliações ficam em branco porque são do seu
+        negócio. Nada é enviado até você tocar num botão.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { renderPrevia, estiloCor, trocarNome, limparNome, limparCor, urlDaPrevia, segmento, nomeDaCor, type Estado } from '../../lib/previa';
+  import { padrao } from '../../data/construtor';
+  import { empresa } from '../../data/empresa';
+  import { linkWhats } from '../../lib/texto';
+  import { medir, medirUmaVez } from '../../lib/medir';
+
+  const form = document.querySelector<HTMLElement>('[data-cons]');
+  const pv = document.querySelector<HTMLElement>('#cons-cel [data-pv]');
+
+  if (form && pv) {
+    const estado: Estado = { ...padrao };
+    const base = location.origin.startsWith('http') ? location.origin : empresa.url;
+    const quero = form.querySelector<HTMLAnchorElement>('[data-cons-quero]')!;
+    const mandar = form.querySelector<HTMLAnchorElement>('[data-cons-mandar]');
+    const tel = form.querySelector<HTMLInputElement>('[data-cons-tel]');
+    const aviso = form.querySelector<HTMLElement>('[data-cons-aviso]')!;
+    const leg = document.querySelector<HTMLElement>('[data-cons-leg]');
+    const nomeInput = form.querySelector<HTMLInputElement>('[data-cons-nome]')!;
+    const corLivre = form.querySelector<HTMLInputElement>('[data-cons-cor-livre]')!;
+    const avisoPadrao = aviso.textContent;
+
+    const atualizarLinks = () => {
+      const url = urlDaPrevia(base, estado);
+      const seg = segmento(estado.segmento).rotulo;
+      const msg = [
+        'Olá, Vera Group! Montei uma prévia no site de vocês e quero esse no ar.',
+        estado.nome.trim() ? `Negócio: ${estado.nome.trim()}` : '',
+        `Segmento: ${seg}`,
+        `Cor: ${nomeDaCor(estado.cor)}`,
+        `Prévia: ${url}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      quero.href = linkWhats(msg);
+      if (mandar) {
+        const n = (tel?.value || '').replace(/\D/g, '');
+        const numero = n.length >= 10 ? (n.startsWith('55') ? n : `55${n}`) : '';
+        const texto = `Olá! Aqui está a prévia do site${estado.nome.trim() ? ` da ${estado.nome.trim()}` : ''} que a gente montou agora: ${url}`;
+        mandar.href = linkWhats(texto, numero);
+      }
+      if (leg) leg.textContent = `${seg} · ${nomeDaCor(estado.cor)}`;
+    };
+
+    const remontar = () => {
+      pv.innerHTML = renderPrevia(estado);
+      pv.scrollTop = 0;
+    };
+    const pintar = () => pv.setAttribute('style', estiloCor(estado.cor));
+
+    nomeInput.addEventListener('input', () => {
+      estado.nome = limparNome(nomeInput.value);
+      trocarNome(pv, estado.nome);
+      atualizarLinks();
+      medirUmaVez('construtor_uso', { segmento: estado.segmento });
+    });
+
+    form.addEventListener('change', (e) => {
+      const alvo = e.target as HTMLInputElement;
+      if (alvo.name === 'segmento') {
+        estado.segmento = alvo.value;
+        remontar();
+      } else if (alvo.name === 'cor') {
+        estado.cor = limparCor(alvo.value);
+        pintar();
+      } else return;
+      atualizarLinks();
+      medirUmaVez('construtor_uso', { segmento: estado.segmento });
+    });
+
+    corLivre.addEventListener('input', () => {
+      estado.cor = limparCor(corLivre.value);
+      form.querySelectorAll<HTMLInputElement>('input[name="cor"]').forEach((r) => (r.checked = false));
+      corLivre.parentElement?.style.setProperty('--c', estado.cor);
+      corLivre.parentElement?.classList.add('ativa');
+      pintar();
+      atualizarLinks();
+    });
+    form.querySelectorAll<HTMLInputElement>('input[name="cor"]').forEach((r) =>
+      r.addEventListener('change', () => corLivre.parentElement?.classList.remove('ativa')),
+    );
+
+    tel?.addEventListener('input', atualizarLinks);
+
+    quero.addEventListener('click', () => medir('construtor_quero', { segmento: estado.segmento }));
+    mandar?.addEventListener('click', () => medir('demo_envio', { segmento: estado.segmento }));
+
+    form.querySelector('[data-cons-copiar]')?.addEventListener('click', async () => {
+      const url = urlDaPrevia(base, estado);
+      try {
+        await navigator.clipboard.writeText(url);
+        aviso.textContent = 'Link da prévia copiado. É só colar na conversa.';
+      } catch {
+        aviso.textContent = `Copie o link: ${url}`;
+      }
+      setTimeout(() => (aviso.textContent = avisoPadrao), 5000);
+    });
+
+    // Estado vindo de um link de prévia (?n=&s=&c=) volta para o construtor
+    const p = new URLSearchParams(location.search);
+    if (p.has('s') || p.has('n')) {
+      estado.nome = limparNome(p.get('n'));
+      const s = p.get('s');
+      if (s && form.querySelector(`input[name="segmento"][value="${CSS.escape(s)}"]`)) estado.segmento = s;
+      estado.cor = limparCor(p.get('c') || estado.cor);
+      nomeInput.value = estado.nome;
+      form.querySelectorAll<HTMLInputElement>('input[name="segmento"]').forEach((r) => (r.checked = r.value === estado.segmento));
+      form.querySelectorAll<HTMLInputElement>('input[name="cor"]').forEach((r) => (r.checked = r.value.toLowerCase() === estado.cor.toLowerCase()));
+      pintar();
+      remontar();
+    }
+    atualizarLinks();
+  }
+</script>
+
+<style>
+  .cons__grade {
+    display: grid;
+    gap: 48px;
+  }
+  .cons__intro {
+    margin-top: 22px;
+  }
+  .cons__controles,
+  .cons__fim {
+    display: grid;
+    gap: 26px;
+  }
+  .campo {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .campo__rotulo {
+    padding: 0;
+    color: var(--tinta-3);
+  }
+  .campo input:not([type='radio']):not([type='color']) {
+    width: 100%;
+    min-height: 56px;
+    padding: 0 16px;
+    border: 1.5px solid var(--tinta);
+    border-radius: 10px;
+    background: #fbfaf7;
+    font-size: 19px;
+  }
+  .campo input::placeholder {
+    color: #8b877e;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    position: relative;
+  }
+  .chip input,
+  .cor input[type='radio'] {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  .chip span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1.5px solid var(--fio);
+    border-radius: 999px;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.25s var(--curva);
+  }
+  .chip input:checked + span {
+    border-color: var(--tinta);
+    background: var(--tinta);
+    color: var(--papel);
+  }
+  .chip input:focus-visible + span {
+    outline: 2px solid var(--sinal);
+    outline-offset: 2px;
+  }
+  .cores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cor {
+    position: relative;
+    width: 44px;
+    height: 44px;
+  }
+  .cor > span {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow:
+      0 0 0 3px var(--papel),
+      0 0 0 4px transparent;
+    transition: box-shadow 0.25s var(--curva);
+  }
+  .cor input:checked + span,
+  .cor--livre.ativa > span {
+    box-shadow:
+      0 0 0 3px var(--papel),
+      0 0 0 5px var(--tinta);
+  }
+  .cor input:focus-visible + span {
+    outline: 2px solid var(--sinal);
+    outline-offset: 5px;
+  }
+  .cor--livre {
+    --c: transparent;
+  }
+  .cor--livre > span {
+    border: 1.5px dashed var(--tinta-3);
+    font-size: 20px;
+    color: var(--tinta-2);
+  }
+  .cor--livre.ativa > span {
+    border: 0;
+    color: transparent;
+  }
+  .cor--livre input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .cons__acoes {
+    display: grid;
+    gap: 10px;
+  }
+  .cons__demo {
+    gap: 14px;
+    padding: 20px;
+    border: 1.5px dashed var(--tinta);
+    border-radius: 12px;
+  }
+  [data-demo] .cons__demo {
+    display: grid !important;
+  }
+  .cons__demo .btn {
+    margin-top: 14px;
+  }
+  .cons__aviso {
+    font-size: 14px;
+    color: var(--tinta-3);
+    max-width: 52ch;
+  }
+  .cons__palco {
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    align-content: start;
+  }
+  .cons__moldura {
+    width: min(330px, 86vw);
+  }
+  .cons__moldura :global(.cel) {
+    --cel-w: min(330px, 86vw);
+  }
+  .cons__legenda {
+    color: var(--tinta-3);
+    font-size: 11px;
+  }
+
+  @media (min-width: 640px) {
+    .cons__acoes {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+  @media (min-width: 1000px) {
+    .cons__grade {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      grid-template-areas: 'cab palco' 'controles palco' 'fim palco';
+      grid-template-rows: auto auto 1fr;
+      column-gap: 72px;
+      row-gap: 40px;
+    }
+    .cons__cab {
+      grid-area: cab;
+    }
+    .cons__controles {
+      grid-area: controles;
+    }
+    .cons__fim {
+      grid-area: fim;
+      align-content: start;
+    }
+    .cons__palco {
+      grid-area: palco;
+      position: sticky;
+      top: calc(var(--topo) + 32px);
+      align-self: start;
+    }
+    .cons__moldura,
+    .cons__moldura :global(.cel) {
+      --cel-w: 360px;
+      width: 360px;
+    }
+  }
+</style>

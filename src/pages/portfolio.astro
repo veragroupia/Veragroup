@@ -1,0 +1,83 @@
+---
+import Base from '../layouts/Base.astro';
+import CabecaPagina from '../components/CabecaPagina.astro';
+import ProjetoBloco from '../components/ProjetoBloco.astro';
+import Fechamento from '../components/Fechamento.astro';
+import T from '../components/T.astro';
+import { projetosNoSite, veraFinances } from '../data/portfolio';
+import { schemaTrilha } from '../lib/seo';
+import { temPreencher } from '../lib/texto';
+
+const trilha = [
+  { nome: 'Início', url: '/' },
+  { nome: 'Portfólio', url: '/portfolio' },
+];
+---
+<Base
+  title="Portfólio: projetos no ar, com link de verdade"
+  description="Projetos da Vera Group no ar: o problema do cliente, o que fizemos e o link para conferir. Inclui a loja online da ERK Pratas, de Salto, com peças em 3D."
+  caminho="/portfolio"
+  og="portfolio"
+  schema={[schemaTrilha(trilha)]}
+>
+  <CabecaPagina trilha={trilha} rotulo="Portfólio" titulo="Projetos *no ar*,|com o link|de verdade.">
+    <p class="corpo-g">
+      Só entra aqui projeto que o cliente autorizou mostrar. Cada um com o problema que existia, o que a gente fez e o
+      endereço para você abrir e testar.
+    </p>
+  </CabecaPagina>
+
+  <section class="envelope pf" aria-label="Projetos">
+    {projetosNoSite.map((p, i) => <ProjetoBloco p={p} n={i + 1} completo nivel="h2" />)}
+  </section>
+
+  <section class="secao envelope pf-produto" aria-labelledby="vf-titulo">
+    <p class="rotulo"><b>+</b> Produto próprio</p>
+    <h2 id="vf-titulo" class="titulo">{veraFinances.nome}</h2>
+    <div class="pf-produto__texto">
+      <p class="corpo-g">{veraFinances.descricao}</p>
+      <p class="corpo">
+        A Vera não faz só site para os outros: constrói e mantém um produto próprio, com site e aplicativo. É o mesmo cuidado
+        que vai para o projeto do seu negócio.
+      </p>
+      <p class="mono">Situação: <T t={veraFinances.situacao} /></p>
+      {temPreencher(veraFinances.link) ? <p><T t={veraFinances.link} /></p> : (
+        <a class="link-seta" href={veraFinances.link} target="_blank" rel="noopener">Conhecer o Vera Finances <span class="seta" aria-hidden="true">↗</span></a>
+      )}
+    </div>
+  </section>
+
+  <Fechamento origem="portfolio" />
+</Base>
+
+<style>
+  .pf {
+    display: grid;
+    gap: clamp(96px, 12vw, 160px);
+    padding-bottom: var(--respiro);
+    border-bottom: 1px solid var(--tinta);
+  }
+  .pf-produto {
+    display: grid;
+    gap: 24px;
+  }
+  .pf-produto__texto {
+    display: grid;
+    gap: 16px;
+    max-width: 62ch;
+  }
+  .pf-produto .mono {
+    color: var(--tinta-3);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  @media (min-width: 1000px) {
+    .pf-produto {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: 56px;
+    }
+    .pf-produto .rotulo {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

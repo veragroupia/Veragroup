@@ -1,0 +1,37 @@
+---
+import ProjetoBloco from '../ProjetoBloco.astro';
+import { projetosNoSite } from '../../data/portfolio';
+---
+<section id="portfolio" class="secao port" aria-labelledby="port-titulo">
+  <div class="envelope">
+    <header class="cabeca cabeca--lado">
+      <p class="rotulo"><b>04</b> A prova</p>
+      <h2 id="port-titulo" class="titulo linhas" data-revela>
+        <span class="l" style="--n:0"><span>Feito por nós.</span></span>
+        <span class="l" style="--n:1"><span><em>No ar agora.</em></span></span>
+      </h2>
+      <p class="corpo-g" data-revela>
+        Cada projeto com o problema que o cliente tinha, o que a gente fez e o link de verdade. Abra, teste, compre.
+      </p>
+    </header>
+
+    <div class="port__lista">
+      {projetosNoSite.map((p, i) => <ProjetoBloco p={p} n={i + 1} />)}
+    </div>
+
+    <p class="port__mais" data-fora-demo>
+      <a class="link-seta" href="/portfolio">Ver o portfólio completo <span class="seta" aria-hidden="true">→</span></a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .port__lista {
+    display: grid;
+    gap: clamp(96px, 12vw, 160px);
+  }
+  .port__mais {
+    margin-top: 64px;
+    font-size: 18px;
+  }
+</style>

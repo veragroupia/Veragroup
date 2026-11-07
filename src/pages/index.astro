@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/home/Hero.astro';
+import Faixa from '../components/home/Faixa.astro';
+import Calculadora from '../components/home/Calculadora.astro';
+import Construtor from '../components/home/Construtor.astro';
+import Portfolio from '../components/home/Portfolio.astro';
+import Servicos from '../components/home/Servicos.astro';
+import ComoFunciona from '../components/home/ComoFunciona.astro';
+import QuemSomos from '../components/home/QuemSomos.astro';
+import Duvidas from '../components/home/Duvidas.astro';
+import Fechamento from '../components/Fechamento.astro';
+import { faq } from '../data/home';
+import { schemaFaq } from '../lib/seo';
+---
+<Base
+  title="Vera Group · Sites, lojas e Google para negócios de Itu, Salto, Sorocaba e Indaiatuba"
+  description="Seu cliente procurou e achou o concorrente? Sites, lojas online, Google Meu Negócio e WhatsApp para negócios de Itu, Salto, Sorocaba e Indaiatuba. A gente vai até a sua loja."
+  caminho="/"
+  og="home"
+  schema={[schemaFaq(faq)]}
+  demo
+>
+  <Hero />
+  <Faixa />
+  <Calculadora />
+  <Construtor />
+  <Portfolio />
+  <Servicos />
+  <ComoFunciona />
+  <QuemSomos />
+  <Duvidas perguntas={faq} />
+  <Fechamento />
+
+  <nav class="demo-barra" aria-label="Etapas da demonstração" data-so-demo slot="fim">
+    <a href="#construtor" data-demo-etapa aria-current="true"><span class="mono">1</span> Prévia</a>
+    <a href="#portfolio" data-demo-etapa><span class="mono">2</span> Portfólio</a>
+    <a href="#calculadora" data-demo-etapa><span class="mono">3</span> Perda</a>
+  </nav>
+</Base>
+
+<style is:global>
+  .demo-barra {
+    position: fixed;
+    z-index: 70;
+    left: 10px;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 6px;
+    border-radius: 999px;
+    background: var(--tinta);
+    box-shadow: 0 16px 32px -16px rgb(14 14 12 / 0.6);
+  }
+  [data-demo] .demo-barra {
+    display: grid !important;
+  }
+  .demo-barra a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 52px;
+    border-radius: 999px;
+    color: var(--papel);
+    font-size: 16px;
+    font-weight: 560;
+    text-decoration: none;
+  }
+  .demo-barra a[aria-current='true'] {
+    background: var(--papel);
+    color: var(--tinta);
+  }
+  .demo-barra .mono {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+</style>

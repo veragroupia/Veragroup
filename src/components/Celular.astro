@@ -1,0 +1,29 @@
+---
+import '../styles/previa.css';
+import { renderPrevia, estiloCor, type Estado } from '../lib/previa';
+import { padrao } from '../data/construtor';
+
+interface Props {
+  estado?: Estado;
+  /** A tela rola (construtor) ou fica parada (topo). */
+  rola?: boolean;
+  monta?: boolean;
+  rotulo?: string;
+  id?: string;
+  class?: string;
+}
+const { estado = padrao, rola = false, monta = true, rotulo, id, class: cls } = Astro.props;
+---
+<div class:list={['cel', { 'cel--rola': rola }, cls]} id={id} role={rotulo ? 'img' : undefined} aria-label={rotulo}>
+  <div class="cel__tela">
+    <span class="cel__ilha" aria-hidden="true"></span>
+    <div
+      class:list={['pv', { 'pv--monta': monta }]}
+      data-pv
+      style={estiloCor(estado.cor)}
+      tabindex={rola ? 0 : undefined}
+      aria-hidden={rotulo ? 'true' : undefined}
+      set:html={renderPrevia(estado)}
+    />
+  </div>
+</div>

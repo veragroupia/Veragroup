@@ -1,0 +1,6 @@
+---
+import logo from '../assets/logo-vera.svg?raw';
+interface Props { class?: string }
+const svg = logo.replace('<svg ', `<svg class="${Astro.props.class ?? ''}" aria-hidden="true" focusable="false" `);
+---
+<Fragment set:html={svg} />

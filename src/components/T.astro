@@ -1,0 +1,7 @@
+---
+/* Texto com os [[PREENCHER]] destacados. *palavra* vira itálico. */
+import { emHtml } from '../lib/texto';
+interface Props { t: string }
+const { t } = Astro.props;
+---
+<Fragment set:html={emHtml(t)} />

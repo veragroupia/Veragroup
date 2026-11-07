@@ -1,0 +1,134 @@
+---
+import T from '../T.astro';
+import { equipe } from '../../data/home';
+import { veraFinances } from '../../data/portfolio';
+import { temPreencher } from '../../lib/texto';
+---
+<section id="quem-somos" class="secao quem" aria-labelledby="quem-titulo" data-fora-demo>
+  <div class="envelope">
+    <p class="rotulo"><b>07</b> Quem somos</p>
+    <h2 id="quem-titulo" class="frase linhas quem__frase" data-revela>
+      <span class="l" style="--n:0"><span>Somos da região.</span></span>
+      <span class="l" style="--n:1"><span>E a gente vai</span></span>
+      <span class="l" style="--n:2"><span><em>até a sua loja.</em></span></span>
+    </h2>
+
+    <ul class="quem__socios">
+      {equipe.socios.map((s, i) => (
+        <li class="socio" data-revela style={`--atraso:${i * 90}ms`}>
+          {s.foto && <img class="socio__foto" src={s.foto} alt={`Foto de ${s.nome}`} width="320" height="400" loading="lazy" />}
+          <span class="socio__n mono">{String(i + 1).padStart(2, '0')}</span>
+          <h3 class="socio__nome">{s.nome}</h3>
+          <p class="socio__papel mono"><T t={s.papel} /> · <T t={s.cidade} /></p>
+          <p class="socio__frase">{temPreencher(s.frase) ? <T t={s.frase} /> : <>“{s.frase}”</>}</p>
+        </li>
+      ))}
+    </ul>
+
+    <div class="quem__produto" data-revela>
+      <div>
+        <p class="rotulo"><b>+</b> Produto próprio</p>
+        <h3 class="titulo-m">{veraFinances.nome}</h3>
+      </div>
+      <div class="quem__produto-texto">
+        <p class="corpo-g">{veraFinances.descricao}</p>
+        <p class="corpo">
+          Entra aqui como prova: além de sites para clientes, a gente constrói e mantém produto de verdade.
+        </p>
+        <p class="mono quem__situacao">Situação: <T t={veraFinances.situacao} /></p>
+        {temPreencher(veraFinances.link) ? (
+          <p><T t={veraFinances.link} /></p>
+        ) : (
+          <a class="link-seta" href={veraFinances.link} target="_blank" rel="noopener">Conhecer o Vera Finances <span class="seta" aria-hidden="true">↗</span></a>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .quem__frase {
+    margin: 28px 0 clamp(56px, 8vw, 112px);
+  }
+  .quem__socios {
+    display: grid;
+    gap: 0;
+    margin-bottom: clamp(72px, 10vw, 140px);
+  }
+  .socio {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    column-gap: 14px;
+    row-gap: 6px;
+    padding: 26px 0;
+    border-top: 1px solid var(--tinta);
+  }
+  .socio__foto {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    margin-bottom: 14px;
+    border-radius: 6px;
+    filter: grayscale(1);
+  }
+  .socio__n {
+    grid-row: span 3;
+    padding-top: 12px;
+    color: var(--sinal-texto);
+  }
+  .socio__nome {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(36px, 4vw, 56px);
+    line-height: 1;
+  }
+  .socio__papel {
+    color: var(--tinta-3);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .socio__frase {
+    max-width: 40ch;
+    font-size: 17px;
+    color: var(--tinta-2);
+  }
+  .quem__produto {
+    display: grid;
+    gap: 24px;
+    padding: clamp(28px, 4vw, 48px);
+    border: 1px solid var(--tinta);
+    border-radius: 6px;
+  }
+  .quem__produto .titulo-m {
+    margin-top: 12px;
+  }
+  .quem__produto-texto {
+    display: grid;
+    gap: 14px;
+  }
+  .quem__situacao {
+    color: var(--tinta-3);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  @media (min-width: 1000px) {
+    .quem__socios {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px;
+    }
+    .socio {
+      grid-template-columns: 1fr;
+      align-content: start;
+    }
+    .socio__n {
+      grid-row: auto;
+      padding-top: 0;
+    }
+    .quem__produto {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      gap: 48px;
+    }
+  }
+</style>

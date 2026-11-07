@@ -1,3 +1,5 @@
+> **Documento da versão 1 do site (setembro de 2026).** Preços, equipe e estrutura daqui foram substituídos na reformulação; o estado atual está em [`ENTREGA.md`](ENTREGA.md).
+
 # Diagnóstico: site portfólio da Vera Group
 
 Documento de trabalho. Reúne as perguntas que um estrategista faria antes de desenhar o site, a resposta que os dados disponíveis dão para cada uma e a decisão tomada. No fim ficam as perguntas que só a Vera Group pode responder.

@@ -1,0 +1,139 @@
+---
+/* Prévia compartilhável: /previa?n=Nome&s=segmento&c=D4371C
+   Montada no navegador de quem abre, com os parâmetros do link. */
+import Base from '../layouts/Base.astro';
+import Celular from '../components/Celular.astro';
+import Logo from '../components/Logo.astro';
+import IconeWhats from '../components/IconeWhats.astro';
+import { linkWhats, MSG } from '../lib/texto';
+---
+<Base
+  title="Prévia do seu site"
+  description="Prévia de site montada no Construtor ao vivo da Vera Group."
+  caminho="/previa"
+  noindex
+  semTopo
+>
+  <div class="pr">
+    <header class="pr__topo envelope">
+      <a href="/" class="pr__marca" aria-label="Vera Group, página inicial"><Logo class="pr__logo" /></a>
+      <p class="mono">Prévia · ainda não publicada</p>
+    </header>
+
+    <div class="pr__grade envelope">
+      <div class="pr__texto">
+        <h1 class="titulo-m">Prévia do site <span data-pr-nome>do seu negócio</span>.</h1>
+        <p class="corpo">
+          Montada agora com o modelo de <b data-pr-seg>confeitaria</b>. Endereço, horário, fotos e avaliações ficam em
+          branco porque são do seu negócio: entram quando a gente montar o site de verdade.
+        </p>
+        <div class="pr__acoes">
+          <a class="btn btn--sinal btn--g" href={linkWhats(MSG.padrao)} data-pr-quero data-whats="previa" target="_blank" rel="noopener">
+            <IconeWhats />Quero esse no ar
+          </a>
+          <a class="btn btn--linha btn--g" href="/#construtor" data-pr-editar>Mudar nome, segmento ou cor</a>
+        </div>
+      </div>
+      <div class="pr__cel">
+        <Celular rola id="pr-cel" />
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { estadoDaUrl, renderPrevia, estiloCor, segmento, nomeDaCor, urlDaPrevia } from '../lib/previa';
+  import { linkWhats } from '../lib/texto';
+  import { medir } from '../lib/medir';
+
+  const e = estadoDaUrl(location.search);
+  const pv = document.querySelector<HTMLElement>('#pr-cel [data-pv]');
+  if (pv) {
+    pv.setAttribute('style', estiloCor(e.cor));
+    pv.innerHTML = renderPrevia(e);
+  }
+  const seg = segmento(e.segmento);
+  const nome = document.querySelector('[data-pr-nome]');
+  if (nome && e.nome) nome.textContent = `de ${e.nome}`;
+  const s = document.querySelector('[data-pr-seg]');
+  if (s) s.textContent = seg.rotulo.toLowerCase();
+  if (e.nome) document.title = `Prévia: ${e.nome} · Vera Group`;
+
+  const url = urlDaPrevia(location.origin, e);
+  const quero = document.querySelector<HTMLAnchorElement>('[data-pr-quero]');
+  if (quero) {
+    quero.href = linkWhats(
+      [
+        'Olá, Vera Group! Vi a prévia do meu site e quero esse no ar.',
+        e.nome ? `Negócio: ${e.nome}` : '',
+        `Segmento: ${seg.rotulo}`,
+        `Cor: ${nomeDaCor(e.cor)}`,
+        `Prévia: ${url}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    );
+    quero.addEventListener('click', () => medir('previa_quero', { segmento: seg.id }));
+  }
+  const editar = document.querySelector<HTMLAnchorElement>('[data-pr-editar]');
+  if (editar) editar.href = `/${location.search}#construtor`;
+</script>
+
+<style>
+  .pr {
+    min-height: 100dvh;
+    padding-bottom: 64px;
+  }
+  .pr__topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: 64px;
+    border-bottom: 1px solid var(--fio);
+    margin-bottom: 32px;
+  }
+  .pr__marca {
+    color: var(--tinta);
+  }
+  .pr__marca :global(.pr__logo) {
+    width: 72px;
+  }
+  .pr__topo .mono {
+    color: var(--tinta-3);
+    font-size: 11px;
+  }
+  .pr__grade {
+    display: grid;
+    gap: 32px;
+  }
+  .pr__texto {
+    display: grid;
+    gap: 18px;
+    align-content: center;
+  }
+  .pr__acoes {
+    display: grid;
+    gap: 10px;
+  }
+  .pr__acoes .btn {
+    white-space: normal;
+  }
+  .pr__cel {
+    display: grid;
+    justify-items: center;
+  }
+  .pr__cel :global(.cel) {
+    --cel-w: min(360px, 88vw);
+  }
+  @media (min-width: 900px) {
+    .pr__grade {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+      gap: 64px;
+    }
+    .pr__acoes {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+</style>

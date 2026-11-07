@@ -1,0 +1,325 @@
+/* Celular de demonstração e o mini-site que o Construtor monta. */
+
+.cel {
+  --cel-w: 300px;
+  position: relative;
+  width: var(--cel-w);
+  max-width: 100%;
+  aspect-ratio: 9 / 19;
+  padding: 9px;
+  border-radius: calc(var(--cel-w) * 0.15);
+  background: var(--tinta);
+  box-shadow:
+    0 0 0 1px #2a2a26 inset,
+    0 30px 60px -30px rgb(14 14 12 / 0.45);
+}
+.cel__tela {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--cel-w) * 0.12);
+  background: #fbfaf7;
+  isolation: isolate;
+}
+.cel__ilha {
+  position: absolute;
+  z-index: 3;
+  top: 9px;
+  left: 50%;
+  width: 30%;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 20px;
+  background: var(--tinta);
+}
+.cel--rola .pv {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.cel--rola .pv::-webkit-scrollbar {
+  display: none;
+}
+
+.pv {
+  --pv: #d4371c;
+  --pv-t: #fff;
+  --pv-claro: color-mix(in srgb, var(--pv) 12%, #fff);
+  --pv-claro-2: color-mix(in srgb, var(--pv) 6%, #fff);
+  position: relative;
+  height: 100%;
+  padding: 40px 0 72px;
+  overflow: hidden;
+  color: #1b1b19;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+}
+.pv * {
+  box-sizing: border-box;
+}
+:where(.pv p, .pv ul, .pv ol) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pv svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pv-b {
+  padding: 0 14px;
+  margin-bottom: 16px;
+}
+.pv-barra {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ebe8e1;
+}
+.pv-sigla {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--pv);
+  color: var(--pv-t);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.pv-marca {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pv-menu {
+  display: grid;
+  gap: 4px;
+  width: 18px;
+}
+.pv-menu i {
+  display: block;
+  height: 1.5px;
+  background: #1b1b19;
+}
+
+.pv-foto {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background-color: var(--pv-claro);
+  background-image: repeating-linear-gradient(135deg, transparent 0 9px, var(--pv-claro-2) 9px 18px);
+  color: var(--pv);
+}
+.pv-glifo {
+  width: 52px;
+  height: 52px;
+  stroke-width: 1.8;
+}
+.pv-foto span {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5f5b53;
+}
+.pv-seg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5f5b53;
+}
+.pv-seg::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pv);
+}
+.pv-titulo {
+  margin-bottom: 10px;
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.pv-sub {
+  margin-bottom: 14px;
+  color: #55524b;
+}
+.pv-botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  margin-bottom: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--pv);
+  color: var(--pv-t);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.pv-botao svg {
+  width: 15px;
+  height: 15px;
+}
+.pv-botao--linha {
+  background: transparent;
+  color: #1b1b19;
+  border: 1.2px solid #1b1b19;
+}
+.pv-h {
+  margin-bottom: 8px;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.1;
+}
+.pv-lista li {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid #ebe8e1;
+  font-weight: 500;
+}
+.pv-lista li span {
+  color: var(--pv);
+  font-size: 15px;
+  line-height: 1;
+}
+.pv-passos ol {
+  display: grid;
+  gap: 7px;
+}
+.pv-passos li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.pv-passos b {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--pv);
+  color: var(--pv-t);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+.pv-vazio {
+  margin-top: 6px;
+  padding: 7px 9px;
+  border: 1px dashed #c9c4b8;
+  border-radius: 8px;
+  color: #6c685f;
+  font-size: 11px;
+}
+.pv-mapa {
+  position: relative;
+  height: 74px;
+  border-radius: 10px;
+  background-color: #efece5;
+  background-image:
+    linear-gradient(#e2ded4 1px, transparent 1px),
+    linear-gradient(90deg, #e2ded4 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.pv-mapa i {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--pv);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+}
+.pv-flutua {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--pv);
+  color: var(--pv-t);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.22);
+}
+.pv-flutua svg {
+  width: 20px;
+  height: 20px;
+}
+.cel--rola .pv {
+  padding-bottom: 14px;
+}
+.cel--rola .pv-flutua {
+  position: sticky;
+  bottom: 14px;
+  margin: 0 12px 0 auto;
+}
+
+/* A vitrine que se monta: cada bloco encaixa no lugar, em ordem */
+@media (prefers-reduced-motion: no-preference) {
+  .pv--monta .pv-b {
+    animation: pv-encaixa 720ms var(--curva) both;
+    animation-delay: calc(var(--i) * 150ms + 120ms);
+  }
+  .pv--monta .pv-flutua {
+    animation: pv-surge 520ms var(--curva) both;
+    animation-delay: 1250ms;
+  }
+}
+@keyframes pv-encaixa {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pv-surge {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

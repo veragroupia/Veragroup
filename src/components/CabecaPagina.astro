@@ -1,0 +1,71 @@
+---
+import { linhasHtml } from '../lib/texto';
+interface Props {
+  trilha: { nome: string; url: string }[];
+  rotulo: string;
+  /** Use | para quebrar linha e *palavra* para itálico. */
+  titulo: string;
+}
+const { trilha, rotulo, titulo } = Astro.props;
+---
+<header class="cp envelope">
+  <nav class="cp__trilha mono" aria-label="Você está em">
+    <ol>
+      {trilha.map((t, i) => (
+        <li>{i < trilha.length - 1 ? <a href={t.url}>{t.nome}</a> : <span aria-current="page">{t.nome}</span>}</li>
+      ))}
+    </ol>
+  </nav>
+  <p class="rotulo"><b>●</b> {rotulo}</p>
+  <h1 class="display linhas cp__titulo" set:html={linhasHtml(titulo)} />
+  <slot />
+</header>
+
+<style>
+  .cp {
+    padding-block: clamp(32px, 6vh, 72px) clamp(56px, 9vh, 112px);
+  }
+  .cp__trilha ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-bottom: clamp(36px, 6vh, 64px);
+    color: var(--tinta-3);
+    font-size: 11px;
+  }
+  .cp__trilha li + li::before {
+    content: '/';
+    margin-right: 10px;
+    color: var(--fio);
+  }
+  .cp__trilha a {
+    text-decoration: none;
+  }
+  .cp__trilha a:hover {
+    text-decoration: underline;
+  }
+  .cp .rotulo {
+    margin-bottom: 22px;
+  }
+  .cp .rotulo b {
+    font-size: 10px;
+  }
+  .cp__titulo {
+    max-width: 16ch;
+    margin-bottom: 28px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cp__titulo :global(.l > span) {
+      animation: cp-sobe 900ms var(--curva) both;
+      animation-delay: calc(var(--n) * 90ms + 60ms);
+    }
+  }
+  @keyframes cp-sobe {
+    from {
+      transform: translateY(105%);
+    }
+    to {
+      transform: none;
+    }
+  }
+</style>
