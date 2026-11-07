@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+import Topo from '../components/Topo.astro';
+import Rodape from '../components/Rodape.astro';
+import Cookies from '../components/Cookies.astro';
+import { empresa } from '../data/empresa';
+import { schemaEmpresa } from '../lib/seo';
+import { semMarcadores } from '../lib/texto';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Caminho canônico, ex.: '/itu'. */
+  caminho: string;
+  /** Imagem de prévia em /og/{og}.jpg */
+  og?: string;
+  schema?: object[];
+  noindex?: boolean;
+  /** Aceita ?demo=1 (só a página inicial). */
+  demo?: boolean;
+  semTopo?: boolean;
+}
+
+const { title, description, caminho, og = 'home', schema = [], noindex = false, demo = false, semTopo = false } = Astro.props;
+const tituloFinal = semMarcadores(caminho === '/' ? title : `${title} · Vera Group`);
+const descricao = semMarcadores(description);
+const canonical = `${empresa.url}${caminho === '/' ? '' : caminho}`;
+const imagem = `${empresa.url}/og/${og}.jpg`;
+const jsonld = [schemaEmpresa(), ...schema];
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{tituloFinal}</title>
+    <meta name="description" content={descricao} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="theme-color" content="#F4F1EA" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Vera Group" />
+    <meta property="og:title" content={tituloFinal} />
+    <meta property="og:description" content={descricao} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imagem} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={tituloFinal} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preload" href="/fonts/instrument-serif-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/instrument-serif-400-italic.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/geist-var.woff2" as="font" type="font/woff2" crossorigin />
+
+    <script is:inline define:vars={{ demo }}>
+      document.documentElement.classList.add('js');
+      if (demo && /[?&]demo=1(&|$)/.test(location.search)) document.documentElement.dataset.demo = '1';
+    </script>
+
+    {jsonld.map((j) => <script type="application/ld+json" set:html={JSON.stringify(j)} />)}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    {!semTopo && <Topo />}
+    <main id="conteudo">
+      <slot />
+    </main>
+    {!semTopo && <Rodape />}
+    <Cookies />
+    <slot name="fim" />
+    <script>
+      import '../scripts/base.ts';
+    </script>
+  </body>
+</html>

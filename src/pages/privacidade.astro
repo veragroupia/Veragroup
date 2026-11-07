@@ -1,0 +1,131 @@
+---
+import Base from '../layouts/Base.astro';
+import CabecaPagina from '../components/CabecaPagina.astro';
+import T from '../components/T.astro';
+import { empresa } from '../data/empresa';
+import { schemaTrilha } from '../lib/seo';
+import { temPreencher } from '../lib/texto';
+
+const trilha = [
+  { nome: 'Início', url: '/' },
+  { nome: 'Privacidade', url: '/privacidade' },
+];
+const temMedicao = Boolean(empresa.analytics.ga4 || empresa.analytics.gtm);
+const atualizado = '7 de novembro de 2026';
+---
+<Base
+  title="Política de privacidade"
+  description="Como o site da Vera Group trata os seus dados: o que fica só no seu aparelho, o que só é medido com o seu consentimento e como exercer os seus direitos pela LGPD."
+  caminho="/privacidade"
+  og="home"
+  schema={[schemaTrilha(trilha)]}
+>
+  <CabecaPagina trilha={trilha} rotulo="Privacidade e LGPD" titulo="O que acontece|com os *seus dados*.">
+    <p class="corpo-g">Versão curta: o que você digita neste site fica no seu aparelho. Só sai quando você toca num botão de WhatsApp, e a medição de visitas só liga se você aceitar.</p>
+  </CabecaPagina>
+
+  <article class="envelope pv-texto">
+    <section>
+      <h2>Quem responde por este site</h2>
+      <p>
+        Vera Group, agência de presença digital da região de {empresa.regiao}. Responsável pelo tratamento de dados:
+        <T t={empresa.responsavel} />.{empresa.cnpj && <> CNPJ {empresa.cnpj}.</>}
+      </p>
+      <p>
+        Contato para assuntos de privacidade:{' '}
+        {temPreencher(empresa.email) ? <T t={empresa.email} /> : <a href={`mailto:${empresa.email}`}>{empresa.email}</a>}.
+      </p>
+    </section>
+
+    <section>
+      <h2>Calculadora e Construtor ao vivo</h2>
+      <p>
+        Os números da calculadora e o nome, o segmento e a cor que você escolhe no construtor são processados só no seu
+        navegador. Nada disso é enviado para a Vera Group nem para terceiros enquanto você não tocar num botão.
+      </p>
+      <p>
+        Ao tocar em “Quero esse no ar”, “Mandar no meu WhatsApp” ou “Falar no WhatsApp”, o WhatsApp abre com uma mensagem
+        pronta. Você pode editar ou apagar a mensagem antes de enviar. A partir do envio, a conversa segue as regras do
+        próprio WhatsApp.
+      </p>
+      <p>
+        O link de prévia leva o nome do negócio, o segmento e a cor no próprio endereço. Quem recebe o link consegue ver
+        essas três informações.
+      </p>
+    </section>
+
+    <section>
+      <h2>Medição de visitas e cookies</h2>
+      {temMedicao ? (
+        <p>
+          Usamos <T t={empresa.analytics.ferramenta} /> para contar visitas e cliques em botões (WhatsApp, calculadora,
+          construtor). Isso só é ligado se você aceitar no aviso de cookies, e você pode mudar a escolha a qualquer momento
+          em “Preferências de cookies”, no rodapé. Nunca enviamos o que você digitou: nem nome do negócio, nem valores, nem
+          telefone.
+        </p>
+      ) : (
+        <p>
+          Hoje este site não usa ferramenta de medição nem cookies. Se um dia passar a usar (<T t={empresa.analytics.ferramenta} />),
+          a medição só vai ligar depois do seu aceite, num aviso em que recusar é tão fácil quanto aceitar.
+        </p>
+      )}
+      <p>
+        Guardamos no seu navegador (armazenamento local) só a sua escolha sobre os cookies, para não perguntar de novo.
+        As fontes do site são servidas pelo próprio site, sem chamadas ao Google Fonts.
+      </p>
+    </section>
+
+    <section>
+      <h2>Hospedagem</h2>
+      <p>
+        O site é hospedado na Vercel, que registra dados técnicos de acesso (como endereço IP e tipo de navegador) para
+        segurança e funcionamento do serviço.
+      </p>
+    </section>
+
+    <section>
+      <h2>Por quanto tempo guardamos</h2>
+      <p><T t="[[PREENCHER: por quanto tempo vocês guardam as conversas e os dados de quem chama no WhatsApp]]" /></p>
+    </section>
+
+    <section>
+      <h2>Seus direitos</h2>
+      <p>
+        Pela Lei Geral de Proteção de Dados (Lei 13.709/2018), você pode pedir confirmação de que tratamos seus dados,
+        acesso, correção, eliminação e informação sobre compartilhamento, e pode revogar o consentimento a qualquer momento.
+        Basta escrever para o contato acima.
+      </p>
+    </section>
+
+    <p class="mono pv-texto__data">Última atualização: {atualizado}</p>
+  </article>
+</Base>
+
+<style>
+  .pv-texto {
+    display: grid;
+    gap: 40px;
+    max-width: 760px;
+    margin-left: max(var(--margem), (100% - var(--largura)) / 2);
+    padding-bottom: var(--respiro);
+  }
+  .pv-texto section {
+    display: grid;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--tinta);
+  }
+  .pv-texto h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(28px, 3vw, 40px);
+    line-height: 1.05;
+  }
+  .pv-texto p {
+    font-size: 17px;
+    color: var(--tinta-2);
+  }
+  .pv-texto__data {
+    color: var(--tinta-3);
+  }
+</style>

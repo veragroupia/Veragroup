@@ -1,0 +1,247 @@
+---
+import Celular from '../Celular.astro';
+import Carga from '../Carga.astro';
+import IconeWhats from '../IconeWhats.astro';
+import { linkWhats, MSG } from '../../lib/texto';
+
+const etapas = ['Nome e marca', 'Foto e chamada', 'Serviços', 'Como pedir', 'Onde fica', 'Avaliações', 'WhatsApp'];
+---
+<section class="hero" aria-labelledby="hero-titulo" data-fora-demo>
+  <div class="hero__in envelope">
+    <div class="hero__texto">
+      <p class="rotulo hero__kicker"><b>●</b> Itu · Salto · Sorocaba · Indaiatuba</p>
+      <h1 id="hero-titulo" class="display linhas hero__titulo">
+        <span class="l" style="--n:0"><span>Seu cliente</span></span>
+        <span class="l" style="--n:1"><span><em>procurou.</em></span></span>
+        <span class="l" style="--n:2"><span>E achou o</span></span>
+        <span class="l" style="--n:3"><span><em>concorrente.</em></span></span>
+      </h1>
+      <p class="hero__sub corpo-g">
+        Sites, lojas e automações para negócios de Itu, Salto, Sorocaba e Indaiatuba.
+      </p>
+      <div class="hero__acoes">
+        <a class="btn btn--tinta btn--g" href="#calculadora">Ver quanto você está perdendo <span aria-hidden="true">↓</span></a>
+        <a class="btn btn--linha btn--g" href={linkWhats(MSG.padrao)} data-whats="hero" target="_blank" rel="noopener">
+          <IconeWhats />Falar no WhatsApp
+        </a>
+      </div>
+      <Carga class="hero__carga" />
+    </div>
+
+    <div class="hero__visual">
+      <ol class="hero__log mono" aria-hidden="true" data-hero-log>
+        {etapas.map((e, i) => (
+          <li style={`--i:${i}`}><span>{String(i + 1).padStart(2, '0')}</span>{e}</li>
+        ))}
+      </ol>
+      <div class="hero__cel corte">
+        <Celular rotulo="Exemplo: um site de confeitaria sendo montado bloco por bloco num celular" id="hero-cel" />
+      </div>
+      <p class="hero__legenda mono" aria-hidden="true">
+        <span data-hero-seg>Confeitaria</span> · montado agora, no seu navegador
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { renderPrevia, estiloCor } from '../../lib/previa';
+  import { segmentos, cores } from '../../data/construtor';
+
+  // Depois da primeira montagem, o topo mostra outros segmentos uma vez, e para.
+  const pv = document.querySelector<HTMLElement>('#hero-cel [data-pv]');
+  const log = document.querySelector<HTMLElement>('[data-hero-log]');
+  const seg = document.querySelector<HTMLElement>('[data-hero-seg]');
+  const parado = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ordem = [
+    ['oficina', 3],
+    ['odonto', 1],
+    ['petshop', 6],
+    ['confeitaria', 0],
+  ] as const;
+
+  if (pv && !parado && !document.documentElement.dataset.demo) {
+    let passo = 0;
+    let visivel = true;
+    new IntersectionObserver((e) => (visivel = e[0].isIntersecting), { threshold: 0.3 }).observe(pv);
+    const trocar = () => {
+      if (passo >= ordem.length) return;
+      if (!visivel || document.hidden) {
+        setTimeout(trocar, 1500);
+        return;
+      }
+      const [id, c] = ordem[passo++];
+      const s = segmentos.find((x) => x.id === id)!;
+      pv.setAttribute('style', estiloCor(cores[c].hex));
+      pv.innerHTML = renderPrevia({ nome: '', segmento: id, cor: cores[c].hex });
+      if (seg) seg.textContent = s.rotulo;
+      if (log) {
+        log.classList.remove('roda');
+        void log.offsetWidth;
+        log.classList.add('roda');
+      }
+      setTimeout(trocar, 5200);
+    };
+    setTimeout(trocar, 5600);
+  }
+</script>
+
+<style>
+  .hero {
+    padding-block: clamp(28px, 6vh, 72px) clamp(72px, 10vh, 140px);
+  }
+  .hero__in {
+    display: grid;
+    gap: 56px;
+  }
+  .hero__kicker {
+    margin-bottom: 22px;
+  }
+  .hero__kicker b {
+    font-size: 10px;
+  }
+  .hero__titulo {
+    margin-bottom: 26px;
+  }
+  .hero__sub {
+    margin-bottom: 30px;
+  }
+  .hero__acoes {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 26px;
+  }
+  .hero__visual {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 18px;
+  }
+  .hero__cel {
+    width: min(300px, 80vw);
+  }
+  .hero__cel :global(.cel) {
+    --cel-w: min(300px, 80vw);
+  }
+  .hero__legenda {
+    color: var(--tinta-3);
+    font-size: 11px;
+    text-align: center;
+  }
+  .hero__log {
+    display: none;
+  }
+
+  /* entrada do título: em camadas, sem esperar JavaScript */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__titulo .l > span {
+      animation: hero-sobe 900ms var(--curva) both;
+      animation-delay: calc(var(--n) * 90ms + 60ms);
+    }
+    .hero__acoes,
+    .hero__kicker {
+      animation: hero-surge 800ms var(--curva) both;
+      animation-delay: 420ms;
+    }
+  }
+  @keyframes hero-sobe {
+    from {
+      transform: translateY(105%);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes hero-surge {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .hero__acoes {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .hero {
+      padding-top: clamp(40px, 7vh, 88px);
+    }
+    .hero__in {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      align-items: center;
+      gap: 40px;
+    }
+    .hero__visual {
+      grid-template-columns: auto auto;
+      justify-content: end;
+      align-items: center;
+      column-gap: 28px;
+    }
+    .hero__cel,
+    .hero__cel :global(.cel) {
+      --cel-w: 330px;
+      width: 330px;
+    }
+    .hero__legenda {
+      grid-column: 2;
+    }
+    .hero__log {
+      display: grid;
+      gap: 14px;
+      color: var(--tinta-3);
+      font-size: 11px;
+    }
+    .hero__log li {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .hero__log li span {
+      color: var(--sinal-texto);
+    }
+    .hero__log li::after {
+      content: '';
+      width: 28px;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.6;
+    }
+  }
+  @media (min-width: 1000px) and (prefers-reduced-motion: no-preference) {
+    .hero__log li {
+      animation: hero-log 520ms var(--curva) both;
+      animation-delay: calc(var(--i) * 150ms + 200ms);
+    }
+    .hero__log:global(.roda) li {
+      animation-name: hero-log-2;
+    }
+  }
+  @keyframes hero-log {
+    from {
+      opacity: 0.15;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes hero-log-2 {
+    from {
+      opacity: 0.15;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import CabecaPagina from '../components/CabecaPagina.astro';
+import ListaServicos from '../components/ListaServicos.astro';
+import Fechamento from '../components/Fechamento.astro';
+import { schemaTrilha } from '../lib/seo';
+
+const trilha = [
+  { nome: 'Início', url: '/' },
+  { nome: 'Serviços', url: '/servicos' },
+];
+---
+<Base
+  title="Serviços: sites, lojas, Google, plaquinha NFC e WhatsApp"
+  description="Landing Express por R$ 690 + R$ 97/mês, plaquinha NFC por R$ 100, sites completos, lojas online, Google Meu Negócio e WhatsApp com IA revisada por pessoas."
+  caminho="/servicos"
+  og="servicos"
+  schema={[schemaTrilha(trilha)]}
+>
+  <CabecaPagina trilha={trilha} rotulo="Serviços" titulo="Tudo o que faz o|cliente *achar você*.">
+    <p class="corpo-g">
+      Dois serviços com preço fechado para começar. O resto depende do tamanho do seu negócio, e o orçamento sai na
+      conversa pelo WhatsApp.
+    </p>
+  </CabecaPagina>
+  <section class="envelope" style="padding-bottom: var(--respiro)" aria-label="Lista de serviços">
+    <ListaServicos nivel="h2" />
+  </section>
+  <Fechamento origem="servicos" />
+</Base>

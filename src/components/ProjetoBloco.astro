@@ -1,0 +1,264 @@
+---
+import { Picture } from 'astro:assets';
+import Peca3d from './Peca3d.astro';
+import T from './T.astro';
+import type { Projeto } from '../data/portfolio';
+import { temPreencher } from '../lib/texto';
+
+interface Props {
+  p: Projeto;
+  n: number;
+  completo?: boolean;
+  /** Nível do título do projeto: h2 na página de portfólio, h3 dentro de uma seção. */
+  nivel?: 'h2' | 'h3';
+}
+const { p, n, completo = false, nivel = 'h3' } = Astro.props;
+const H = nivel;
+const comp = p.telas.find((t) => t.formato === 'computador');
+const cel = p.telas.find((t) => t.formato === 'celular');
+const resto = p.telas.filter((t) => t !== comp && t !== cel);
+const linkOk = !temPreencher(p.link.url);
+const dominio = linkOk ? new URL(p.link.url).host : '';
+---
+<article class="proj" aria-labelledby={`proj-${p.slug}`}>
+  <header class="proj__cab">
+    <p class="rotulo"><b>{String(n).padStart(2, '0')}</b> <T t={p.cidade} /> · {p.segmento}</p>
+    <H id={`proj-${p.slug}`} class="titulo proj__nome">{p.nome}</H>
+    <p class="corpo-g">{p.resumo}</p>
+  </header>
+
+  <div class="proj__grade">
+    {(comp || cel) && (
+      <div class="proj__telas" data-revela>
+        {comp && (
+          <figure class="nav corte">
+            <div class="nav__barra" aria-hidden="true"><i></i><i></i><i></i><span class="mono">{dominio || p.nome}</span></div>
+            <Picture src={comp.src} formats={['avif', 'webp']} fallbackFormat="webp" widths={[720, 1080, 1440]} sizes="(min-width: 1000px) 62vw, 92vw" alt={comp.alt} loading="lazy" />
+          </figure>
+        )}
+        {cel && (
+          <figure class="mini-cel">
+            <Picture src={cel.src} formats={['avif', 'webp']} fallbackFormat="webp" widths={[240, 390]} sizes="(min-width: 1000px) 200px, 34vw" alt={cel.alt} loading="lazy" />
+          </figure>
+        )}
+      </div>
+    )}
+
+    <dl class="proj__ficha">
+      <div>
+        <dt class="rotulo"><b>A</b> O problema</dt>
+        <dd><T t={p.problema} /></dd>
+      </div>
+      <div>
+        <dt class="rotulo"><b>B</b> O que fizemos</dt>
+        <dd>
+          <ol class="proj__feito">
+            {p.feito.map((f) => <li><T t={f} /></li>)}
+          </ol>
+        </dd>
+      </div>
+      <div>
+        <dt class="rotulo"><b>C</b> No ar</dt>
+        <dd>
+          {linkOk ? (
+            <>
+              <a class="btn btn--tinta proj__link" href={p.link.url} target="_blank" rel="noopener">
+                {p.link.rotulo} <span class="seta" aria-hidden="true">↗</span>
+              </a>
+              <span class="status proj__status">No ar · {dominio}</span>
+            </>
+          ) : (
+            <T t={p.link.url} />
+          )}
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  {completo && resto.length > 0 && (
+    <div class="proj__galeria">
+      {resto.map((t) => (
+        <figure data-revela>
+          <Picture src={t.src} formats={['avif', 'webp']} fallbackFormat="webp" widths={t.formato === 'celular' ? [240, 390] : [720, 1080]} sizes={t.formato === 'celular' ? '(min-width: 1000px) 22vw, 60vw' : '(min-width: 1000px) 44vw, 92vw'} alt={t.alt} loading="lazy" class={t.formato} />
+          <figcaption class="mono">{t.legenda} · tela real</figcaption>
+        </figure>
+      ))}
+    </div>
+  )}
+
+  {p.tem3d && (
+    <div class="proj__3d">
+      <p class="rotulo"><b>3D</b> Gire a peça, como o cliente da ERK faz</p>
+      <Peca3d />
+    </div>
+  )}
+</article>
+
+<style>
+  .proj {
+    display: grid;
+    gap: 40px;
+  }
+  .proj__cab {
+    display: grid;
+    gap: 16px;
+  }
+  .proj__nome {
+    font-size: clamp(52px, 8vw, 128px);
+  }
+  .proj__grade {
+    display: grid;
+    gap: 40px;
+  }
+  .proj__telas {
+    position: relative;
+    padding-bottom: 12%;
+  }
+  .nav {
+    overflow: hidden;
+    border: 1px solid var(--tinta);
+    border-radius: 8px;
+    background: var(--papel-claro, #fbfaf7);
+  }
+  .nav :global(img) {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 0 0 7px 7px;
+  }
+  .nav__barra {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--tinta);
+    background: var(--papel);
+  }
+  .nav__barra i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--tinta-3);
+  }
+  .nav__barra span {
+    margin-left: 10px;
+    font-size: 10.5px;
+    color: var(--tinta-3);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .mini-cel {
+    position: absolute;
+    right: 4%;
+    bottom: 0;
+    width: 30%;
+    max-width: 200px;
+    padding: 5px;
+    border-radius: 22px;
+    background: var(--tinta);
+    box-shadow: 0 24px 40px -20px rgb(14 14 12 / 0.6);
+  }
+  .mini-cel :global(img) {
+    width: 100%;
+    aspect-ratio: 390 / 844;
+    object-fit: cover;
+    border-radius: 17px;
+  }
+  .proj__ficha {
+    display: grid;
+    gap: 28px;
+    align-content: start;
+  }
+  .proj__ficha > div {
+    display: grid;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--fio);
+  }
+  .proj__ficha dd {
+    margin: 0;
+    font-size: 17px;
+    color: var(--tinta-2);
+  }
+  .proj__feito {
+    display: grid;
+    gap: 8px;
+    counter-reset: f;
+  }
+  .proj__feito li {
+    position: relative;
+    padding-left: 28px;
+  }
+  .proj__feito li::before {
+    counter-increment: f;
+    content: counter(f, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 0.25em;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--sinal-texto);
+  }
+  .proj__link {
+    margin: 4px 0 12px;
+  }
+  .proj__status {
+    display: flex;
+    color: var(--tinta-3);
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .proj__galeria {
+    display: grid;
+    gap: 28px;
+  }
+  .proj__galeria figure {
+    display: grid;
+    gap: 10px;
+  }
+  .proj__galeria :global(img) {
+    width: 100%;
+    border: 1px solid var(--tinta);
+    border-radius: 8px;
+  }
+  .proj__galeria :global(img.celular) {
+    max-width: 280px;
+    border-radius: 18px;
+  }
+  .proj__galeria figcaption {
+    color: var(--tinta-3);
+    font-size: 11px;
+  }
+  .proj__3d {
+    display: grid;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  @media (min-width: 1000px) {
+    .proj__grade {
+      grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+      gap: 56px;
+      align-items: start;
+    }
+    .proj__cab {
+      grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+      column-gap: 56px;
+      align-items: end;
+    }
+    .proj__cab .rotulo {
+      grid-column: 1 / -1;
+    }
+    .proj__galeria {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      align-items: end;
+    }
+    .proj__galeria figure {
+      grid-column: span 5;
+    }
+    .proj__galeria figure:nth-child(3n + 1) {
+      grid-column: span 7;
+    }
+  }
+</style>

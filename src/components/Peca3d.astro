@@ -1,0 +1,224 @@
+---
+/* Prévia interativa do 3D da ERK Pratas.
+   É o mesmo código do visualizador entregue para a ERK. Carrega depois do
+   conteúdo: sozinho em conexão boa, ou no toque em 4G fraco / economia de dados. */
+import { Image } from 'astro:assets';
+import poster from '../assets/img/erk-3d-poster.png';
+
+const elos = ['cubano', 'grumet', 'veneziana', 'cartier', 'baiana'];
+const acabamentos = ['polido', 'escovado', 'oxidado'];
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+---
+<div class="p3d" data-p3d>
+  <div class="p3d__palco corte">
+    <Image class="p3d__poster" src={poster} alt="Corrente de prata da ERK em 3D, elo cubano polido." widths={[400, 610]} sizes="(min-width: 1000px) 560px, 92vw" loading="lazy" data-p3d-poster />
+    <canvas class="p3d__canvas" aria-label="Corrente de prata da ERK em 3D. Arraste para girar." hidden data-p3d-canvas></canvas>
+    <button type="button" class="btn btn--claro p3d__carregar" data-p3d-carregar hidden>
+      Girar em 3D <small class="mono">≈ 115 KB</small>
+    </button>
+    <p class="p3d__peca mono" data-p3d-legenda>Elo cubano · 6 mm · 50 cm · polido</p>
+    <p class="p3d__dica mono" data-p3d-dica hidden>Arraste para girar</p>
+  </div>
+  <div class="p3d__opcoes">
+    <p class="rotulo" id="p3d-elo">Tipo de elo</p>
+    <div class="p3d__grupo" role="group" aria-labelledby="p3d-elo" data-p3d-grupo="elo">
+      {elos.map((e, i) => <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-valor={e}>{cap(e)}</button>)}
+    </div>
+    <p class="rotulo" id="p3d-acab">Acabamento</p>
+    <div class="p3d__grupo" role="group" aria-labelledby="p3d-acab" data-p3d-grupo="acabamento">
+      {acabamentos.map((a, i) => <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-valor={a}>{cap(a)}</button>)}
+    </div>
+    <p class="p3d__nota">
+      Não é vídeo nem foto: cada elo é desenhado em tempo real, na medida em centímetros. É o mesmo visualizador que o
+      cliente da ERK usa no montador.
+    </p>
+  </div>
+</div>
+
+<script>
+  const raiz = document.querySelector<HTMLElement>('[data-p3d]');
+  if (raiz) {
+    const canvas = raiz.querySelector<HTMLCanvasElement>('[data-p3d-canvas]')!;
+    const poster = raiz.querySelector<HTMLElement>('[data-p3d-poster]');
+    const botao = raiz.querySelector<HTMLButtonElement>('[data-p3d-carregar]')!;
+    const dica = raiz.querySelector<HTMLElement>('[data-p3d-dica]');
+    const legenda = raiz.querySelector<HTMLElement>('[data-p3d-legenda]');
+    const spec: Record<string, string | number> = { tipo: 'corrente', elo: 'cubano', esp: 6, medida: 50, acabamento: 'polido' };
+    let viewer: { setSpec: (s: object) => void } | null = null;
+    let carregando = false;
+
+    const escrever = () => {
+      if (legenda) legenda.textContent = `Elo ${spec.elo} · ${spec.esp} mm · ${spec.medida} cm · ${spec.acabamento}`;
+    };
+
+    const temWebGL = () => {
+      try {
+        const c = document.createElement('canvas');
+        return Boolean(c.getContext('webgl2') || c.getContext('webgl'));
+      } catch {
+        return false;
+      }
+    };
+
+    async function carregar() {
+      if (carregando || viewer) return;
+      carregando = true;
+      botao.disabled = true;
+      try {
+        if (!temWebGL()) throw new Error('sem webgl');
+        const { createViewer } = await import('../scripts/erk-3d.js');
+        canvas.hidden = false;
+        viewer = await createViewer(canvas, { orbitaVertical: false });
+        viewer!.setSpec({ ...spec });
+        botao.hidden = true;
+        poster?.classList.add('some');
+        if (dica) dica.hidden = false;
+      } catch {
+        canvas.hidden = true;
+        botao.hidden = true;
+        carregando = false;
+      }
+    }
+
+    raiz.querySelectorAll<HTMLElement>('[data-p3d-grupo]').forEach((grupo) => {
+      grupo.addEventListener('click', (e) => {
+        const b = (e.target as Element).closest<HTMLButtonElement>('button[data-valor]');
+        if (!b) return;
+        grupo.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        spec[grupo.dataset.p3dGrupo!] = b.dataset.valor!;
+        escrever();
+        if (viewer) viewer.setSpec({ ...spec });
+        else carregar();
+      });
+    });
+    canvas.addEventListener('pointerdown', () => dica?.classList.add('some'), { once: true });
+    botao.addEventListener('click', carregar);
+
+    // Conexão boa: carrega sozinho quando chega perto. Fraca, demo ou economia de dados: espera o toque.
+    const con = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const fraca = Boolean(con && (con.saveData || /(^|-)2g|3g/.test(con.effectiveType || '')));
+    const demo = Boolean(document.documentElement.dataset.demo);
+    if (fraca || demo) botao.hidden = false;
+    else {
+      const io = new IntersectionObserver(
+        (ent) => {
+          if (!ent[0].isIntersecting) return;
+          io.disconnect();
+          carregar();
+        },
+        { rootMargin: '200px 0px' },
+      );
+      io.observe(raiz);
+    }
+  }
+</script>
+
+<style>
+  .p3d {
+    display: grid;
+    gap: 28px;
+  }
+  .p3d__palco {
+    position: relative;
+    aspect-ratio: 5 / 4;
+    border-radius: 6px;
+    background: #141412;
+    color: var(--noite-texto);
+    touch-action: pan-y;
+  }
+  .p3d__poster,
+  .p3d__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .p3d__poster {
+    transition: opacity 0.6s var(--curva);
+  }
+  .p3d__poster:global(.some) {
+    opacity: 0;
+  }
+  .p3d__canvas {
+    cursor: grab;
+  }
+  .p3d__canvas:active {
+    cursor: grabbing;
+  }
+  .p3d__carregar {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+  }
+  .p3d__carregar[hidden] {
+    display: none;
+  }
+  .p3d__carregar small {
+    font-size: 10.5px;
+    opacity: 0.7;
+  }
+  .p3d__peca {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 6px 12px;
+    border: 1px solid var(--noite-fio);
+    border-radius: 999px;
+    color: #d6d2c8;
+    font-size: 10.5px;
+    pointer-events: none;
+  }
+  .p3d__dica {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    color: var(--noite-fraco);
+    font-size: 10.5px;
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+  .p3d__dica:global(.some) {
+    opacity: 0;
+  }
+  .p3d__opcoes {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .p3d__grupo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .p3d__grupo button {
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1.5px solid var(--fio);
+    border-radius: 999px;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.25s var(--curva);
+  }
+  .p3d__grupo button[aria-pressed='true'] {
+    border-color: var(--tinta);
+    background: var(--tinta);
+    color: var(--papel);
+  }
+  .p3d__nota {
+    max-width: 44ch;
+    font-size: 15px;
+    color: var(--tinta-3);
+  }
+  @media (min-width: 1000px) {
+    .p3d {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 48px;
+      align-items: center;
+    }
+  }
+</style>

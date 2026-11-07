@@ -1,0 +1,35 @@
+---
+/* Selo honesto: aparece só depois que o navegador mediu o carregamento. */
+interface Props { class?: string }
+---
+<p class:list={['carga', Astro.props.class]} data-carga>
+  <span class="carga__ponto" aria-hidden="true"></span>
+  <span>Esta página carregou em <b class="num" data-carga-valor></b>&nbsp;s no seu aparelho. Medido agora pelo navegador.</span>
+</p>
+<style>
+  .carga {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    line-height: 1.5;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--tinta-3);
+  }
+  /* espaço reservado (sem empurrar o layout); só aparece depois de medir */
+  .carga { visibility: hidden; }
+  .carga:global(.medido) { visibility: visible; }
+  .carga b { color: var(--tinta); font-weight: 550; }
+  :global(.tema-noite) .carga { color: var(--noite-fraco); }
+  :global(.tema-noite) .carga b { color: var(--noite-texto); }
+  .carga__ponto {
+    transform: translateY(-1px);
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: #1e8a4c;
+    box-shadow: 0 0 0 3px rgb(30 138 76 / 0.18);
+  }
+</style>

@@ -1,0 +1,141 @@
+---
+import Logo from './Logo.astro';
+import Carga from './Carga.astro';
+import T from './T.astro';
+import { empresa } from '../data/empresa';
+import { cidades } from '../data/cidades';
+import { servicos } from '../data/servicos';
+import { temPreencher, whatsFormatado, linkWhats, numeroWhats, MSG } from '../lib/texto';
+
+const ano = new Date().getFullYear();
+const temMedicao = Boolean(empresa.analytics.ga4 || empresa.analytics.gtm);
+---
+<footer class="rodape tema-noite" data-fora-demo>
+  <div class="envelope">
+    <div class="rodape__grade">
+      <div class="rodape__marca">
+        <Logo class="rodape__logo" />
+        <p>Presença digital para negócios de Itu, Salto, Sorocaba e Indaiatuba. A conversa é presencial, na sua loja.</p>
+      </div>
+
+      <div>
+        <p class="rotulo">Contato</p>
+        <ul class="rodape__lista">
+          <li>
+            WhatsApp:{' '}
+            {numeroWhats() ? (
+              <a href={linkWhats(MSG.padrao)} data-whats="rodape" target="_blank" rel="noopener">{whatsFormatado()}</a>
+            ) : (
+              <T t={empresa.whatsapp} />
+            )}
+          </li>
+          <li>
+            E-mail:{' '}
+            {temPreencher(empresa.email) ? <T t={empresa.email} /> : <a href={`mailto:${empresa.email}`}>{empresa.email}</a>}
+          </li>
+          <li>
+            {temPreencher(empresa.avaliacoesGoogle) ? (
+              <>Avaliações no Google: <T t={empresa.avaliacoesGoogle} /></>
+            ) : (
+              <a href={empresa.avaliacoesGoogle} target="_blank" rel="noopener">Nossas avaliações no Google ↗</a>
+            )}
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="rotulo">Cidades</p>
+        <ul class="rodape__lista">
+          {cidades.map((c) => <li><a href={`/${c.slug}`}>{c.nome}</a></li>)}
+        </ul>
+      </div>
+
+      <div>
+        <p class="rotulo">Serviços</p>
+        <ul class="rodape__lista">
+          {servicos.map((s) => <li><a href={`/servicos/${s.slug}`}>{s.nome}</a></li>)}
+        </ul>
+      </div>
+    </div>
+
+    <div class="rodape__base">
+      <p>
+        Responsável: <T t={empresa.responsavel} /> · {empresa.regiao}
+        {empresa.cnpj && <> · CNPJ {empresa.cnpj}</>}
+      </p>
+      <p class="rodape__links">
+        <a href="/privacidade">Política de privacidade</a>
+        {temMedicao && <button type="button" class="rodape__cookies" data-cookies-abrir hidden>Preferências de cookies</button>}
+        <span>© {ano} {empresa.nome}</span>
+      </p>
+      <Carga />
+    </div>
+  </div>
+</footer>
+
+<style>
+  .rodape {
+    padding-block: 72px 40px;
+    border-top: 1px solid var(--noite-fio);
+  }
+  .rodape__grade {
+    display: grid;
+    gap: 40px;
+  }
+  .rodape__marca :global(.rodape__logo) {
+    width: 120px;
+    margin-bottom: 18px;
+    color: var(--noite-texto);
+  }
+  .rodape__marca p {
+    max-width: 34ch;
+    color: #d6d2c8;
+  }
+  .rodape .rotulo {
+    margin-bottom: 14px;
+  }
+  .rodape__lista {
+    display: grid;
+    gap: 8px;
+    font-size: 15.5px;
+  }
+  .rodape__lista a {
+    text-decoration: none;
+  }
+  .rodape__lista a:hover {
+    text-decoration: underline;
+  }
+  .rodape__base {
+    display: grid;
+    gap: 14px;
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--noite-fio);
+    font-size: 14px;
+    color: var(--noite-fraco);
+  }
+  .rodape__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+  .rodape__links a,
+  .rodape__cookies {
+    color: var(--noite-texto);
+  }
+  .rodape__cookies {
+    padding: 0;
+    border: 0;
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+  .rodape__cookies[hidden] {
+    display: none;
+  }
+  @media (min-width: 760px) {
+    .rodape__grade {
+      grid-template-columns: 1.4fr 1fr 0.7fr 1fr;
+    }
+  }
+</style>

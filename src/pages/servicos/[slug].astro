@@ -1,0 +1,266 @@
+---
+import Base from '../../layouts/Base.astro';
+import CabecaPagina from '../../components/CabecaPagina.astro';
+import Duvidas from '../../components/home/Duvidas.astro';
+import Fechamento from '../../components/Fechamento.astro';
+import IconeWhats from '../../components/IconeWhats.astro';
+import T from '../../components/T.astro';
+import { servicos, type Servico } from '../../data/servicos';
+import { projetos } from '../../data/portfolio';
+import { empresa } from '../../data/empresa';
+import { schemaServico, schemaTrilha, schemaFaq } from '../../lib/seo';
+import { brl, linkWhats, MSG } from '../../lib/texto';
+
+export function getStaticPaths() {
+  return servicos.map((s) => ({ params: { slug: s.slug }, props: { s } }));
+}
+interface Props {
+  s: Servico;
+}
+const { s } = Astro.props;
+const trilha = [
+  { nome: 'Início', url: '/' },
+  { nome: 'Serviços', url: '/servicos' },
+  { nome: s.nome, url: `/servicos/${s.slug}` },
+];
+const prova = s.prova ? projetos.find((p) => p.slug === s.prova && p.autorizado) : undefined;
+const outros = servicos.filter((x) => x.slug !== s.slug);
+const msg = s.slug === 'landing-express' ? MSG.landing : s.slug === 'plaquinha-nfc' ? MSG.nfc : MSG.orcamento(s.nome);
+const oferta = empresa.ofertaLancamento;
+---
+<Base
+  title={s.title}
+  description={s.description}
+  caminho={`/servicos/${s.slug}`}
+  og={`servico-${s.slug}`}
+  schema={[schemaTrilha(trilha), schemaServico(s), schemaFaq(s.perguntas)]}
+>
+  <CabecaPagina trilha={trilha} rotulo="Serviço" titulo={s.nome}>
+    <p class="corpo-g">{s.curto}</p>
+  </CabecaPagina>
+
+  <section class="envelope sv" aria-label={`Detalhes de ${s.nome}`}>
+    <div class="sv__principal">
+      <div class="sv__bloco">
+        <p class="rotulo"><b>01</b> Para quem é</p>
+        <p class="sv__para">{s.paraQuem}</p>
+      </div>
+      <div class="sv__bloco">
+        <p class="rotulo"><b>02</b> O que inclui</p>
+        <ul class="sv__inclui">
+          {s.inclui.map((x) => <li><T t={x} /></li>)}
+        </ul>
+      </div>
+      <div class="sv__bloco">
+        <p class="rotulo"><b>03</b> Como funciona</p>
+        <ol class="sv__passos">
+          {s.comoFunciona.map((x, i) => <li><span class="num">{i + 1}</span><span>{x}</span></li>)}
+        </ol>
+      </div>
+      {prova && (
+        <div class="sv__bloco sv__prova">
+          <p class="rotulo"><b>04</b> No ar</p>
+          <p class="sv__para">{prova.nome}, de {prova.cidade}: {prova.resumo.charAt(0).toLowerCase() + prova.resumo.slice(1)}</p>
+          <div class="sv__prova-links">
+            <a class="link-seta" href={prova.link.url} target="_blank" rel="noopener">{prova.link.rotulo} <span class="seta" aria-hidden="true">↗</span></a>
+            <a class="link-seta" href="/portfolio">Ver o case completo <span class="seta" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <aside class="sv__lado corte" aria-label="Preço e contato">
+      {s.preco?.tipo === 'mensal' && (
+        <>
+          <p class="rotulo">Preço</p>
+          <p class="sv__preco num">{brl(s.preco.implantacao)}</p>
+          <p class="sv__preco-d">de implantação</p>
+          <p class="sv__preco sv__preco--m num">+ {brl(s.preco.mensal)}<small> por mês</small></p>
+          <p class="rotulo">A mensalidade inclui</p>
+          <ul class="sv__inclui sv__inclui--p">{s.preco.mensalidadeInclui.map((x) => <li><T t={x} /></li>)}</ul>
+          {s.comparativo && <p class="sv__comp">{s.comparativo}</p>}
+          {oferta.ativa && (
+            <p class="sv__comp"><T t={oferta.titulo} />: <T t={oferta.condicao} />. Até <T t={oferta.prazoFinal} />. Depois, <T t={oferta.precoDepois} />.</p>
+          )}
+        </>
+      )}
+      {s.preco?.tipo === 'unico' && (
+        <>
+          <p class="rotulo">Preço</p>
+          <p class="sv__preco num">{brl(s.preco.valor)}</p>
+          <p class="sv__preco-d">{s.preco.nota}</p>
+        </>
+      )}
+      {!s.preco && (
+        <>
+          <p class="rotulo">Preço</p>
+          <p class="sv__sob">Depende do seu negócio. O valor é apresentado na conversa, depois de entender o que você precisa.</p>
+        </>
+      )}
+      <a class="btn btn--sinal btn--g btn--bloco" href={linkWhats(msg)} data-whats={`pagina-${s.slug}`} target="_blank" rel="noopener">
+        <IconeWhats />{s.preco ? `Quero ${s.slug === 'plaquinha-nfc' ? 'a plaquinha' : 'a ' + s.nome}` : 'Receber orçamento no WhatsApp'}
+      </a>
+      <p class="sv__pag">{empresa.pagamento}</p>
+    </aside>
+  </section>
+
+  <Duvidas perguntas={s.perguntas} numero="?" titulo={`Perguntas sobre *${s.nome}*`} />
+
+  <nav class="envelope sv__outros" aria-label="Outros serviços">
+    <p class="rotulo">Outros serviços</p>
+    <ul>
+      {outros.map((o) => <li><a href={`/servicos/${o.slug}`}>{o.nome} <span class="seta" aria-hidden="true">→</span></a></li>)}
+    </ul>
+  </nav>
+
+  <Fechamento mensagem={msg} origem={`fechamento-${s.slug}`} />
+</Base>
+
+<style>
+  .sv {
+    display: grid;
+    gap: 56px;
+    padding-bottom: var(--respiro);
+  }
+  .sv__principal {
+    display: grid;
+    gap: 48px;
+  }
+  .sv__bloco {
+    display: grid;
+    gap: 16px;
+    padding-top: 20px;
+    border-top: 1px solid var(--tinta);
+  }
+  .sv__para {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3vw, 42px);
+    line-height: 1.08;
+    text-wrap: pretty;
+  }
+  .sv__inclui {
+    display: grid;
+    gap: 10px;
+    font-size: 18px;
+  }
+  .sv__inclui li {
+    position: relative;
+    padding-left: 22px;
+  }
+  .sv__inclui li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.68em;
+    width: 10px;
+    height: 1.5px;
+    background: var(--sinal);
+  }
+  .sv__inclui--p {
+    font-size: 15.5px;
+  }
+  .sv__passos {
+    display: grid;
+    gap: 14px;
+  }
+  .sv__passos li {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    font-size: 18px;
+  }
+  .sv__passos .num {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid var(--tinta);
+    border-radius: 50%;
+    font-size: 13px;
+  }
+  .sv__prova-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+  }
+  .sv__lado {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding: 28px 24px;
+    border: 1px solid var(--tinta);
+    border-radius: 6px;
+    background: #fbfaf7;
+  }
+  .sv__preco {
+    font-size: clamp(44px, 5vw, 64px);
+    line-height: 1;
+    font-weight: 500;
+  }
+  .sv__preco--m {
+    font-size: 30px;
+  }
+  .sv__preco--m small {
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--tinta-3);
+  }
+  .sv__preco-d {
+    margin-top: -6px;
+    color: var(--tinta-3);
+  }
+  .sv__comp {
+    padding: 12px 14px;
+    border-left: 2px solid var(--sinal);
+    background: var(--papel-2);
+    font-size: 14.5px;
+  }
+  .sv__sob {
+    font-size: 17px;
+    color: var(--tinta-2);
+  }
+  .sv__lado .btn {
+    margin-top: 8px;
+    white-space: normal;
+  }
+  .sv__pag {
+    font-size: 13.5px;
+    color: var(--tinta-3);
+  }
+  .sv__outros {
+    padding-block: 0 var(--respiro);
+  }
+  .sv__outros .rotulo {
+    margin-bottom: 16px;
+  }
+  .sv__outros ul {
+    display: grid;
+    border-top: 1px solid var(--tinta);
+  }
+  .sv__outros a {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--fio);
+    font-family: var(--serif);
+    font-size: clamp(26px, 2.6vw, 36px);
+    line-height: 1.1;
+    text-decoration: none;
+  }
+  @media (min-width: 1000px) {
+    .sv {
+      grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+      gap: 72px;
+      align-items: start;
+    }
+    .sv__lado {
+      position: sticky;
+      top: calc(var(--topo) + 32px);
+    }
+    .sv__outros ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 48px;
+    }
+  }
+</style>

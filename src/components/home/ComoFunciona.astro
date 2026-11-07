@@ -1,0 +1,94 @@
+---
+import T from '../T.astro';
+import { passos } from '../../data/home';
+---
+<section id="como-funciona" class="como" aria-labelledby="como-titulo" data-fora-demo>
+  <div class="envelope">
+    <div class="como__cab">
+      <p class="rotulo"><b>06</b> Como funciona</p>
+      <h2 id="como-titulo" class="titulo-m">Quatro passos, <em>do balcão ao ar</em>.</h2>
+    </div>
+    <ol class="como__lista">
+      {passos.map((p, i) => (
+        <li class="como__passo" data-revela style={`--atraso:${i * 90}ms`}>
+          <span class="como__n num">{i + 1}</span>
+          <h3 class="como__t">{p.titulo}</h3>
+          <p class="como__x">{p.texto}</p>
+          <p class="como__prazo mono"><T t={p.prazo} /></p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .como {
+    padding-block: clamp(72px, 9vh, 120px);
+    border-block: 1px solid var(--tinta);
+    background: var(--papel-2);
+  }
+  .como__cab {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 48px;
+  }
+  .como__lista {
+    display: grid;
+    gap: 0;
+  }
+  .como__passo {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    column-gap: 16px;
+    row-gap: 6px;
+    padding: 22px 0;
+    border-top: 1px solid var(--fio);
+  }
+  .como__n {
+    grid-row: span 3;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--tinta);
+    border-radius: 50%;
+    font-size: 15px;
+  }
+  .como__t {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .como__x {
+    font-size: 15.5px;
+    color: var(--tinta-2);
+  }
+  .como__prazo {
+    color: var(--sinal-texto);
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  @media (min-width: 1000px) {
+    .como__cab {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      align-items: end;
+      column-gap: 32px;
+    }
+    .como__lista {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 32px;
+    }
+    .como__passo {
+      grid-template-columns: 1fr;
+      align-content: start;
+      padding-top: 24px;
+      border-top: 1px solid var(--tinta);
+    }
+    .como__n {
+      grid-row: auto;
+      margin-bottom: 10px;
+    }
+  }
+</style>

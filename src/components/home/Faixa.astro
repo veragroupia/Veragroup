@@ -1,0 +1,69 @@
+---
+import { faixa } from '../../data/home';
+---
+<div class="faixa" data-fora-demo>
+  <p class="visual-oculto">{faixa.join(', ')}.</p>
+  <div class="faixa__trilho" aria-hidden="true">
+    {[0, 1].map(() => (
+      <ul class="faixa__grupo mono">
+        {faixa.map((f) => <li>{f}</li>)}
+      </ul>
+    ))}
+  </div>
+</div>
+
+<style>
+  .faixa {
+    overflow: hidden;
+    border-block: 1px solid var(--tinta);
+    background: var(--papel-2);
+  }
+  .faixa__trilho {
+    display: flex;
+    width: max-content;
+  }
+  .faixa__grupo {
+    display: flex;
+    flex: none;
+    font-size: 12.5px;
+  }
+  .faixa__grupo li {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 15px 0 15px 28px;
+    white-space: nowrap;
+  }
+  .faixa__grupo li::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sinal);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .faixa__trilho {
+      animation: faixa 48s linear infinite;
+    }
+    .faixa:hover .faixa__trilho {
+      animation-play-state: paused;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faixa__trilho {
+      width: auto;
+    }
+    .faixa__grupo {
+      flex-wrap: wrap;
+      padding-right: 28px;
+    }
+    .faixa__grupo + .faixa__grupo {
+      display: none;
+    }
+  }
+  @keyframes faixa {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+</style>

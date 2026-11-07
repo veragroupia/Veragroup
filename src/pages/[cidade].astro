@@ -1,0 +1,304 @@
+---
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import CabecaPagina from '../components/CabecaPagina.astro';
+import Duvidas from '../components/home/Duvidas.astro';
+import Fechamento from '../components/Fechamento.astro';
+import IconeWhats from '../components/IconeWhats.astro';
+import { cidades, type Cidade } from '../data/cidades';
+import { porSlug } from '../data/servicos';
+import { projetos } from '../data/portfolio';
+import { schemaTrilha, schemaFaq, schemaCidade } from '../lib/seo';
+import { brl, emHtml, linkWhats, MSG } from '../lib/texto';
+
+export function getStaticPaths() {
+  return cidades.map((c) => ({ params: { cidade: c.slug }, props: { c } }));
+}
+interface Props {
+  c: Cidade;
+}
+const { c } = Astro.props;
+const trilha = [
+  { nome: 'Início', url: '/' },
+  { nome: c.nome, url: `/${c.slug}` },
+];
+const prova = c.prova ? projetos.find((p) => p.slug === c.prova && p.autorizado) : undefined;
+const provaTela = prova?.telas.find((t) => t.formato === 'computador');
+const outras = cidades.filter((x) => x.slug !== c.slug);
+---
+<Base
+  title={c.title}
+  description={c.description}
+  caminho={`/${c.slug}`}
+  og={`cidade-${c.slug}`}
+  schema={[schemaTrilha(trilha), schemaCidade(c.nome), schemaFaq(c.perguntas)]}
+>
+  <CabecaPagina trilha={trilha} rotulo={`${c.nome} · ${c.angulo}`} titulo={c.h1}>
+    <div class="cd__intro">
+      {c.intro.map((t) => <p class="corpo-g">{t}</p>)}
+    </div>
+  </CabecaPagina>
+
+  <section class="cd__buscas tema-noite" aria-labelledby="cd-buscas">
+    <div class="envelope cd__buscas-grade">
+      <div>
+        <p class="rotulo"><b>01</b> Como o cliente procura em {c.nome}</p>
+        <h2 id="cd-buscas" class="titulo-m" set:html={emHtml(c.leitura.titulo)} />
+        <p class="corpo">{c.leitura.texto}</p>
+      </div>
+      <ul class="cd__lista" aria-label="Exemplos de pesquisa">
+        {c.buscas.map((b, i) => (
+          <li class="cd__busca" data-revela style={`--atraso:${i * 80}ms`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /></svg>
+            <span>{b}</span>
+          </li>
+        ))}
+        <li class="cd__nota mono">Exemplos de pesquisa, não dados de volume.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="secao envelope cd__foco" aria-labelledby="cd-foco">
+    <p class="rotulo"><b>02</b> O que mais faz diferença em {c.nome}</p>
+    <h2 id="cd-foco" class="titulo-m">Por onde a gente começaria <em>aqui</em>.</h2>
+    <ol class="cd__servicos">
+      {c.foco.map((f, i) => {
+        const s = porSlug(f.slug)!;
+        return (
+          <li>
+            <span class="mono cd__n">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <h3><a href={`/servicos/${s.slug}`}>{s.nome}</a></h3>
+              <p>{f.motivo}</p>
+            </div>
+            <p class="cd__preco num">
+              {s.preco?.tipo === 'mensal' && <>{brl(s.preco.implantacao)} + {brl(s.preco.mensal)}/mês</>}
+              {s.preco?.tipo === 'unico' && <>{brl(s.preco.valor)}</>}
+              {!s.preco && <span class="cd__orc">Orçamento no WhatsApp</span>}
+            </p>
+          </li>
+        );
+      })}
+    </ol>
+  </section>
+
+  {prova && (
+    <section class="envelope cd__prova" aria-labelledby="cd-prova">
+      <p class="rotulo"><b>03</b> No ar em {c.nome}</p>
+      <div class="cd__prova-grade">
+        {provaTela && (
+          <Picture src={provaTela.src} formats={['avif', 'webp']} fallbackFormat="webp" widths={[720, 1080]} sizes="(min-width: 1000px) 56vw, 92vw" alt={provaTela.alt} loading="lazy" class="cd__prova-img" />
+        )}
+        <div class="cd__prova-texto">
+          <h2 id="cd-prova" class="titulo-m">{prova.nome}</h2>
+          <p class="corpo"><b>Antes:</b> {prova.problema}</p>
+          <p class="corpo"><b>Agora:</b> {prova.resumo}</p>
+          <div class="cd__prova-links">
+            <a class="btn btn--tinta" href={prova.link.url} target="_blank" rel="noopener">{prova.link.rotulo} <span class="seta" aria-hidden="true">↗</span></a>
+            <a class="link-seta" href="/portfolio">Ver o case completo <span class="seta" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="secao envelope cd__visita" aria-labelledby="cd-visita">
+    <h2 id="cd-visita" class="titulo">A conversa é <em>na sua loja</em>, em {c.nome}.</h2>
+    <div>
+      <p class="corpo-g">
+        Um dos sócios vai até você. A gente olha junto como o seu negócio aparece hoje e mostra o que está escapando, antes
+        de falar de preço.
+      </p>
+      <a class="btn btn--sinal btn--g" href={linkWhats(MSG.cidade(c.nome))} data-whats={`cidade-${c.slug}`} target="_blank" rel="noopener">
+        <IconeWhats />Marcar uma conversa em {c.nome}
+      </a>
+    </div>
+  </section>
+
+  <Duvidas perguntas={c.perguntas} numero="?" titulo={`Perguntas de quem é de *${c.nome}*`} />
+
+  <nav class="envelope cd__outras" aria-label="Outras cidades">
+    <p class="rotulo">Também atendemos</p>
+    <ul>
+      {outras.map((o) => <li><a href={`/${o.slug}`}>{o.nome} <span class="seta" aria-hidden="true">→</span></a></li>)}
+    </ul>
+  </nav>
+
+  <Fechamento mensagem={MSG.cidade(c.nome)} origem={`fechamento-${c.slug}`} />
+</Base>
+
+<style>
+  .cd__intro {
+    display: grid;
+    gap: 16px;
+  }
+  .cd__buscas {
+    padding-block: clamp(72px, 10vh, 128px);
+  }
+  .cd__buscas-grade {
+    display: grid;
+    gap: 40px;
+  }
+  .cd__buscas-grade .titulo-m {
+    margin: 16px 0 16px;
+  }
+  .cd__lista {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .cd__busca {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 0 20px;
+    border: 1px solid var(--noite-fio);
+    border-radius: 999px;
+    background: var(--noite-2);
+    font-size: 17px;
+  }
+  .cd__busca svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    fill: none;
+    stroke: var(--noite-fraco);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .cd__nota {
+    margin-top: 4px;
+    color: var(--noite-fraco);
+    font-size: 11px;
+  }
+  .cd__foco .titulo-m {
+    margin: 16px 0 40px;
+  }
+  .cd__servicos li {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    column-gap: 12px;
+    row-gap: 8px;
+    padding: 24px 0;
+    border-top: 1px solid var(--tinta);
+  }
+  .cd__servicos li:last-child {
+    border-bottom: 1px solid var(--tinta);
+  }
+  .cd__n {
+    padding-top: 10px;
+    color: var(--sinal-texto);
+  }
+  .cd__servicos h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(30px, 3.4vw, 48px);
+    line-height: 1;
+  }
+  .cd__servicos h3 a {
+    text-decoration: none;
+  }
+  .cd__servicos h3 a:hover {
+    text-decoration: underline;
+  }
+  .cd__servicos p {
+    margin-top: 6px;
+    color: var(--tinta-2);
+  }
+  .cd__preco {
+    grid-column: 2;
+    font-size: 18px;
+  }
+  .cd__orc {
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--tinta-3);
+  }
+  .cd__prova {
+    display: grid;
+    gap: 24px;
+    padding-bottom: var(--respiro);
+  }
+  .cd__prova-grade {
+    display: grid;
+    gap: 32px;
+  }
+  .cd__prova-grade :global(.cd__prova-img) {
+    width: 100%;
+    border: 1px solid var(--tinta);
+    border-radius: 8px;
+  }
+  .cd__prova-texto {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  .cd__prova-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+    margin-top: 8px;
+  }
+  .cd__visita {
+    display: grid;
+    gap: 32px;
+    border-top: 1px solid var(--tinta);
+  }
+  .cd__visita > div {
+    display: grid;
+    gap: 24px;
+    align-content: end;
+    justify-items: start;
+  }
+  .cd__visita .btn {
+    white-space: normal;
+  }
+  .cd__outras {
+    padding-bottom: var(--respiro);
+  }
+  .cd__outras .rotulo {
+    margin-bottom: 16px;
+  }
+  .cd__outras ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 40px;
+  }
+  .cd__outras a {
+    font-family: var(--serif);
+    font-size: clamp(32px, 4vw, 56px);
+    line-height: 1.1;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--tinta);
+  }
+  @media (min-width: 1000px) {
+    .cd__intro {
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      max-width: 1100px;
+    }
+    .cd__buscas-grade {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+      gap: 72px;
+      align-items: center;
+    }
+    .cd__servicos li {
+      grid-template-columns: 56px minmax(0, 7fr) minmax(0, 3fr);
+      align-items: baseline;
+    }
+    .cd__preco {
+      grid-column: 3;
+      text-align: right;
+    }
+    .cd__prova-grade {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+    }
+    .cd__visita {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+    }
+  }
+</style>

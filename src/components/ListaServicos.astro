@@ -1,0 +1,258 @@
+---
+/* Lista editorial de serviços: linhas numeradas e filetes, não cards.
+   Preço só nos serviços de entrada; o resto pede orçamento no WhatsApp. */
+import T from './T.astro';
+import IconeWhats from './IconeWhats.astro';
+import { servicos } from '../data/servicos';
+import { empresa } from '../data/empresa';
+import { brl, linkWhats, MSG } from '../lib/texto';
+
+interface Props {
+  nivel?: 'h2' | 'h3';
+}
+const { nivel = 'h3' } = Astro.props;
+const H = nivel;
+const oferta = empresa.ofertaLancamento;
+---
+<ol class="serv">
+  {servicos.map((s, i) => (
+    <li class="serv__linha" id={`servico-${s.slug}`}>
+      <span class="serv__fio" data-fio aria-hidden="true"></span>
+      <span class="serv__n mono">{String(i + 1).padStart(2, '0')}</span>
+
+      <div class="serv__nome">
+        <H class="serv__titulo"><a href={`/servicos/${s.slug}`}>{s.nome}</a></H>
+        <p class="serv__curto">{s.curto}</p>
+      </div>
+
+      <details class="serv__det" data-serv-det>
+        <summary class="serv__abre">Para quem é e o que inclui<span aria-hidden="true"></span></summary>
+        <p><span class="serv__r mono">Para quem</span>{s.paraQuem}</p>
+        <p class="serv__r mono">O que inclui</p>
+        <ul class="serv__inclui">
+          {s.inclui.map((x) => <li><T t={x} /></li>)}
+        </ul>
+        <a class="serv__mais" href={`/servicos/${s.slug}`}>Como funciona <span class="seta" aria-hidden="true">→</span></a>
+      </details>
+
+      <div class="serv__preco">
+        {s.preco?.tipo === 'mensal' && (
+          <>
+            <p class="preco"><span class="preco__v num">{brl(s.preco.implantacao)}</span><span class="preco__d">de implantação</span></p>
+            <p class="preco preco--m"><span class="preco__v num">+ {brl(s.preco.mensal)}</span><span class="preco__d">por mês</span></p>
+            <p class="serv__r mono">A mensalidade inclui</p>
+            <ul class="serv__inclui serv__inclui--p">
+              {s.preco.mensalidadeInclui.map((x) => <li><T t={x} /></li>)}
+            </ul>
+            {s.comparativo && <p class="serv__comp">{s.comparativo}</p>}
+            {oferta.ativa && (
+              <div class="serv__oferta">
+                <p class="mono"><T t={oferta.titulo} /></p>
+                <p><T t={oferta.condicao} /></p>
+                <p>Até <T t={oferta.prazoFinal} />{oferta.vagas && <> ou <T t={oferta.vagas} /> vagas</>}. Depois, o preço passa a ser <T t={oferta.precoDepois} />.</p>
+              </div>
+            )}
+            <a class="btn btn--sinal btn--bloco" href={linkWhats(MSG.landing)} data-whats={`servico-${s.slug}`} target="_blank" rel="noopener"><IconeWhats />Quero a {s.nome}</a>
+          </>
+        )}
+        {s.preco?.tipo === 'unico' && (
+          <>
+            <p class="preco"><span class="preco__v num">{brl(s.preco.valor)}</span><span class="preco__d">{s.preco.nota}</span></p>
+            <a class="btn btn--sinal btn--bloco" href={linkWhats(MSG.nfc)} data-whats={`servico-${s.slug}`} target="_blank" rel="noopener"><IconeWhats />Quero a plaquinha</a>
+          </>
+        )}
+        {!s.preco && (
+          <>
+            <p class="serv__sob">O valor depende do seu negócio e é apresentado na conversa.</p>
+            <a class="btn btn--linha btn--bloco" href={linkWhats(MSG.orcamento(s.nome))} data-whats={`servico-${s.slug}`} target="_blank" rel="noopener"><IconeWhats />Receber orçamento no WhatsApp</a>
+          </>
+        )}
+      </div>
+    </li>
+  ))}
+</ol>
+<script>
+  // No computador, "para quem" e "o que inclui" ficam sempre abertos.
+  const largo = matchMedia('(min-width: 1000px)');
+  const ajustar = () => document.querySelectorAll<HTMLDetailsElement>('[data-serv-det]').forEach((d) => (d.open = largo.matches));
+  ajustar();
+  largo.addEventListener('change', ajustar);
+</script>
+
+<p class="serv__pagamento"><span class="mono">Pagamento</span> {empresa.pagamento}</p>
+
+<style>
+  .serv {
+    counter-reset: s;
+  }
+  .serv__linha {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    padding: 34px 0 40px;
+  }
+  .serv__fio {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--tinta);
+  }
+  .serv__n {
+    color: var(--sinal-texto);
+  }
+  .serv__titulo {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(36px, 4.4vw, 64px);
+    line-height: 0.98;
+    letter-spacing: -0.01em;
+  }
+  .serv__titulo a {
+    text-decoration: none;
+  }
+  .serv__titulo a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+  }
+  .serv__curto {
+    margin-top: 10px;
+    font-size: 18px;
+    color: var(--tinta-2);
+  }
+  .serv__det {
+    font-size: 16px;
+    color: var(--tinta-2);
+  }
+  .serv__det[open] {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .serv__abre {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    border-block: 1px solid var(--fio);
+    font-size: 15px;
+    font-weight: 560;
+    color: var(--tinta);
+    cursor: pointer;
+    list-style: none;
+  }
+  .serv__abre::-webkit-details-marker {
+    display: none;
+  }
+  .serv__abre span::before {
+    content: '+';
+    font-family: var(--mono);
+    font-size: 18px;
+  }
+  .serv__det[open] .serv__abre span::before {
+    content: '−';
+  }
+  .serv__r {
+    display: block;
+    margin: 8px 0 2px;
+    color: var(--tinta-3);
+    font-size: 11px;
+  }
+  .serv__inclui {
+    display: grid;
+    gap: 6px;
+  }
+  .serv__inclui li {
+    position: relative;
+    padding-left: 18px;
+  }
+  .serv__inclui li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 8px;
+    height: 1.5px;
+    background: var(--sinal);
+  }
+  .serv__mais {
+    justify-self: start;
+    margin-top: 6px;
+    font-weight: 560;
+    text-decoration: none;
+    border-bottom: 1.5px solid currentColor;
+  }
+  .serv__preco {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .preco {
+    display: grid;
+    gap: 2px;
+  }
+  .preco__v {
+    font-size: clamp(34px, 3.4vw, 46px);
+    line-height: 1;
+    font-weight: 500;
+  }
+  .preco--m .preco__v {
+    font-size: clamp(24px, 2.4vw, 30px);
+  }
+  .preco__d {
+    font-size: 14.5px;
+    color: var(--tinta-3);
+  }
+  .serv__inclui--p {
+    font-size: 15px;
+    color: var(--tinta-2);
+  }
+  .serv__comp {
+    padding: 12px 14px;
+    border-left: 2px solid var(--sinal);
+    background: var(--papel-2);
+    font-size: 14.5px;
+    color: var(--tinta-2);
+  }
+  .serv__oferta {
+    display: grid;
+    gap: 6px;
+    padding: 14px;
+    border: 1.5px solid var(--sinal);
+    border-radius: 8px;
+    font-size: 14.5px;
+  }
+  .serv__sob {
+    font-size: 15px;
+    color: var(--tinta-3);
+  }
+  .serv__preco .btn {
+    white-space: normal;
+  }
+  .serv__pagamento {
+    padding-top: 22px;
+    border-top: 1px solid var(--tinta);
+    font-size: 15px;
+    color: var(--tinta-2);
+  }
+  .serv__pagamento .mono {
+    margin-right: 10px;
+    color: var(--sinal-texto);
+  }
+
+  @media (min-width: 1000px) {
+    .serv__linha {
+      grid-template-columns: 56px minmax(0, 4fr) minmax(0, 4fr) minmax(0, 3fr);
+      gap: 32px;
+      align-items: start;
+      padding: 40px 0 48px;
+    }
+    .serv__n {
+      padding-top: 14px;
+    }
+    .serv__abre {
+      display: none;
+    }
+  }
+</style>

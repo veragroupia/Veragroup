@@ -1,0 +1,377 @@
+---
+import { calculadora as c } from '../../data/home';
+import { brl } from '../../lib/texto';
+
+const perdidos = (c.procuram.inicial * c.desistem.inicial) / 100;
+const mes = perdidos * c.ticket.inicial;
+const fmt = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+
+const campos = [
+  {
+    id: 'procuram',
+    rotulo: 'Pessoas que procuram o seu negócio por mês',
+    ajuda: 'No Google, no Instagram, no WhatsApp ou na porta. Se não souber, chute baixo.',
+    ...c.procuram,
+    prefixo: '',
+    sufixo: 'pessoas',
+  },
+  {
+    id: 'ticket',
+    rotulo: 'Ticket médio',
+    ajuda: 'Quanto um cliente gasta, em média, numa compra.',
+    ...c.ticket,
+    prefixo: 'R$',
+    sufixo: '',
+  },
+  {
+    id: 'desistem',
+    rotulo: 'Quantas desistem',
+    ajuda: 'Porque não acharam site, horário ou ficaram sem resposta no WhatsApp.',
+    ...c.desistem,
+    prefixo: '',
+    sufixo: '%',
+  },
+];
+---
+<section id="calculadora" class="secao calc tema-noite" aria-labelledby="calc-titulo">
+  <div class="envelope">
+    <header class="cabeca cabeca--lado">
+      <p class="rotulo"><b>02</b> A perda</p>
+      <h2 id="calc-titulo" class="titulo linhas" data-revela>
+        <span class="l" style="--n:0"><span>Quanto custa</span></span>
+        <span class="l" style="--n:1"><span><em>não ser encontrado?</em></span></span>
+      </h2>
+      <p class="corpo-g" data-revela>
+        Três números do seu negócio. A conta aparece inteira, sem fórmula escondida, e nada do que você digitar sai deste
+        aparelho.
+      </p>
+    </header>
+
+    <div class="calc__grade">
+      <form class="calc__campos" data-calc onsubmit="return false">
+        {campos.map((f) => (
+          <div class="calc__campo">
+            <div class="calc__topo">
+              <label for={`calc-${f.id}`}>{f.rotulo}</label>
+              <div class="calc__valor">
+                {f.prefixo && <span>{f.prefixo}</span>}
+                <input
+                  id={`calc-${f.id}-n`}
+                  class="num"
+                  type="number"
+                  inputmode="numeric"
+                  min={f.min}
+                  max={f.max}
+                  step={f.passo}
+                  value={f.inicial}
+                  data-calc-n={f.id}
+                  aria-label={`${f.rotulo} (número)`}
+                />
+                {f.sufixo && <span>{f.sufixo}</span>}
+              </div>
+            </div>
+            <input
+              id={`calc-${f.id}`}
+              type="range"
+              min={f.min}
+              max={f.max}
+              step={f.passo}
+              value={f.inicial}
+              data-calc-r={f.id}
+              aria-describedby={`calc-${f.id}-ajuda`}
+            />
+            <p id={`calc-${f.id}-ajuda`} class="calc__ajuda">{f.ajuda}</p>
+          </div>
+        ))}
+      </form>
+
+      <div class="calc__saida corte" aria-live="polite">
+        <p class="calc__selo mono">Estimativa</p>
+        <p class="calc__mes"><span class="num" data-calc-mes>{brl(mes)}</span><small>por mês</small></p>
+        <p class="calc__ano">
+          <span class="num" data-calc-ano>{brl(mes * 12)}</span> por ano
+        </p>
+
+        <ol class="calc__conta num" aria-label="A conta">
+          <li><span data-calc-t="procuram">{fmt(c.procuram.inicial)}</span> pessoas procuram</li>
+          <li><i>×</i> <span data-calc-t="desistem">{c.desistem.inicial}%</span> desistem</li>
+          <li><i>=</i> <span data-calc-t="perdidos">{fmt(perdidos)}</span> clientes perdidos</li>
+          <li><i>×</i> <span data-calc-t="ticket">{brl(c.ticket.inicial)}</span> de ticket médio</li>
+          <li class="forte"><i>=</i> <span data-calc-t="mes">{brl(mes)}</span> por mês</li>
+          <li><i>×</i> 12 meses</li>
+          <li class="forte"><i>=</i> <span data-calc-t="ano">{brl(mes * 12)}</span> por ano</li>
+        </ol>
+
+        <p class="calc__nota">
+          Estimativa feita só com os números acima, não é promessa de faturamento. A conta é conservadora: considera uma
+          compra por cliente perdido e não conta quem voltaria a comprar.
+        </p>
+        <a class="btn btn--claro btn--g btn--bloco" href="#construtor" data-fora-demo>Ver o que dá para fazer com isso <span aria-hidden="true">↓</span></a>
+        <a class="btn btn--claro btn--g btn--bloco" href="#construtor" data-so-demo>Voltar para a prévia do site <span aria-hidden="true">↑</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { brl } from '../../lib/texto';
+  import { medirUmaVez } from '../../lib/medir';
+
+  const form = document.querySelector<HTMLFormElement>('[data-calc]');
+  if (form) {
+    const v: Record<string, number> = {};
+    const fmt = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+    const t = (id: string, txt: string) => {
+      const el = document.querySelector(`[data-calc-t="${id}"]`);
+      if (el) el.textContent = txt;
+    };
+    const ranges = [...form.querySelectorAll<HTMLInputElement>('[data-calc-r]')];
+    const nums = [...form.querySelectorAll<HTMLInputElement>('[data-calc-n]')];
+
+    const pintar = (r: HTMLInputElement) => {
+      const p = ((Number(r.value) - Number(r.min)) / (Number(r.max) - Number(r.min))) * 100;
+      r.style.setProperty('--p', `${p}%`);
+    };
+
+    const calcular = () => {
+      const perdidos = (v.procuram * v.desistem) / 100;
+      const mes = perdidos * v.ticket;
+      t('procuram', fmt(v.procuram));
+      t('desistem', `${fmt(v.desistem)}%`);
+      t('perdidos', fmt(perdidos));
+      t('ticket', brl(v.ticket));
+      t('mes', brl(mes));
+      t('ano', brl(mes * 12));
+      const m = document.querySelector('[data-calc-mes]');
+      const a = document.querySelector('[data-calc-ano]');
+      if (m) m.textContent = brl(mes);
+      if (a) a.textContent = brl(mes * 12);
+    };
+
+    const definir = (id: string, valor: number, origem?: HTMLInputElement) => {
+      const r = ranges.find((x) => x.dataset.calcR === id)!;
+      const n = nums.find((x) => x.dataset.calcN === id)!;
+      const min = Number(r.min);
+      const max = id === 'desistem' ? 100 : Number(n.max) * 10;
+      const limpo = Math.min(max, Math.max(min, Number.isFinite(valor) ? valor : min));
+      v[id] = limpo;
+      if (origem !== r) r.value = String(Math.min(Number(r.max), limpo));
+      if (origem !== n) n.value = String(limpo);
+      pintar(r);
+      calcular();
+    };
+
+    ranges.forEach((r) => {
+      v[r.dataset.calcR!] = Number(r.value);
+      pintar(r);
+      r.addEventListener('input', () => {
+        definir(r.dataset.calcR!, Number(r.value), r);
+        medirUmaVez('calculadora_uso');
+      });
+    });
+    nums.forEach((n) => {
+      n.addEventListener('input', () => {
+        if (n.value === '') return;
+        definir(n.dataset.calcN!, Number(n.value), n);
+        medirUmaVez('calculadora_uso');
+      });
+      n.addEventListener('blur', () => definir(n.dataset.calcN!, Number(n.value)));
+    });
+  }
+</script>
+
+<style>
+  .calc__grade {
+    display: grid;
+    gap: 48px;
+  }
+  .calc__campos {
+    display: grid;
+    gap: 36px;
+    align-content: start;
+  }
+  .calc__campo {
+    display: grid;
+    gap: 14px;
+    padding-top: 22px;
+    border-top: 1px solid var(--noite-fio);
+  }
+  .calc__topo {
+    display: grid;
+    gap: 10px;
+  }
+  .calc__topo label {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .calc__valor {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--noite-fraco);
+  }
+  .calc__valor input {
+    width: 7ch;
+    padding: 6px 10px;
+    border: 1px solid var(--noite-fio);
+    border-radius: 8px;
+    background: var(--noite-2);
+    color: var(--noite-texto);
+    font-size: 26px;
+    line-height: 1.1;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .calc__valor input::-webkit-inner-spin-button,
+  .calc__valor input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .calc__valor input:focus-visible {
+    border-color: var(--sinal-noite);
+  }
+  .calc__ajuda {
+    font-size: 14.5px;
+    color: var(--noite-fraco);
+  }
+
+  input[type='range'] {
+    --p: 50%;
+    width: 100%;
+    height: 32px;
+    margin: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--sinal-noite) var(--p), var(--noite-fio) var(--p));
+  }
+  input[type='range']::-moz-range-track {
+    height: 3px;
+    border-radius: 3px;
+    background: var(--noite-fio);
+  }
+  input[type='range']::-moz-range-progress {
+    height: 3px;
+    background: var(--sinal-noite);
+  }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    margin-top: -11.5px;
+    border: 3px solid var(--noite);
+    border-radius: 50%;
+    background: var(--noite-texto);
+    box-shadow: 0 0 0 1px var(--noite-texto);
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--noite);
+    border-radius: 50%;
+    background: var(--noite-texto);
+  }
+  input[type='range']:focus-visible {
+    outline: none;
+  }
+  input[type='range']:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px var(--sinal-noite);
+  }
+  input[type='range']:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 3px var(--sinal-noite);
+  }
+
+  .calc__saida {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+    padding: 28px 22px;
+    border: 1px solid var(--noite-fio);
+    border-radius: 4px;
+    background: var(--noite-2);
+  }
+  .calc__selo {
+    justify-self: start;
+    padding: 5px 10px;
+    border: 1px solid var(--sinal-noite);
+    border-radius: 999px;
+    color: var(--sinal-noite);
+    font-size: 11px;
+  }
+  .calc__mes {
+    display: grid;
+    gap: 2px;
+  }
+  .calc__mes .num {
+    font-size: clamp(44px, 6vw, 76px);
+    line-height: 1;
+    font-weight: 500;
+    color: #fff;
+  }
+  .calc__mes small {
+    font-size: 15px;
+    color: var(--noite-fraco);
+  }
+  .calc__ano {
+    font-size: 18px;
+    color: #d6d2c8;
+  }
+  .calc__ano .num {
+    color: var(--sinal-noite);
+    font-weight: 500;
+  }
+  .calc__conta {
+    display: grid;
+    gap: 4px;
+    padding: 16px 0;
+    border-block: 1px dashed var(--noite-fio);
+    font-size: 14px;
+    color: var(--noite-fraco);
+  }
+  .calc__conta i {
+    display: inline-block;
+    width: 1.4em;
+    font-style: normal;
+    color: var(--sinal-noite);
+  }
+  .calc__conta span {
+    color: var(--noite-texto);
+  }
+  .calc__conta .forte {
+    color: var(--noite-texto);
+  }
+  .calc__nota {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--noite-fraco);
+  }
+  .calc__saida .btn {
+    margin-top: 6px;
+    white-space: normal;
+  }
+
+  @media (min-width: 960px) {
+    .calc__grade {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 64px;
+    }
+    .calc__topo {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 24px;
+    }
+    .calc__saida {
+      position: sticky;
+      top: calc(var(--topo) + 24px);
+      padding: 36px 32px;
+    }
+  }
+</style>
