@@ -1,69 +1,37 @@
-# Vera Group · site portfólio
+# Vera Group · Espelho 3D da cidade
 
-Site de apresentação e prospecção da Vera Group. Mostra os trabalhos no ar (ERK Pratas e Vó Neis Confeitaria), os sistemas próprios, a tabela de preços e leva a conversa para o WhatsApp.
+Site novo da Vera Group: um quarteirão comercial do interior, à noite, em 3D. A luz de cada loja mostra o status dela: apagada quer dizer que ninguém acha o negócio no Google; acesa quer dizer que ele tem presença digital.
 
-O raciocínio por trás de cada decisão está em [`docs/DIAGNOSTICO.md`](docs/DIAGNOSTICO.md).
+Em construção, por checkpoints. O design aprovado está em [`docs/superpowers/specs/2026-11-08-espelho-3d-design.md`](docs/superpowers/specs/2026-11-08-espelho-3d-design.md).
 
-## Como rodar
-
-É um site estático, sem etapa de build. Qualquer servidor serve:
+## Rodar
 
 ```bash
-python3 -m http.server 8080
-# ou
-npx serve .
+npm install
+npm run dev      # baixa as fontes do Fontshare (1ª vez) e abre em http://127.0.0.1:5173
+npm run build    # gera dist/ (Cloudflare Pages: build "npm run build", saída "dist")
 ```
 
-Abra `http://localhost:8080`.
+Parâmetros úteis na URL (prints e pôster):
 
-## Antes de publicar
+- `?t=1.6`: congela a animação de entrada nesse instante.
+- `?q=alta|media|baixa`: força a qualidade.
+- `?dpr=1`: força a resolução.
+- `?az=300`: abre a câmera noutro ângulo.
+- `?mov=0`: simula `prefers-reduced-motion`.
 
-1. **WhatsApp:** coloque o número comercial em `assets/js/config.js` (`whatsapp: '5511...'`). Sem ele, os botões levam para o formulário, e o formulário abre o WhatsApp para a pessoa escolher o contato.
-2. **Vídeos:** rode `sh scripts/baixar-videos.sh` para trazer os dois vídeos do Higgsfield para `assets/video/`. Enquanto isso não acontece, o site usa o endereço do CDN do Higgsfield.
-3. **Prévia do link:** o `<meta property="og:image">` do `index.html` aponta para `https://vera-group.vercel.app/assets/img/og.jpg`. Ao ligar o domínio próprio, troque esse endereço, porque o WhatsApp só mostra a imagem com endereço completo.
+## Onde mexer
 
-## Onde está no ar
+- `src/data/empresa.ts`: WhatsApp, e-mail, responsável, CNPJ e sócios. Campo vazio = o elemento não aparece.
+- `src/data/rua.ts`: cada loja da rua (posição, segmento, status, case, cores, letreiro). Cliente novo = lote novo aqui.
+- `src/cena/`: a cena 3D (geometria procedural, luz, pós-processamento, câmera).
 
-Projeto `vera-group` na Vercel, ligado a este repositório: **https://vera-group.vercel.app**
+## Fontes e licenças
 
-Sem framework e sem comando de build. O `vercel.json` cuida de cache e cabeçalhos.
+- **Cabinet Grotesk** e **Satoshi** são da ITF Free Font License. Ela permite hospedar no próprio site, mas proíbe alterar o arquivo e distribuí-lo por repositório público. Por isso os arquivos **não estão no git**: `scripts/fontes.mjs` baixa os WOFF2 oficiais do Fontshare a cada build, sem alterar.
+- **JetBrains Mono**, **Big Shoulders Display** (letreiros) e **Cinzel** (letreiro da ERK, perto da marca deles) são OFL e vêm pelo npm.
+- O nome que o visitante digita no construtor usa só fonte OFL.
 
-## Link personalizado para prospecção
+## Fotos
 
-A página aceita três parâmetros. O Maestro pode montar esse link em cada mensagem:
-
-```
-https://vera-group.vercel.app/?empresa=Clínica%20Sorriso&nicho=dentista&cidade=Itu
-```
-
-O que muda:
-
-- o topo mostra "Preparado para Clínica Sorriso" e a data com a cidade;
-- a pesquisa do topo fica fixa em "dentista em Itu";
-- no teste, a linha "Seu negócio" vira "Clínica Sorriso";
-- o formulário já vem com o nome do negócio e a cidade;
-- a mensagem de WhatsApp cita a empresa.
-
-Sem parâmetros, a pesquisa do topo alterna entre os nichos e cidades de `assets/js/config.js`.
-
-## Estrutura
-
-```
-index.html                 a página
-assets/css/site.css        estilo (papel, tinta, vermelho de sinal)
-assets/js/config.js        número de WhatsApp e pesquisas do topo
-assets/js/site.js          personalização, teste, prévia, vídeos, 3D, formulário
-assets/js/erk-3d.js        visualizador 3D do projeto ERK Pratas
-assets/vendor/             three.js (licença MIT em THREE-LICENSE.txt)
-assets/fonts/              Archivo e IBM Plex Mono (SIL Open Font License)
-assets/img/                telas reais dos projetos, fotos da Vó Neis e og.jpg
-assets/video/              vídeos locais (ver scripts/baixar-videos.sh)
-tools/og.html              molde da imagem de prévia; gere com node tools/gerar-og.mjs
-docs/DIAGNOSTICO.md        diagnóstico e perguntas em aberto
-```
-
-## De onde vem cada imagem
-
-- **ERK Pratas:** capturas do site no ar (`site-production-0686.up.railway.app`).
-- **Vó Neis:** o cardápio real (código do repositório do cliente) renderizado com os produtos e as fotos da própria loja, porque a versão no ar está temporariamente sem fotos cadastradas.
-- **Vídeos:** gerados no Higgsfield. O do topo é luz natural numa parede, sem produto. O da Vó Neis parte da foto real do bolo Chocolatudo.
+As fotos e prints em `public/trabalhos/` são dos clientes reais (ERK Pratas e Vó Neis), com autorização.
