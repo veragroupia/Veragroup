@@ -1,18 +1,30 @@
 /* Vera Group · comportamento do site.
-   Sem framework: personalizacao pelo link, o teste da pesquisa, a previa dos
-   trabalhos, o 3D da ERK, os videos e o formulario que abre o WhatsApp. */
+   Sem framework. Tudo aqui melhora uma página que já funciona sem JavaScript:
+   personalização pelo link, contato com o projeto de referência, roteiro dos
+   projetos, 3D sob demanda, vídeo, formulário e o carregamento do movimento. */
 
 const cfg = window.VERA || {};
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
 const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
 const semMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const CIDADES = ['Itu', 'Salto', 'Sorocaba', 'Indaiatuba', 'Porto Feliz', 'Tietê'];
+const CIDADES = ['Salto', 'Itu', 'Sorocaba', 'Indaiatuba', 'Porto Feliz', 'Tietê'];
+const PROJETOS = cfg.projetos || {};
 
-/* ---------- personalizacao pelo link ----------
-   ?empresa=Clínica Sorriso&nicho=dentista&cidade=Itu  */
+/* ---------- medição: só envia se houver ferramenta configurada ---------- */
+function registrar(evento, dados = {}) {
+  try {
+    if (typeof window.va === 'function') window.va('event', { name: evento, data: dados });
+    if (typeof window.gtag === 'function') window.gtag('event', evento, dados);
+    if (typeof window.plausible === 'function') window.plausible(evento, { props: dados });
+    window.dispatchEvent(new CustomEvent('vera:evento', { detail: { evento, ...dados } }));
+  } catch (_) { /* medição nunca quebra a página */ }
+}
+
+/* ---------- personalização pelo link ----------
+   ?empresa=Clínica Sorriso&nicho=dentista&cidade=Itu&projeto=erk */
 function limpar(valor, max = 60) {
   if (!valor) return '';
-  return valor.replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+  return String(valor).replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 const params = new URLSearchParams(location.search);
 const empresa = limpar(params.get('empresa'));
@@ -21,21 +33,38 @@ const cidadeBruta = limpar(params.get('cidade'), 40);
 const cidade = CIDADES.find((c) => c.toLowerCase() === cidadeBruta.toLowerCase()) || cidadeBruta;
 const personalizado = Boolean(nicho || cidade);
 
-const numeroWhats = String(cfg.whatsapp || '').replace(/\D/g, '');
-
-function linkWhats(texto) {
-  const base = numeroWhats ? `https://wa.me/${numeroWhats}` : 'https://wa.me/';
-  return `${base}?text=${encodeURIComponent(texto)}`;
+function nomeProjeto(valor) {
+  const v = limpar(valor, 60);
+  if (!v) return '';
+  const chave = v.toLowerCase();
+  if (PROJETOS[chave]) return PROJETOS[chave];
+  return Object.values(PROJETOS).find((n) => n.toLowerCase() === chave) || '';
 }
+let projetoRef = nomeProjeto(params.get('projeto'));
 
-function mensagemPadrao(assunto) {
-  const partes = ['Olá, Vera Group! Vi o portfólio de vocês.'];
+const numeroWhats = String(cfg.whatsapp || '').replace(/\D/g, '');
+function linkWhats(texto) {
+  const t = encodeURIComponent(texto);
+  return numeroWhats ? `https://wa.me/${numeroWhats}?text=${t}` : `https://wa.me/?text=${t}`;
+}
+function frasesBase() {
+  const partes = ['Olá, Vera Group! Vi o site de vocês.'];
   if (empresa) partes.push(`Sou da ${empresa}${cidade ? `, de ${cidade}` : ''}.`);
-  partes.push(assunto ? `${assunto}.` : 'Quero conversar sobre o meu negócio.');
+  return partes;
+}
+function fraseProjeto() {
+  return projetoRef ? `Vi o projeto ${projetoRef} e quero algo assim para a minha empresa.` : '';
+}
+function mensagemPadrao(assunto) {
+  const partes = frasesBase();
+  const p = fraseProjeto();
+  if (p) partes.push(p);
+  if (assunto) partes.push(`${assunto}.`);
+  else if (!p) partes.push('Quero conversar sobre um projeto.');
   return partes.join(' ');
 }
 
-/* cabecalho do documento: para quem, onde e quando */
+/* ---------- cabeçalho do hero: para quem, onde e quando ---------- */
 (function cabecalho() {
   const alvo = $('[data-preparado]');
   if (alvo && empresa) {
@@ -50,171 +79,165 @@ function mensagemPadrao(assunto) {
     const lugar = cidade ? (CIDADES.includes(cidade) ? `${cidade}, SP` : cidade) : 'Salto, SP';
     data.textContent = `${lugar} · ${hoje}`;
   }
+  const url = $('[data-obra-url]');
+  if (url && empresa) {
+    const slug = empresa.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 28);
+    if (slug) url.textContent = `${slug}.com.br`;
+  }
   const ano = $('[data-ano]');
   if (ano) ano.textContent = String(new Date().getFullYear());
 })();
 
-/* ---------- a pesquisa do topo ---------- */
+/* ---------- a pesquisa do título de soluções ---------- */
 (function pesquisa() {
-  const texto = $('[data-busca]');
-  const espelho = $('[data-busca-espelho]');
-  const rotulo = $('[data-busca-rotulo]');
-  if (!texto) return;
-
-  const escrever = (valor) => {
-    texto.textContent = valor;
-    if (espelho) espelho.textContent = valor;
-  };
-
+  const alvo = $('[data-busca]');
+  if (!alvo) return;
   if (personalizado) {
-    const consulta = `${nicho || 'o que você faz'} em ${cidade || 'sua cidade'}`;
-    escrever(consulta);
-    if (rotulo) rotulo.setAttribute('aria-label', `Pesquisa: ${consulta}`);
+    alvo.textContent = `${nicho || 'o que você faz'} em ${cidade || 'sua cidade'}`;
     return;
   }
+  const lista = cfg.pesquisas && cfg.pesquisas.length ? cfg.pesquisas : ['dentista em Itu'];
+  alvo.textContent = lista[Math.floor(Math.random() * lista.length)];
+})();
 
-  const lista = (cfg.pesquisas && cfg.pesquisas.length ? cfg.pesquisas : ['dentista em Itu']).slice();
-  escrever(lista[0]);
-  if (rotulo) rotulo.setAttribute('aria-label', `Pesquisa de exemplo: ${lista[0]}`);
-  if (semMovimento || lista.length < 2) return;
+/* ---------- links de WhatsApp ---------- */
+function atualizarLinks() {
+  if (!numeroWhats) return; // sem número configurado, os botões levam ao formulário
+  $$('[data-whats]').forEach((a) => {
+    a.href = linkWhats(mensagemPadrao(a.dataset.assunto));
+    a.target = '_blank';
+    a.rel = 'noopener';
+  });
+}
+atualizarLinks();
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('[data-whats]');
+  if (a) registrar('cta_contato', { origem: a.dataset.origem || '', assunto: a.dataset.assunto || '', projeto: projetoRef });
+  const v = e.target.closest('[data-evento]');
+  if (v) registrar(v.dataset.evento, { rotulo: v.dataset.rotulo || '' });
+});
 
-  let i = 0;
-  const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
-  (async function ciclo() {
-    await esperar(3400);
-    for (;;) {
-      if (document.hidden) { await esperar(800); continue; }
-      const atual = lista[i];
-      for (let n = atual.length; n >= 0; n--) {
-        texto.textContent = atual.slice(0, n);
-        await esperar(24);
+/* ---------- projeto de referência ("Quero algo assim") ---------- */
+const ref = (function referencia() {
+  const caixa = $('[data-ref]');
+  const nome = $('[data-ref-nome]');
+  const tirar = $('[data-ref-tirar]');
+  function mostrar() {
+    if (!caixa) return;
+    caixa.hidden = !projetoRef;
+    if (nome) nome.textContent = projetoRef;
+  }
+  function definir(valor) {
+    projetoRef = valor;
+    mostrar();
+    atualizarLinks();
+  }
+  if (tirar) tirar.addEventListener('click', () => definir(''));
+  mostrar();
+
+  $$('[data-quero]').forEach((botao) => {
+    botao.addEventListener('click', (e) => {
+      definir(botao.dataset.quero);
+      registrar('cta_quero_igual', { projeto: projetoRef });
+      if (numeroWhats) {
+        e.preventDefault();
+        window.open(linkWhats(mensagemPadrao()), '_blank', 'noopener');
+        return;
       }
-      i = (i + 1) % lista.length;
-      const prox = lista[i];
-      await esperar(260);
-      for (let n = 1; n <= prox.length; n++) {
-        texto.textContent = prox.slice(0, n);
-        await esperar(52 + Math.random() * 46);
-      }
-      if (espelho) espelho.textContent = prox;
-      await esperar(3000);
+      // Sem número: leva ao formulário já com a referência e foca o primeiro campo
+      setTimeout(() => { const n = $('[data-formulario] input[name="nome"]'); if (n) n.focus({ preventScroll: true }); }, semMovimento ? 0 : 700);
+    });
+  });
+  return { definir };
+})();
+
+/* ---------- roteiro dos projetos: a tela acompanha o passo ---------- */
+(function roteiros() {
+  const largo = window.matchMedia('(min-width: 1100px)');
+  $$('[data-roteiro]').forEach((roteiro) => {
+    const telas = $$('.roteiro__tela', roteiro);
+    const passos = $$('[data-passo]', roteiro);
+    const url = $('[data-roteiro-url]', roteiro);
+    if (!telas.length || !passos.length) return;
+    let atual = -1;
+
+    function ativar(i) {
+      if (i === atual) return;
+      atual = i;
+      roteiro.setAttribute('data-ativo', String(i));
+      telas.forEach((t) => t.classList.toggle('ativa', Number(t.dataset.tela) === i));
+      passos.forEach((p) => p.classList.toggle('ativo', Number(p.dataset.passo) === i));
+      const passo = passos.find((p) => Number(p.dataset.passo) === i);
+      if (url && passo && passo.dataset.url) url.textContent = passo.dataset.url;
     }
-  })();
-})();
 
-/* ---------- 01 o teste ---------- */
-(function teste() {
-  const caixa = $('[data-teste]');
-  if (!caixa) return;
-  const nome = $('[data-empresa]', caixa);
-  if (nome && empresa) nome.textContent = empresa;
-
-  const voce = $('[data-voce]', caixa);
-  const selos = $$('[data-selo]', caixa);
-  const efeito = $('[data-efeito]', caixa);
-  const botoes = $$('[data-modo]', caixa);
-  let tocou = false;
-  let timers = [];
-
-  function aplicar(modo) {
-    timers.forEach(clearTimeout);
-    timers = [];
-    botoes.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modo === modo)));
-    const comVera = modo === 'vera';
-    selos.forEach((s, n) => {
-      timers.push(setTimeout(() => s.classList.toggle('selo--nao', !comVera), semMovimento ? 0 : n * 140));
-    });
-    timers.push(setTimeout(() => {
-      voce.classList.toggle('pronto', comVera);
-      efeito.textContent = comVera ? 'Pronto para ser escolhido.' : 'Fica de fora.';
-    }, semMovimento ? 0 : selos.length * 140));
-  }
-
-  botoes.forEach((b) => b.addEventListener('click', () => { tocou = true; aplicar(b.dataset.modo); }));
-
-  // Mostra a virada sozinho uma vez, quando a pessoa chega na secao
-  const io = new IntersectionObserver((entradas) => {
-    if (!entradas[0].isIntersecting) return;
-    io.disconnect();
-    setTimeout(() => { if (!tocou) aplicar('vera'); }, 2200);
-  }, { threshold: 0.6 });
-  io.observe(caixa);
-})();
-
-/* ---------- 02 previa ao passar o mouse nos trabalhos ---------- */
-(function previa() {
-  const caixa = $('[data-previa-caixa]');
-  const img = $('[data-previa-img]');
-  if (!caixa || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  let x = 0, y = 0, cx = 0, cy = 0, ativo = false, raf = 0;
-
-  function mover() {
-    cx += (x - cx) * 0.18;
-    cy += (y - cy) * 0.18;
-    caixa.style.transform = `translate(${cx + 28}px, ${cy - 120}px)`;
-    if (ativo || Math.abs(x - cx) > 0.5) raf = requestAnimationFrame(mover);
-  }
-  $$('[data-previa]').forEach((linha) => {
-    linha.addEventListener('mouseenter', (e) => {
-      img.src = linha.dataset.previa;
-      x = cx = e.clientX; y = cy = e.clientY;
-      ativo = true;
-      caixa.classList.add('ativa');
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(mover);
-    });
-    linha.addEventListener('mousemove', (e) => { x = e.clientX; y = e.clientY; });
-    linha.addEventListener('mouseleave', () => { ativo = false; caixa.classList.remove('ativa'); });
+    // Faixa estreita no meio da tela: o passo que cruza essa faixa é o ativo
+    const io = new IntersectionObserver((entradas) => {
+      if (!largo.matches) return;
+      entradas.forEach((e) => { if (e.isIntersecting) ativar(Number(e.target.dataset.passo)); });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    passos.forEach((p) => io.observe(p));
+    ativar(0);
   });
 })();
 
-/* ---------- videos ---------- */
+/* ---------- vídeos: tocam só quando aparecem ---------- */
 (function videos() {
   $$('video[data-video]').forEach((v) => {
-    const fontes = $$('source', v);
-    const ultima = fontes[fontes.length - 1];
-    // Sem nenhuma fonte disponivel: com poster, fica a foto; sem poster, some
-    if (ultima && !v.hasAttribute('poster')) ultima.addEventListener('error', () => { v.style.visibility = 'hidden'; });
-
-    if (semMovimento) { v.removeAttribute('autoplay'); v.pause(); return; }
-
-    const preguica = v.hasAttribute('data-video-preguica');
+    if (semMovimento) return; // fica o poster
     const io = new IntersectionObserver((entradas) => {
-      const e = entradas[0];
-      if (e.isIntersecting) {
-        if (preguica && v.preload !== 'auto') { v.preload = 'auto'; v.load(); }
+      if (entradas[0].isIntersecting) {
+        if (v.preload !== 'auto') { v.preload = 'auto'; v.load(); }
         const p = v.play();
         if (p && p.catch) p.catch(() => {});
       } else {
         v.pause();
       }
-    }, { rootMargin: preguica ? '200px 0px' : '0px', threshold: 0.01 });
+    }, { rootMargin: '200px 0px', threshold: 0.01 });
     io.observe(v);
   });
 })();
 
-/* ---------- 3D da ERK ---------- */
+/* ---------- 3D da ERK: só carrega quando a pessoa pede ---------- */
 (function giro() {
-  const palco = $('[data-giro]');
-  if (!palco) return;
-  const canvas = $('canvas', palco);
-  const dica = $('[data-giro-dica]', palco);
-  const peca = $('[data-giro-peca]', palco);
+  const caixa = $('[data-giro]');
+  if (!caixa) return;
+  const palco = $('.giro__palco', caixa);
+  const canvas = $('canvas', caixa);
+  const iniciar = $('[data-giro-iniciar]', caixa);
+  const peca = $('[data-giro-peca]', caixa);
   const spec = { tipo: 'corrente', elo: 'cubano', esp: 6, medida: 50, acabamento: 'polido' };
   let viewer = null;
-
-  const nomes = { cubano: 'cubano', grumet: 'grumet', veneziana: 'veneziana', cartier: 'cartier', baiana: 'baiana' };
-  const legenda = () => { if (peca) peca.textContent = `Elo ${nomes[spec.elo]} · ${spec.esp} mm · ${spec.medida} cm · ${spec.acabamento}`; };
+  const legenda = () => { if (peca) peca.textContent = `Elo ${spec.elo} · ${spec.esp} mm · ${spec.medida} cm · ${spec.acabamento}`; };
 
   function semWebGL() {
     const img = new Image();
-    img.src = 'assets/img/erk-montar.webp';
+    img.src = 'assets/img/r/erk-montar-800.webp';
     img.alt = 'Montador de peças da ERK Pratas com a corrente em 3D.';
     canvas.replaceWith(img);
-    if (dica) dica.remove();
+    if (iniciar) iniciar.remove();
   }
 
-  $$('[data-giro-grupo]').forEach((grupo) => {
+  async function abrir() {
+    if (viewer || !iniciar) return;
+    iniciar.setAttribute('aria-busy', 'true');
+    registrar('demo_3d_aberta');
+    try {
+      const teste = document.createElement('canvas');
+      if (!(teste.getContext('webgl2') || teste.getContext('webgl'))) throw new Error('sem webgl');
+      canvas.hidden = false;
+      const { createViewer } = await import('./erk-3d.js');
+      viewer = await createViewer(canvas, { orbitaVertical: false });
+      viewer.setSpec({ ...spec });
+      iniciar.remove();
+      canvas.setAttribute('tabindex', '0');
+    } catch (erro) {
+      semWebGL();
+    }
+  }
+  if (iniciar) iniciar.addEventListener('click', abrir);
+
+  $$('[data-giro-grupo]', caixa).forEach((grupo) => {
     grupo.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-valor]');
       if (!b) return;
@@ -222,96 +245,76 @@ function mensagemPadrao(assunto) {
       spec[grupo.dataset.giroGrupo] = b.dataset.valor;
       legenda();
       if (viewer) viewer.setSpec({ ...spec });
+      else abrir();
     });
   });
   legenda();
-
-  canvas.addEventListener('pointerdown', () => dica && dica.classList.add('sumiu'), { once: true });
-
-  const io = new IntersectionObserver(async (entradas) => {
-    if (!entradas[0].isIntersecting) return;
-    io.disconnect();
-    try {
-      const teste = document.createElement('canvas');
-      if (!(teste.getContext('webgl2') || teste.getContext('webgl'))) throw new Error('sem webgl');
-      const { createViewer } = await import('./erk-3d.js');
-      viewer = await createViewer(canvas, { orbitaVertical: false });
-      viewer.setSpec({ ...spec });
-    } catch (erro) {
-      semWebGL();
-    }
-  }, { rootMargin: '400px 0px' });
-  io.observe(palco);
+  if (palco) palco.dataset.pronto = '';
 })();
 
-/* ---------- entrada ao rolar ---------- */
-(function revelar() {
-  const alvos = $$([
-    '.titulo-secao', '.case__titulo', '.case__abre', '.telas', '.resultado',
-    '.indice > li', '.numeros > li', '.lista-num > li', '.rolo', '.fluxo__passo',
-    '.vitrine__video', '.vitrine__texto', '.modulos__lista > div', '.casa__item',
-    '.tabela__linha', '.etapa', '.mapa', '.sanfona details', '.giro__palco', '.ficha',
-    '.contato__titulo', '.formulario',
-  ].join(','));
-  if (!('IntersectionObserver' in window) || semMovimento) {
-    alvos.forEach((a) => a.classList.add('revelado'));
-    return;
-  }
-  alvos.forEach((a) => {
-    const irmaos = a.parentElement ? [...a.parentElement.children].filter((c) => c.matches(a.tagName)) : [];
-    const n = Math.max(0, irmaos.indexOf(a));
-    a.style.setProperty('--atraso', `${Math.min(n, 6) * 70}ms`);
-    a.setAttribute('data-revela', '');
-  });
-  const io = new IntersectionObserver((entradas) => {
-    entradas.forEach((e) => {
-      if (!e.isIntersecting) return;
-      e.target.classList.add('revelado');
-      io.unobserve(e.target);
-    });
-  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-  alvos.forEach((a) => io.observe(a));
-})();
-
-/* ---------- topo e barra do WhatsApp ---------- */
+/* ---------- topo, navegação ativa e barra do celular ---------- */
 (function topo() {
   const cab = $('[data-topo]');
   const barra = $('[data-barra]');
-  const abertura = $('#inicio');
+  const hero = $('#inicio');
   const contato = $('#contato');
-  const marcar = () => cab && cab.classList.toggle('rolado', window.scrollY > 24);
-  marcar();
-  window.addEventListener('scroll', marcar, { passive: true });
+  let ultimo = window.scrollY, pedido = 0;
 
-  if (!barra || !abertura || !contato) return;
-  let passouTopo = false, noContato = false;
-  const atualizar = () => barra.classList.toggle('visivel', passouTopo && !noContato);
-  new IntersectionObserver((e) => { passouTopo = !e[0].isIntersecting; atualizar(); }, { threshold: 0.12 }).observe(abertura);
-  new IntersectionObserver((e) => { noContato = e[0].isIntersecting; atualizar(); }, { threshold: 0.05 }).observe(contato);
+  function ao_rolar() {
+    pedido = 0;
+    const y = window.scrollY;
+    if (cab) {
+      cab.classList.toggle('rolado', y > 24);
+      // esconde descendo, mostra subindo; nunca esconde perto do topo
+      const descendo = y > ultimo + 4;
+      const subindo = y < ultimo - 4;
+      if (y < 400 || subindo) cab.classList.remove('escondido');
+      else if (descendo && !cab.contains(document.activeElement)) cab.classList.add('escondido');
+    }
+    ultimo = y;
+  }
+  window.addEventListener('scroll', () => { if (!pedido) pedido = requestAnimationFrame(ao_rolar); }, { passive: true });
+  ao_rolar();
+  if (cab) cab.addEventListener('focusin', () => cab.classList.remove('escondido'));
+
+  // link da seção atual no menu
+  const links = $$('.topo__nav a');
+  const secoes = links.map((a) => $(a.getAttribute('href'))).filter(Boolean);
+  if (secoes.length) {
+    const io = new IntersectionObserver((entradas) => {
+      entradas.forEach((e) => {
+        if (!e.isIntersecting) return;
+        links.forEach((a) => a.setAttribute('aria-current', String(a.getAttribute('href') === `#${e.target.id}`)));
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    secoes.forEach((s) => io.observe(s));
+  }
+
+  if (!barra || !hero || !contato) return;
+  let passouHero = false, noContato = false;
+  const atualizar = () => barra.classList.toggle('visivel', passouHero && !noContato);
+  new IntersectionObserver((e) => { passouHero = !e[0].isIntersecting; atualizar(); }, { threshold: 0.05 }).observe(hero);
+  new IntersectionObserver((e) => { noContato = e[0].isIntersecting; atualizar(); }, { threshold: 0.02 }).observe(contato);
 })();
 
-/* ---------- links de WhatsApp ---------- */
-(function links() {
-  if (!numeroWhats) return; // sem numero configurado, os botoes levam ao formulario
-  $$('[data-whats]').forEach((a) => {
-    a.href = linkWhats(mensagemPadrao(a.dataset.assunto));
-    a.target = '_blank';
-    a.rel = 'noopener';
-  });
-})();
-
-/* ---------- formulario ---------- */
+/* ---------- formulário: monta a mensagem e abre o WhatsApp ---------- */
 (function formulario() {
   const form = $('[data-formulario]');
   if (!form) return;
   const aviso = $('[data-aviso]', form);
+  const enviar = $('[data-enviar]', form);
+  const textoEnviar = $('[data-enviar-texto]', form);
   const campoEmpresa = $('[data-campo-empresa]', form);
   const campoCidade = $('[data-campo-cidade]', form);
+  const campoNome = form.elements.nome;
   if (empresa && campoEmpresa) campoEmpresa.value = empresa;
   if (cidade && campoCidade) {
     const op = [...campoCidade.options].find((o) => o.text === cidade);
     campoCidade.value = op ? op.text : 'Outra';
   }
+  campoNome.addEventListener('input', () => {
+    if (campoNome.value.trim()) { campoNome.removeAttribute('aria-invalid'); aviso.classList.remove('erro'); aviso.textContent = ''; }
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -319,34 +322,79 @@ function mensagemPadrao(assunto) {
     const nome = limpar(dados.get('nome'));
     const negocio = limpar(dados.get('negocio'), 80);
     const cid = limpar(dados.get('cidade'), 40);
-    const precisa = limpar(dados.get('precisa'), 60) || 'um site';
+    const precisa = limpar(dados.get('precisa'), 60) || 'ajuda para decidir';
 
     if (!nome) {
       aviso.textContent = 'Escreva seu nome para a gente saber com quem vai falar.';
-      aviso.classList.add('erro');
-      form.elements.nome.focus();
+      aviso.className = 'formulario__aviso erro';
+      campoNome.setAttribute('aria-invalid', 'true');
+      campoNome.focus();
       return;
     }
-    aviso.classList.remove('erro');
 
     let msg = `Olá, Vera Group! Meu nome é ${nome}`;
     if (negocio) msg += `, da ${negocio}`;
     if (cid && cid !== 'Outra') msg += `, de ${cid}`;
-    msg += `. Preciso de ${precisa}. Vi o portfólio de vocês.`;
+    msg += precisa === 'ajuda para decidir'
+      ? '. Quero ajuda para decidir a melhor solução para a minha empresa.'
+      : `. Preciso de ${precisa}.`;
+    const p = fraseProjeto();
+    if (p) msg += ` ${p}`;
+
+    enviar.setAttribute('aria-busy', 'true');
+    if (textoEnviar) textoEnviar.textContent = 'Abrindo o WhatsApp…';
+    registrar('formulario_enviado', { precisa, cidade: cid, projeto: projetoRef });
 
     // Link de verdade, clicado no mesmo gesto: abre o WhatsApp em qualquer navegador,
-    // inclusive dentro do proprio WhatsApp. O aviso deixa o link a mao se nada abrir.
-    const url = linkWhats(msg);
+    // inclusive dentro do próprio WhatsApp. O aviso deixa o link à mão se nada abrir.
     const link = document.createElement('a');
-    link.href = url;
+    link.href = linkWhats(msg);
     link.target = '_blank';
     link.rel = 'noopener';
     link.textContent = 'abrir o WhatsApp';
+    aviso.className = 'formulario__aviso ok';
     aviso.replaceChildren(
       numeroWhats ? 'Mensagem pronta. Se nada abriu, toque para ' : 'Mensagem pronta. Escolha a conversa da Vera Group ou toque para ',
       link,
       '.'
     );
     link.click();
+    setTimeout(() => {
+      enviar.removeAttribute('aria-busy');
+      if (textoEnviar) textoEnviar.textContent = 'Conversar sobre meu projeto';
+    }, 1600);
   });
 })();
+
+/* ---------- movimento: GSAP só quando faz sentido ----------
+   Não carrega com movimento reduzido nem com economia de dados.
+   A página já está completa sem ele; o movimento é camada. */
+(function movimento() {
+  if (semMovimento) return;
+  const conexao = navigator.connection || {};
+  if (conexao.saveData) return;
+  const leve = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 2;
+
+  const carregar = (src) => new Promise((ok, falha) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = ok;
+    s.onerror = falha;
+    document.head.append(s);
+  });
+
+  const iniciar = async () => {
+    try {
+      await carregar('assets/vendor/gsap.min.js');
+      await carregar('assets/vendor/ScrollTrigger.min.js');
+      const { iniciarMovimento } = await import('./motion.js');
+      iniciarMovimento({ leve });
+    } catch (_) { /* sem movimento, a página segue inteira */ }
+  };
+  // Depois do primeiro desenho: não disputa banda nem CPU com o LCP
+  if (document.readyState === 'complete') setTimeout(iniciar, 0);
+  else window.addEventListener('load', () => setTimeout(iniciar, 0), { once: true });
+})();
+
+export { ref };

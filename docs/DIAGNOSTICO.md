@@ -96,7 +96,58 @@ Site estático, sem etapa de build. Serve na Vercel (a conta já existe), GitHub
 **Como medir?**
 Recomendado: ligar Vercel Web Analytics e contar cliques no WhatsApp por parâmetro de origem (`?empresa=`). Fica como próximo passo.
 
-## 5. Perguntas que só vocês respondem
+## 5. Redesenho comercial (novembro de 2026)
+
+**O que mudou na estratégia?**
+O site deixou de abrir pela dor ("Hoje alguém procurou...") e passou a abrir pela ambição:
+"Seu negócio merece mais do que estar online." A dor continua na página, no título de
+Soluções, onde a pesquisa personalizada pelo link do Maestro ainda aparece. Ordem nova:
+Hero, Projetos, Soluções, Processo, Prova, Perguntas e Contato.
+
+**O que foi preservado?**
+A identidade inteira: papel, tinta, o vermelho de sinal, Archivo e Plex Mono, a marca "Vera."
+com o ponto vermelho, a luz de "no ar", a regra de não usar travessão, gradiente decorativo,
+vidro ou card de benefício. A personalização pelo link, o formulário que abre o WhatsApp, o 3D
+da ERK e os preços de referência continuam.
+
+**O que saiu, e por quê?**
+- Vídeo de fundo do hero: trocado por uma composição em CSS (um site sendo levantado) que
+  fala de desenvolvimento e não pesa nada.
+- Teste "Hoje / Com a Vera" com concorrentes fictícios: a seção de Prova agora usa só
+  evidência real.
+- Mapa das cidades: as cidades seguem no contato, no rodapé, nas perguntas e nos dados
+  estruturados, sem uma seção inteira para isso.
+- 3D carregando sozinho: o three.js tem 650 KB. Agora só carrega quando a pessoa pede.
+
+**Medido (Lighthouse 12, servidor local com brotli como na Vercel):**
+
+| | Antes | Depois (celular) | Depois (computador) |
+|---|---|---|---|
+| Desempenho | 83 | 98 | 100 |
+| Acessibilidade | 97 | 100 | 100 |
+| Boas práticas | 96 | 100 | 100 |
+| SEO | 100 | 100 | 100 |
+| LCP | 2,6 s | 2,3 s | 0,6 s |
+| CLS | 0,268 | 0 | 0 |
+
+O "antes" foi medido sem compressão (servidor Python), então a comparação de desempenho é
+aproximada. CLS e acessibilidade não dependem disso. São números de laboratório: os Core Web
+Vitals de verdade (percentil 75 de visitantes reais) só aparecem com Vercel Speed Insights
+ou com o relatório do Chrome depois de tráfego suficiente.
+
+## 6. Pendências do redesenho
+
+- **Número de WhatsApp comercial** (`assets/js/config.js`). Sem ele, os CTAs levam ao
+  formulário e o formulário abre o WhatsApp para a pessoa escolher o contato.
+- **Medição:** o código já registra os eventos dos CTAs, mas nenhuma ferramenta está
+  instalada. Recomendado: ligar Vercel Web Analytics e Speed Insights no painel.
+- **Depoimentos e resultados:** a seção de Prova não tem nenhum porque nenhum foi
+  autorizado. Quando houver, entram ali com nome e foto reais.
+- **Domínio próprio:** trocar `vera-group.vercel.app` no `index.html`, `robots.txt` e
+  `sitemap.xml`.
+- **Vídeo local:** o vídeo da Vó Neis vem do CDN do Higgsfield (ver README).
+
+## 7. Perguntas que só vocês respondem
 
 Estas definem o que falta para o site sair de "muito bom" para "à prova de desconfiança":
 
