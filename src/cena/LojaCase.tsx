@@ -257,14 +257,10 @@ export function LojaCase({ lote }: { lote: Lote }) {
 /** Celular flutuando ao lado da loja aberta, com as telas reais. */
 function CelularDoCase({ caseId, largura, aberturaRef }: { caseId: 'erk' | 'voneis'; largura: number; lado: number; aberturaRef: { current: number } }) {
   const telas = (caseId === 'erk' ? erk.telas : voneis.telas).filter((t) => t.formato === 'celular').map((t) => t.src);
-  const visivel = useRef(0);
-  const grupo = useRef<Group>(null);
-  useFrame(() => {
-    visivel.current = aberturaRef.current;
-    if (grupo.current) grupo.current.visible = visivel.current > 0.02;
-  });
+  // fica "visível" mesmo fechado (só com escala quase zero): assim o shader da tela compila junto com o
+  // resto nos primeiros quadros, atrás do pôster, em vez de travar a animação de abrir a loja
   return (
-    <group ref={grupo}>
+    <group>
       <CelularAnimado telas={telas} posicao={[largura / 2 + 1.9, 2.5, 0.9]} aberturaRef={aberturaRef} />
     </group>
   );

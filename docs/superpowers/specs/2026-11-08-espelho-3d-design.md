@@ -1,45 +1,62 @@
-# Vera Group · "Espelho 3D da cidade" — design aprovado
+# Vera Group · "O site como prova de competência": design
 
-Aprovado em 08/11/2026. Fonte da verdade sobre fatos: o briefing do dono (preços, cases, sócios, cidades). Nada além disso entra na tela.
+Revisado em 08/11/2026 a partir do segundo briefing ("VERA GROUP — O SITE COMO PROVA DE COMPETÊNCIA") e do pacote de referências (REFERENCIAS-VERA-3D.md). Ele substitui a primeira versão deste documento, que usava outra marca e outra cena.
+
+Fonte da verdade sobre fatos: o briefing. Nada além dele entra na tela: preços, cases, sócios, cidades e produtos próprios. Telefone, e-mail, responsável e CNPJ não existem ainda e não são inventados.
 
 ## Ideia
 
-O site é um quarteirão comercial do interior, à noite, em 3D. A luz de cada loja é o status: apagada = ninguém acha no Google; acesa = tem presença digital. Tocar numa loja abre a fachada e mostra o trabalho (ERK Pratas, Vó Neis), a calculadora de perda (lojas genéricas) ou o construtor (terreno vazio).
+O próprio site prova que a Vera sabe fazer. É uma rua comercial do interior, à noite, em 3D, e a luz de cada loja é o status dela. A câmera guia o visitante por cinco momentos. Cada serviço da Vera tem um efeito físico visível na rua.
 
-## Cena
+## Marca
 
-- 8 lotes, 4 de cada lado, escala real (frente de 6 m, pé-direito de 3,2 m). Câmera de lente longa (FOV ~26°), órbita com limites (azimute ±35°, elevação 28–60°), zoom 0,7–1,6×.
-- `src/data/rua.ts` descreve cada lote; a cena só lê esse arquivo.
-- Fachada com chanfro, toldo, porta de vidro, janelas instanciadas, letreiro em canvas. Pino de status em cima de cada loja, sempre com ícone além da cor.
-- Lua direcional fria (1 sombra), 4 postes âmbar como spot para baixo, vitrines emissivas, névoa azul-petróleo, asfalto molhado (reflexo real no modo alto, faixas falsas no modo baixo).
-- Corrente da ERK com envMap próprio (RoomEnvironment/PMREM): `MeshPhysicalMaterial` #f2f2f4, metalness 1, roughness 0,18, envMapIntensity 1,4; elos torus 1,6× encaixados a 90°, em catenária.
-- Pós: Bloom só acima de 1,0 (luzes acesas), vinheta, SMAA, ACES, sRGB. `PerformanceMonitor` desce: sem bloom → sem sombra → dpr menor (máx. 1,75 no celular).
-- Entrada ≤ 3,5 s: rua com postes; ERK acende, depois Vó Neis (rampa curta com leve sobressalto, sem piscar). `prefers-reduced-motion`: cena parada e acesa.
+- "vera." em Syne 700, letter-spacing -0,02em, ponto dourado. Abertura: as letras sobem uma a uma, com brilho dourado respirando.
+- Cores:
+  - fundo #05060a; superfícies #09090f, #0d0e16 e #11121c;
+  - ouro #c9a96e, ouro claro #e2c48a;
+  - texto #f2efe8 (apagado a 50%); bordas em 5,5%, 10% e 16% de branco;
+  - sucesso #4ade80; WhatsApp #25d366.
+- Syne (títulos), DM Sans (texto), DM Mono (números e selos), todas OFL e locais. Assinatura: "do design ao resultado, para negócios locais".
+- Sem gradiente roxo, emoji, número inventado ou frase genérica de agência.
+
+## Os cinco momentos
+
+1. **Cidade**: rua infinita (quarteirões de 45 m + travessa de 9 m, reciclados por índice), carros com semáforo e pedestres que entram nas lojas acesas e passam reto pelas apagadas. Mensagem: "Seu negócio existe. Mas será que estão encontrando ele?". Loja apagada → calculadora de perda (estimativa, fórmula à mostra) e "Acender esta loja".
+2. **Trabalhos**: a fachada desliza e o corte desce até o térreo ("maquete em corte").
+   - ERK Pratas: corrente de prata física no balcão, que muda com o montador (peça, modelo do elo, comprimento), e celular com as telas reais.
+   - Vó Neis: vitrine com os doces reais e cardápio com pedido pelo WhatsApp. Caixa e estoque aparecem com dados fictícios, ditos na tela.
+3. **Sua loja**: o visitante digita o nome e um prédio sobe no terreno vazio, com a cor e o letreiro dele.
+   - Com chave do Google, busca no Places e mostra dados verificados. Sem chave: simulação, com selo.
+   - Serviços e efeitos:
+     - site → letreiro acende e celular com prévia;
+     - Google → pino e pedestres que vêm;
+     - cardápio → vitrine se enche;
+     - NFC → plaquinha no balcão;
+     - WhatsApp → balões de mensagem.
+   - Painel do dono com selo "Simulação".
+4. **A Vera perto de você**: mapa 3D estilizado das quatro cidades em posição real, ligadas pela SP-75, e os sócios Otávio Barbieri, Davi Marques e Alaf. Entre rua e mapa há uma cortina, porque estão em lugares diferentes do mundo.
+5. **Contato**:
+   - Landing Express R$ 690 + R$ 97/mês e Plaquinha NFC R$ 100; o resto é orçamento.
+   - Canais só se preenchidos em `src/data/empresa.ts`.
 
 ## Telas
 
-- Desktop: cena inteira, marca "Vera.", legenda de status, painel de vidro à direita ao abrir loja.
-- Celular: cena inteira, barra Rua · Trabalhos · Sua loja · Contato, painéis em bottom sheet (3 alturas).
-- Abaixo da cena: serviços, sócios, contato. Página `/privacidade`.
-- Lista de lojas em `<button>` sempre no HTML: teclado, leitor de tela, SEO e versão 2D.
+- **Desktop**: cena inteira, navegação no topo e painel de vidro à direita. Arrastar anda pela rua, o botão direito gira, a roda aproxima, as setas andam e Esc volta um nível.
+- **Celular**: barra Rua · Trabalhos · Sua loja · Contato e bottom sheet com três alturas, que muda de altura em vez de deslizar (para todo o conteúdo caber).
+- **Versão leve** (`?modo=2d`, sem WebGL2 ou aparelho fraco): página única com pôster e todas as seções. É decidida antes da primeira pintura.
 
-## Calculadora
+## Engenharia
 
-Perda/mês = procuras × % que desiste × taxa de fechamento do segmento × ticket. A taxa de fechamento é fixa por segmento e aparece escrita na linha da conta. Valores marcados como "estimativa".
+- Vite + React 19 + TypeScript; three 0.187, @react-three/fiber 9, drei 10, postprocessing; zustand liga cena e HTML.
+- `frameloop="demand"` com metrônomo de 30 qps (60 na alta) e ritmo cheio só em transições.
+- Luz dos postes assada nos vértices, sem sombra em tempo real. Luz por loja num uniform. Instancing em pedestres, carros, pinos e reflexos. Letreiros em atlas.
+- Bloom a meia resolução. DPR 1,5 no desktop e 1,25 no celular.
+- Shaders pré-compilados atrás do pôster. Os objetos que só aparecem depois ficam "visíveis" com escala quase zero, para compilar junto.
+- HTML pré-renderizado no build (SEO e leitor de tela), schema LocalBusiness, `/privacidade.html` (sem cookies nem analytics).
+- O build falha com texto provisório, link vazio ou teste quebrado.
 
-## Contato e campos vazios
+## Fora do escopo desta versão
 
-`src/data/empresa.ts` tem `whatsapp`, `email`, `responsavel`, `cnpj` vazios. Elemento que depende de campo vazio não renderiza. Teste de build falha se o HTML tiver "PREENCHER", "[...]", "em breve", "Lorem".
-
-## Stack
-
-Vite + React 19 + TypeScript; @react-three/fiber 9, drei 10, postprocessing 3; `motion` para painéis; zustand liga cena e HTML. HTML pré-renderizado no build. Cena em chunk separado depois do pôster WebP (gerado da própria cena). Deploy no Cloudflare Pages (o dono liga o repositório no fim).
-
-## Fontes e licenças
-
-- Cabinet Grotesk (títulos) e Satoshi (texto): ITF Free Font License. A licença permite hospedar no próprio site, mas proíbe subset, conversão e distribuição por repositório público. Como este repositório é público, os arquivos **não** vão para o git: `scripts/fontes.mjs` baixa os WOFF2 oficiais do Fontshare no build, sem alterar.
-- JetBrains Mono (números) e a fonte dos letreiros: OFL, via npm. Os letreiros e o nome digitado no construtor usam a fonte OFL, para não oferecer fonte do Fontshare a terceiros gerarem conteúdo.
-
-## Checkpoints
-
-1. Plano (feito). 2. Rua + luzes, prints 390×844 e 1440×900. 3. Interação + ERK. 4. Vó Neis, genéricas, construtor, calculadora. 5. Blocos, 2D, SEO, testes, Lighthouse, deploy. 6. Relatório.
+- Photorealistic 3D Tiles do Google.
+- Troca automática de qualidade por qps medido.
+- Canal de contato: a Vera não tem número nem e-mail definidos.

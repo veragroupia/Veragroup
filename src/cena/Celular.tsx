@@ -45,12 +45,16 @@ export function Celular({
     const id = setInterval(() => setI((x) => (x + 1) % lista.length), 2800);
     return () => clearInterval(id);
   }, [lista]);
-  const matTela = useMemo(() => new MeshBasicMaterial({ toneMapped: false }), []);
+  // nasce já com a primeira tela: assim a pré-compilação (atrás do pôster) gera o shader com textura,
+  // e abrir o case não trava para compilar
+  const matTela = useMemo(() => new MeshBasicMaterial({ toneMapped: false, map: lista[0] ?? null }), []); // eslint-disable-line react-hooks/exhaustive-deps
   const matCorpo = useMemo(() => new MeshStandardMaterial({ color: '#111216', roughness: 0.35, metalness: 0.6 }), []);
   useEffect(() => {
-    matTela.map = lista[i] ?? null;
+    const nova = lista[i] ?? null;
     matTela.color.setScalar(0.92);
-    matTela.needsUpdate = true;
+    // só recompila se passar de "sem textura" para "com textura" (ou o contrário)
+    if (Boolean(nova) !== Boolean(matTela.map)) matTela.needsUpdate = true;
+    matTela.map = nova;
   }, [i, lista, matTela]);
 
   useFrame(({ clock }) => {
@@ -58,7 +62,7 @@ export function Celular({
     const s = Math.max(0.0001, visivel) * escala;
     grupo.current.scale.setScalar(s);
     grupo.current.position.y = posicao[1] + Math.sin(clock.elapsedTime * 1.1) * 0.06;
-    grupo.current.visible = visivel > 0.01;
+    grupo.current.visible = visivel > 0;
   });
 
   return (

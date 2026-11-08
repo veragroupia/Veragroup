@@ -8,8 +8,21 @@ import { useCelular } from './basicos';
 type Altura = 'baixo' | 'meio' | 'alto';
 const FRACAO: Record<Altura, number> = { baixo: 0.34, meio: 0.6, alto: 1 };
 
-export function Painel({ aberto, rotulo, children, chave }: { aberto: boolean; rotulo: string; children: ReactNode; chave: string }) {
-  const celular = useCelular();
+export function Painel({
+  aberto,
+  rotulo,
+  children,
+  chave,
+  estatico = false,
+}: {
+  aberto: boolean;
+  rotulo: string;
+  children: ReactNode;
+  chave: string;
+  /** versão leve: vira bloco comum da página, sem arraste nem altura própria */
+  estatico?: boolean;
+}) {
+  const celular = useCelular() && !estatico;
   const ref = useRef<HTMLElement>(null);
   const corpo = useRef<HTMLDivElement>(null);
   const [altura, setAltura] = useState<Altura>('meio');
@@ -22,7 +35,8 @@ export function Painel({ aberto, rotulo, children, chave }: { aberto: boolean; r
     corpo.current?.scrollTo({ top: 0 });
   }, [chave]);
 
-  const alturaMax = () => (ref.current ? ref.current.getBoundingClientRect().height : 600);
+  // altura máxima disponível: tela menos topo e barra de app
+  const alturaMax = () => (typeof window === 'undefined' ? 600 : window.innerHeight - (celular ? 56 + 64 + 8 : 0));
   const deslocamento = (a: Altura) => alturaMax() * (1 - FRACAO[a]);
 
   const aoDescer = (e: React.PointerEvent) => {
@@ -56,13 +70,18 @@ export function Painel({ aberto, rotulo, children, chave }: { aberto: boolean; r
     inicio.current = null;
   };
 
-  const ty = celular ? (arrasto ?? deslocamento(altura)) : 0;
+  // no celular o sheet muda de ALTURA (não só desliza): assim todo o conteúdo rolável fica na tela
+  const desloc = arrasto ?? deslocamento(altura);
   const estilo = celular
     ? {
-        transform: `translateY(${aberto ? ty : alturaMax() + 40}px)`,
-        transition: arrasto === null ? 'transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+        height: `${Math.max(120, alturaMax() - desloc)}px`,
+        maxHeight: 'none',
+        transform: aberto ? 'none' : 'translateY(110%)',
+        transition: arrasto === null ? 'height 420ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
       }
-    : { transition: 'opacity 300ms ease', opacity: aberto ? 1 : 0 };
+    : estatico
+      ? undefined
+      : { transition: 'opacity 300ms ease', opacity: aberto ? 1 : 0 };
 
   return (
     <aside ref={ref} className="painel" aria-label={rotulo} hidden={!aberto && !celular} style={estilo} data-altura={altura}>

@@ -19,6 +19,15 @@
     <meta property="og:description" content="Uma rua 3D do interior onde quem aparece no Google acende. Site, cardápio, Google e WhatsApp para o comércio de Itu, Salto, Sorocaba e Indaiatuba." />
     <meta property="og:image" content="/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // decide a versão leve antes da primeira pintura (evita a página pular quando o JS chega)
+      (function () {
+        var p = new URLSearchParams(location.search), m = p.get('modo'), n = navigator, gl = false;
+        try { gl = !!document.createElement('canvas').getContext('webgl2'); } catch (e) {}
+        var fraco = (n.deviceMemory !== undefined && n.deviceMemory <= 2) || (n.hardwareConcurrency || 8) <= 2;
+        if (m === '2d' || !gl || (fraco && m !== '3d')) document.documentElement.classList.add('modo-2d');
+      })();
+    </script>
     <!--schema-->
   </head>
   <body>

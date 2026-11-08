@@ -71,7 +71,7 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-body.modo-3d {
+.modo-3d {
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -236,9 +236,16 @@ button {
 .palco-cena--pronta {
   opacity: 1;
 }
-.palco-cena--pronta + .palco-poster,
-.palco-poster--some {
+.palco-poster {
+  pointer-events: none;
+}
+/* o pôster fica num <picture> logo depois da cena: some quando a cena fica pronta */
+.palco-cena--pronta + picture .palco-poster {
   opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 600ms ease,
+    visibility 0s linear 600ms;
 }
 .cena-canvas {
   position: absolute !important;
@@ -1152,18 +1159,18 @@ input[type='range'] {
 }
 
 /* ——— versão leve (sem 3D) ——— */
-body.modo-2d .palco {
+.modo-2d .palco {
   position: relative;
   height: 62svh;
   min-height: 360px;
 }
-body.modo-2d .heroi {
+.modo-2d .heroi {
   position: relative;
   background: none;
   padding-top: 24px;
   width: auto;
 }
-body.modo-2d .painel {
+.modo-2d .painel {
   position: static;
   max-height: none;
   width: auto;
@@ -1172,16 +1179,33 @@ body.modo-2d .painel {
   background: none;
   backdrop-filter: none;
 }
-body.modo-2d .painel-alca,
-body.modo-2d .legenda,
-body.modo-2d .palco-dica,
-body.modo-2d .painel-topo {
+.modo-2d .painel-alca,
+.modo-2d .legenda,
+.modo-2d .palco-dica,
+.modo-2d .painel-topo {
   display: none;
 }
-body.modo-2d .secao-2d[hidden] {
+.modo-2d .topo {
+  background: rgba(5, 6, 10, 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--borda-1);
+}
+.modo-2d .secao-2d {
+  scroll-margin-top: 72px;
+}
+/* antes de o JS hidratar, o HTML pré-renderizado ainda vem com o painel e as seções escondidos */
+.modo-2d .secao-2d[hidden]:not(#loja),
+.modo-2d .painel[hidden] {
   display: block !important;
 }
-body.modo-2d .secao-2d {
+.modo-2d .painel {
+  opacity: 1 !important;
+}
+.modo-2d main {
+  padding-bottom: calc(var(--barra-h) + env(safe-area-inset-bottom) + 24px);
+}
+.modo-2d .secao-2d {
   max-width: 760px;
   margin: 0 auto;
   padding: 32px 18px;
@@ -1256,5 +1280,10 @@ body.modo-2d .secao-2d {
   white-space: pre;
 }
 .abertura--pular {
+  display: none;
+}
+
+/* a versão leve vai direto ao conteúdo */
+.modo-2d .abertura {
   display: none;
 }

@@ -40,7 +40,7 @@ function calcularPose(aspecto: number, xRua: number): Pose {
       // câmera ao sul olhando para o norte: Sorocaba embaixo à esquerda, Indaiatuba em cima à direita
       azimute: 348,
       polar: celular ? 40 : 46,
-      distancia: (s.cidadeFoco ? 32 : 96) * (celular ? 1.3 : 1),
+      distancia: (s.cidadeFoco ? 32 : 96) * (celular ? 1.75 : 1),
       desvio: desvioPainel,
     };
   }
