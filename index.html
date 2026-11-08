@@ -3,16 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Vera Group · Sites, lojas e sistemas no interior de SP</title>
-  <meta name="description" content="Sites, lojas online, cardápios com gestão e automação de WhatsApp para negócios de Itu, Salto, Sorocaba e região. Trabalhos no ar e preço aberto.">
+  <title>Vera Group · Sites, sistemas e experiências digitais em Salto, Itu e Sorocaba</title>
+  <meta name="description" content="Criamos sites, landing pages, sistemas web e automação de WhatsApp para empresas de Salto, Itu, Sorocaba, Indaiatuba e região. Projetos reais no ar e preço de referência aberto.">
+  <link rel="canonical" href="https://vera-group.vercel.app/">
   <meta name="theme-color" content="#F2EFE8">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:site_name" content="Vera Group">
-  <meta property="og:title" content="Vera Group · Sites, lojas e sistemas">
-  <meta property="og:description" content="Trabalhos no ar, preço aberto. Para negócios de Itu, Salto, Sorocaba e região.">
+  <meta property="og:url" content="https://vera-group.vercel.app/">
+  <meta property="og:title" content="Vera Group · Seu negócio merece mais do que estar online">
+  <meta property="og:description" content="Sites, sistemas e experiências digitais para empresas de Salto, Itu, Sorocaba e região. Projetos reais no ar.">
   <meta property="og:image" content="https://vera-group.vercel.app/assets/img/og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -28,9 +30,22 @@
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
     "name": "Vera Group",
-    "description": "Sites, lojas online, cardápios com gestão e automação de WhatsApp para negócios locais.",
-    "areaServed": ["Itu", "Salto", "Sorocaba", "Indaiatuba", "Porto Feliz", "Tietê"],
-    "address": { "@type": "PostalAddress", "addressRegion": "SP", "addressCountry": "BR" }
+    "url": "https://vera-group.vercel.app/",
+    "image": "https://vera-group.vercel.app/assets/img/og.jpg",
+    "description": "Sites, landing pages, sistemas web sob medida e automação de WhatsApp para empresas.",
+    "areaServed": ["Salto", "Itu", "Sorocaba", "Indaiatuba", "Porto Feliz", "Tietê"],
+    "address": { "@type": "PostalAddress", "addressLocality": "Salto", "addressRegion": "SP", "addressCountry": "BR" },
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Serviços",
+      "itemListElement": [
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Landing page" }, "price": "1200", "priceCurrency": "BRL" },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Landing page com WhatsApp automático" }, "price": "1800", "priceCurrency": "BRL" },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Site institucional completo" }, "priceSpecification": { "@type": "PriceSpecification", "minPrice": "2500", "maxPrice": "4000", "priceCurrency": "BRL" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Automação de WhatsApp" }, "price": "800", "priceCurrency": "BRL" },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Sistema web sob medida" } }
+      ]
+    }
   }
   </script>
 </head>
@@ -38,224 +53,205 @@
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
   <header class="topo" data-topo>
-    <div class="topo__linha">
+    <div class="topo__linha envelope">
       <a class="marca" href="#inicio" aria-label="Vera Group, início">
         <span class="marca__nome">Vera<span class="marca__ponto">.</span></span>
         <span class="marca__group">Group</span>
       </a>
       <nav class="topo__nav" aria-label="Seções">
-        <a href="#trabalhos">Trabalhos</a>
-        <a href="#precos">Preços</a>
-        <a href="#processo">Como funciona</a>
-        <a href="#contato">Contato</a>
+        <a href="#projetos">Projetos</a>
+        <a href="#solucoes">Soluções</a>
+        <a href="#processo">Processo</a>
+        <a href="#prova">Prova</a>
       </nav>
       <a class="botao botao--tinta botao--pequeno" href="#contato" data-whats data-origem="topo">
-        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1L4 20z"/></svg>
-        <span>Conversar</span>
+        <span>Solicitar projeto</span>
       </a>
     </div>
   </header>
 
   <main id="conteudo">
 
-    <!-- TOPO -->
-    <section class="abertura" id="inicio" aria-labelledby="abertura-titulo">
-      <div class="abertura__fundo" aria-hidden="true">
-        <video class="abertura__video" autoplay muted loop playsinline preload="auto" poster="assets/img/hero-luz-poster.webp" data-video>
-          <source src="assets/video/hero-luz.mp4" type="video/mp4">
-          <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3K02vVuSs7rq9tHmdVvUCOsCh4U/hf_20260929_113405_5ca5796b-1bd2-48dd-988d-ea3503847775.mp4" type="video/mp4">
-        </video>
-        <div class="abertura__veu"></div>
-      </div>
-
-      <div class="envelope abertura__corpo">
-        <div class="abertura__cabecalho mono">
-          <span data-preparado>Sites, lojas e sistemas</span>
-          <span data-data>Salto, SP</span>
-        </div>
-
-        <h1 class="abertura__titulo" id="abertura-titulo">
-          <span class="linha"><span>Hoje alguém procurou</span></span>
-          <span class="linha linha--busca">
-            <span class="busca" role="img" aria-label="Pesquisa: dentista em Itu" data-busca-rotulo>
-              <svg class="busca__lupa" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
-              <span class="busca__texto" data-busca aria-hidden="true">dentista em Itu</span><span class="busca__cursor" aria-hidden="true"></span>
-            </span>
-          </span>
-          <span class="linha"><span>Encontrou <em>você</em>?</span></span>
-        </h1>
-
-        <div class="abertura__base">
-          <p class="abertura__texto">
-            A Vera Group faz sites, lojas online e sistemas para negócios do interior de São Paulo.
-            Os trabalhos de clientes desta página foram construídos por nós e estão no ar, com gente usando.
+    <!-- 01 HERO -->
+    <section class="hero" id="inicio" aria-labelledby="hero-titulo">
+      <div class="envelope hero__grade">
+        <div class="hero__texto">
+          <p class="hero__kicker mono">
+            <span data-preparado>Sites · Sistemas · Experiências digitais</span>
+            <span class="hero__kicker-fio" aria-hidden="true"></span>
+            <span data-data>Salto, SP</span>
           </p>
-          <div class="abertura__acoes">
-            <a class="botao botao--tinta" href="#trabalhos">Ver os trabalhos</a>
-            <a class="botao botao--linha" href="#contato" data-whats data-origem="abertura">Conversar no WhatsApp</a>
+
+          <h1 class="hero__titulo" id="hero-titulo"><span class="p" style="--i:0"><span>Seu</span></span> <span class="p" style="--i:1"><span>negócio</span></span> <span class="p" style="--i:2"><span>merece</span></span> <span class="p" style="--i:3"><span>mais</span></span> <span class="p" style="--i:4"><span>do</span></span> <span class="p" style="--i:5"><span>que</span></span> <span class="p" style="--i:6"><span>estar</span></span> <span class="p p--destaque" style="--i:7"><span>online<span class="ponto">.</span></span></span></h1>
+
+          <p class="hero__sub">
+            Criamos sites, sistemas e experiências digitais que elevam a presença da sua empresa.
+          </p>
+
+          <div class="hero__acoes">
+            <a class="botao botao--tinta" href="#projetos" data-evento="cta_ver_projetos">
+              Ver nossos projetos
+              <svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+            </a>
+            <a class="botao botao--linha" href="#contato" data-whats data-origem="hero">Solicitar um projeto</a>
           </div>
         </div>
+
+        <!-- Elemento autoral: um site sendo construído, do grid ao "no ar" -->
+        <div class="obra" aria-hidden="true" data-obra>
+          <div class="obra__janela">
+            <div class="obra__barra">
+              <i></i><i></i><i></i>
+              <span class="obra__url"><span class="obra__cadeado"></span><span data-obra-url>seunegocio.com.br</span></span>
+            </div>
+            <div class="obra__tela">
+              <div class="obra__grade"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="obra__nav"><b></b><span></span><span></span><span></span></div>
+              <div class="obra__titulo"><i></i><i></i></div>
+              <div class="obra__linhas"><i></i><i></i><i></i></div>
+              <div class="obra__botao">WhatsApp</div>
+              <div class="obra__imagem"></div>
+              <div class="obra__cards"><i></i><i></i><i></i></div>
+              <span class="obra__nota obra__nota--a mono">grid · 6 colunas</span>
+              <span class="obra__nota obra__nota--b mono">&lt;h1&gt; o que você faz</span>
+              <span class="obra__nota obra__nota--c mono">botão → WhatsApp</span>
+            </div>
+          </div>
+          <p class="obra__status mono"><span class="status status--ar">No ar</span></p>
+        </div>
       </div>
+
+      <a class="hero__rolar mono" href="#projetos" aria-label="Rolar até os projetos">
+        <span class="hero__rolar-linha" aria-hidden="true"></span>
+        <span aria-hidden="true">Role</span>
+      </a>
     </section>
 
-    <!-- 01 O TESTE -->
-    <section class="secao teste" id="teste" aria-labelledby="teste-titulo">
-      <div class="envelope teste__grade">
-        <div class="teste__texto">
-          <p class="rotulo"><span class="rotulo__num">01</span> O teste</p>
-          <h2 class="titulo-secao" id="teste-titulo">Seu cliente decide em poucos segundos.</h2>
-          <p class="corrido">
-            Ele pega o celular, digita o que precisa e o nome da cidade. Olha quem tem foto, horário,
-            endereço e um jeito rápido de chamar. Liga para quem passa confiança. Quem não aparece
-            direito nem entra na disputa.
-          </p>
-          <p class="corrido corrido--fraco">
-            Troque para <strong>Com a Vera</strong> e veja o que muda para o seu negócio.
-          </p>
-        </div>
-
-        <div class="resultado" data-teste>
-          <div class="resultado__barra">
-            <svg class="busca__lupa" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
-            <span data-busca-espelho>dentista em Itu</span>
-          </div>
-
-          <ol class="resultado__lista">
-            <li class="resultado__item">
-              <div class="resultado__nome"><span class="mono resultado__pos">1</span> Concorrente A</div>
-              <ul class="selos" aria-label="O que o cliente encontra">
-                <li class="selo selo--sim">Site</li><li class="selo selo--sim">Fotos</li><li class="selo selo--sim">Horário</li><li class="selo selo--sim">WhatsApp</li>
-              </ul>
-              <p class="resultado__efeito">Recebe a ligação.</p>
-            </li>
-            <li class="resultado__item">
-              <div class="resultado__nome"><span class="mono resultado__pos">2</span> Concorrente B</div>
-              <ul class="selos" aria-label="O que o cliente encontra">
-                <li class="selo selo--sim">Site</li><li class="selo selo--nao">Fotos</li><li class="selo selo--sim">Horário</li><li class="selo selo--sim">WhatsApp</li>
-              </ul>
-              <p class="resultado__efeito">Recebe a mensagem.</p>
-            </li>
-            <li class="resultado__item resultado__item--voce" data-voce>
-              <div class="resultado__nome"><span class="mono resultado__pos">3</span> <span data-empresa>Seu negócio</span></div>
-              <ul class="selos" aria-label="O que o cliente encontra">
-                <li class="selo selo--nao" data-selo>Site</li><li class="selo selo--nao" data-selo>Fotos</li><li class="selo selo--nao" data-selo>Horário</li><li class="selo selo--nao" data-selo>WhatsApp</li>
-              </ul>
-              <p class="resultado__efeito" data-efeito>Fica de fora.</p>
-            </li>
-          </ol>
-
-          <div class="alternar" role="group" aria-label="Comparar">
-            <button type="button" class="alternar__botao" aria-pressed="true" data-modo="hoje">Hoje</button>
-            <button type="button" class="alternar__botao" aria-pressed="false" data-modo="vera">Com a Vera</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 02 TRABALHOS -->
-    <section class="secao trabalhos" id="trabalhos" aria-labelledby="trabalhos-titulo">
-      <div class="envelope">
-        <div class="cabeca-secao">
-          <p class="rotulo"><span class="rotulo__num">02</span> Trabalhos selecionados</p>
-          <h2 class="titulo-secao" id="trabalhos-titulo">Nada de modelo pronto. Cada projeto feito do zero.</h2>
-        </div>
-
-        <ol class="indice" data-indice>
-          <li>
-            <a class="indice__linha" href="#erk" data-previa="assets/img/erk-home.webp">
-              <span class="indice__num mono">01</span>
-              <span class="indice__nome">ERK Pratas</span>
-              <span class="indice__onde mono">Joalheria · Salto</span>
-              <span class="indice__oque">Loja online, montador de peças em 3D e painel do dono</span>
-              <span class="status status--ar mono">No ar</span>
-            </a>
-          </li>
-          <li>
-            <a class="indice__linha" href="#voneis" data-previa="assets/img/voneis-desktop.webp">
-              <span class="indice__num mono">02</span>
-              <span class="indice__nome">Vó Neis Confeitaria</span>
-              <span class="indice__onde mono">Confeitaria · Salto</span>
-              <span class="indice__oque">Cardápio digital, caixa, estoque do dia e iFood</span>
-              <span class="status status--ar mono">No ar</span>
-            </a>
-          </li>
-          <li>
-            <a class="indice__linha" href="#casa">
-              <span class="indice__num mono">03</span>
-              <span class="indice__nome">Vera Prospect</span>
-              <span class="indice__onde mono">Uso interno</span>
-              <span class="indice__oque">Painel comercial com automação de WhatsApp</span>
-              <span class="status status--uso mono">Em uso</span>
-            </a>
-          </li>
-          <li>
-            <a class="indice__linha" href="#casa">
-              <span class="indice__num mono">04</span>
-              <span class="indice__nome">Vera Finances</span>
-              <span class="indice__onde mono">Produto próprio</span>
-              <span class="indice__oque">Finanças pessoais conectadas ao banco por Open Finance</span>
-              <span class="status status--dev mono">Em desenvolvimento</span>
-            </a>
-          </li>
+    <!-- 02 PROJETOS -->
+    <section class="projetos" id="projetos" aria-labelledby="projetos-titulo">
+      <div class="envelope projetos__cabeca">
+        <p class="rotulo rotulo--claro"><span class="rotulo__num">01</span> Projetos em destaque</p>
+        <h2 class="titulo-secao titulo-secao--claro" id="projetos-titulo" data-revela-titulo>Nada de modelo pronto. Projetos reais, no ar, com gente usando.</h2>
+        <ol class="projetos__indice mono">
+          <li><a href="#erk"><span>01</span> ERK Pratas <em>Joalheria · Salto</em></a></li>
+          <li><a href="#voneis"><span>02</span> Vó Neis Confeitaria <em>Confeitaria · Salto</em></a></li>
         </ol>
-        <figure class="previa" aria-hidden="true" data-previa-caixa><img alt="" data-previa-img></figure>
       </div>
-    </section>
 
-    <!-- CASE ERK -->
-    <article class="case case--escuro" id="erk" aria-labelledby="erk-titulo">
-      <div class="envelope">
-        <header class="case__cabeca">
-          <p class="rotulo rotulo--claro"><span class="rotulo__num">01</span> ERK Pratas</p>
-          <h2 class="case__titulo" id="erk-titulo">Da bancada de Salto para qualquer CEP do Brasil.</h2>
-        </header>
+      <!-- PROJETO ERK -->
+      <article class="projeto projeto--escuro" id="erk" aria-labelledby="erk-titulo" data-projeto="ERK Pratas">
+        <div class="capa" data-capa>
+          <div class="capa__nome envelope" aria-hidden="true"><span>ERK</span><span>Pratas</span></div>
+          <div class="capa__palco envelope">
+            <div class="navegador navegador--escuro capa__janela" data-capa-janela>
+              <div class="navegador__barra" aria-hidden="true"><i></i><i></i><i></i><span>erkpratas · início</span></div>
+              <div class="navegador__tela" data-capa-tela>
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/erk-home-800.avif 800w, assets/img/r/erk-home-1440.avif 1440w" sizes="(min-width: 1360px) 1280px, 94vw">
+                  <img src="assets/img/erk-home.webp" srcset="assets/img/r/erk-home-800.webp 800w, assets/img/erk-home.webp 1440w" sizes="(min-width: 1360px) 1280px, 94vw" width="1440" height="900" loading="lazy" decoding="async" alt="Página inicial da loja ERK Pratas: corrente cubana de prata a partir de R$ 231, com botões para ver o catálogo e montar a peça.">
+                </picture>
+              </div>
+            </div>
+            <div class="celular capa__celular" data-capa-celular>
+              <picture>
+                <source type="image/avif" srcset="assets/img/r/erk-mobile-390.avif">
+                <img src="assets/img/erk-mobile.webp" width="390" height="844" loading="lazy" decoding="async" alt="A mesma loja no celular, com menu compacto e a foto da corrente ocupando a tela.">
+              </picture>
+            </div>
+          </div>
+        </div>
 
-        <div class="case__grade">
-          <aside class="ficha" aria-label="Ficha do projeto">
-            <dl>
-              <div><dt>Cliente</dt><dd>ERK Pratas</dd></div>
-              <div><dt>Segmento</dt><dd>Joalheria de prata 925</dd></div>
-              <div><dt>Cidade</dt><dd>Salto, SP</dd></div>
+        <div class="envelope projeto__intro">
+          <div class="projeto__titulos">
+            <p class="projeto__cat mono"><span class="projeto__num">01</span> Joalheria · Salto, SP</p>
+            <h3 class="projeto__nome" id="erk-titulo">ERK Pratas</h3>
+            <p class="projeto__frase">Da bancada de Salto para qualquer CEP do Brasil.</p>
+          </div>
+          <div class="projeto__resumo">
+            <p>
+              A ERK tem oficina própria e trabalha com prata 925 com punção. Construímos a loja online
+              inteira para transmitir o mesmo cuidado da bancada: catálogo, sacola, checkout, conta do
+              cliente, um montador de peças em 3D e o painel de gestão do dono.
+            </p>
+            <dl class="ficha">
               <div><dt>Entrega</dt><dd>Loja online e painel do dono</dd></div>
               <div><dt>Tecnologia</dt><dd>Next.js, PostgreSQL, three.js</dd></div>
               <div><dt>Situação</dt><dd><span class="status status--ar mono">No ar</span></dd></div>
             </dl>
-            <a class="botao botao--claro botao--bloco" href="https://site-production-0686.up.railway.app" target="_blank" rel="noopener">
-              Abrir a loja <span aria-hidden="true">↗</span>
-            </a>
-          </aside>
-
-          <div class="case__corpo">
-            <p class="case__abre">
-              A ERK tem oficina própria e trabalha com prata 925 com punção. A loja online precisava
-              transmitir o mesmo cuidado da bancada. Construímos a loja inteira: catálogo, sacola,
-              checkout, conta do cliente e um montador em que a pessoa escolhe elo, espessura, medida
-              e acabamento, vendo a peça em 3D e o preço calculado pelo peso da prata.
-            </p>
-
-            <figure class="telas telas--erk">
-              <div class="navegador">
-                <div class="navegador__barra" aria-hidden="true"><i></i><i></i><i></i><span>erkpratas · início</span></div>
-                <img src="assets/img/erk-home.webp" width="1440" height="900" loading="lazy" alt="Página inicial da loja ERK Pratas: corrente cubana de prata a partir de R$ 231, com botões para ver o catálogo e montar a peça.">
-              </div>
-              <div class="celular">
-                <img src="assets/img/erk-mobile.webp" width="390" height="844" loading="lazy" alt="A mesma loja no celular, com menu compacto e a foto da corrente ocupando a tela.">
-              </div>
-              <figcaption class="legenda mono">Tela real da loja no ar, no computador e no celular.</figcaption>
-            </figure>
+            <div class="projeto__acoes">
+              <a class="botao botao--claro" href="#contato" data-quero="ERK Pratas">Quero algo assim para minha empresa</a>
+              <a class="link-seta" href="https://site-production-0686.up.railway.app" target="_blank" rel="noopener" data-evento="visitar_projeto" data-rotulo="ERK Pratas">Visitar a loja <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
         </div>
 
-        <!-- 3D -->
-        <section class="giro" aria-labelledby="giro-titulo">
-          <div class="giro__texto">
-            <p class="rotulo rotulo--claro">O visualizador da loja, rodando aqui</p>
-            <h3 class="giro__titulo" id="giro-titulo">Gire a peça.</h3>
-            <p class="corrido corrido--claro">
-              Não é vídeo nem foto. Cada elo é desenhado em tempo real, na medida certa em centímetros.
-              Arraste para girar e troque o elo e o acabamento como o cliente da ERK faz no montador.
-            </p>
+        <!-- Detalhes: a tela fica fixa e troca conforme os passos passam -->
+        <div class="envelope roteiro" data-roteiro>
+          <div class="roteiro__palco" aria-hidden="true">
+            <div class="navegador navegador--escuro roteiro__janela">
+              <div class="navegador__barra"><i></i><i></i><i></i><span data-roteiro-url>erkpratas · corrente cubana</span></div>
+              <div class="navegador__tela roteiro__telas">
+                <picture class="roteiro__tela ativa" data-tela="0">
+                  <source type="image/avif" srcset="assets/img/r/erk-peca-800.avif 800w, assets/img/r/erk-peca-1440.avif 1440w" sizes="(min-width: 1100px) 720px, 94vw">
+                  <img src="assets/img/r/erk-peca-800.webp" width="1440" height="900" loading="lazy" decoding="async" alt="">
+                </picture>
+                <picture class="roteiro__tela" data-tela="1">
+                  <source type="image/avif" srcset="assets/img/r/erk-montar-800.avif 800w, assets/img/r/erk-montar-1440.avif 1440w" sizes="(min-width: 1100px) 720px, 94vw">
+                  <img src="assets/img/r/erk-montar-800.webp" width="1440" height="900" loading="lazy" decoding="async" alt="">
+                </picture>
+                <picture class="roteiro__tela" data-tela="2">
+                  <source type="image/avif" srcset="assets/img/r/erk-catalogo-800.avif 800w, assets/img/r/erk-catalogo-1440.avif 1440w" sizes="(min-width: 1100px) 720px, 94vw">
+                  <img src="assets/img/r/erk-catalogo-800.webp" width="1440" height="900" loading="lazy" decoding="async" alt="">
+                </picture>
+              </div>
+            </div>
+          </div>
 
+          <ol class="roteiro__passos">
+            <li class="passo" data-passo="0" data-url="erkpratas · corrente cubana">
+              <figure class="passo__tela navegador navegador--escuro">
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/erk-peca-800.avif">
+                  <img src="assets/img/r/erk-peca-800.webp" width="1440" height="900" loading="lazy" decoding="async" alt="Página da corrente cubana com fotos, medidas de 45 a 70 cm, preço em 6 vezes e botão Ver em 3D.">
+                </picture>
+              </figure>
+              <span class="passo__num mono">01 / 03</span>
+              <h4 class="passo__titulo">A página da peça responde antes da pergunta.</h4>
+              <p>Medidas de 45 a 70 cm, preço parcelado, fotos e o botão para ver a peça em 3D.</p>
+            </li>
+            <li class="passo" data-passo="1" data-url="erkpratas · monte a sua peça">
+              <figure class="passo__tela navegador navegador--escuro">
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/erk-montar-800.avif">
+                  <img src="assets/img/r/erk-montar-800.webp" width="1440" height="900" loading="lazy" decoding="async" alt="Montador de peças na etapa 1 de 8, com a corrente em 3D à esquerda e as opções à direita.">
+                </picture>
+              </figure>
+              <span class="passo__num mono">02 / 03</span>
+              <h4 class="passo__titulo">Um montador em 8 etapas, com a peça em 3D.</h4>
+              <p>O cliente escolhe elo, espessura, medida e acabamento. O 3D acompanha cada escolha e o preço sai do peso da prata.</p>
+            </li>
+            <li class="passo" data-passo="2" data-url="erkpratas · catálogo">
+              <figure class="passo__tela navegador navegador--escuro">
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/erk-catalogo-800.avif">
+                  <img src="assets/img/r/erk-catalogo-800.webp" width="1440" height="900" loading="lazy" decoding="async" alt="Catálogo da ERK Pratas com filtro por categoria e ordenação.">
+                </picture>
+              </figure>
+              <span class="passo__num mono">03 / 03</span>
+              <h4 class="passo__titulo">Por trás da loja, o painel do dono.</h4>
+              <p>Catálogo com filtro na frente. Atrás, 11 telas de gestão: pedidos com linha do tempo, peças com margem em cores, insumos e financeiro do mês.</p>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Demonstração 3D: só carrega quando a pessoa pede -->
+        <div class="envelope giro" data-giro>
+          <div class="giro__texto">
+            <p class="rotulo rotulo--claro">Demonstração ao vivo</p>
+            <h4 class="giro__titulo">Gire a peça, como o cliente da ERK faz.</h4>
+            <p class="corrido corrido--claro">
+              Não é vídeo nem foto. Cada elo é desenhado em tempo real, na medida certa, com o código do próprio projeto.
+            </p>
             <div class="opcoes" role="group" aria-label="Tipo de elo" data-giro-grupo="elo">
               <button type="button" aria-pressed="true" data-valor="cubano">Cubano</button>
               <button type="button" aria-pressed="false" data-valor="grumet">Grumet</button>
@@ -269,130 +265,125 @@
               <button type="button" aria-pressed="false" data-valor="oxidado">Oxidado</button>
             </div>
           </div>
-          <div class="giro__palco" data-giro>
-            <canvas class="giro__canvas" aria-label="Corrente de prata em 3D. Arraste para girar."></canvas>
-            <p class="giro__dica mono" data-giro-dica>Arraste para girar</p>
+          <div class="giro__palco">
+            <canvas class="giro__canvas" aria-label="Corrente de prata em 3D. Arraste para girar." hidden></canvas>
+            <button type="button" class="giro__iniciar" data-giro-iniciar>
+              <span class="giro__icone" aria-hidden="true"></span>
+              <span>Abrir o visualizador 3D</span>
+              <small class="mono">carrega cerca de 700 KB</small>
+            </button>
             <p class="giro__peca mono" data-giro-peca>Elo cubano · 6 mm · 50 cm · polido</p>
           </div>
-        </section>
+        </div>
+      </article>
 
-        <ul class="numeros" aria-label="O projeto em números">
-          <li><strong>8</strong><span>etapas no montador de peças</span></li>
-          <li><strong>5</strong><span>tipos de elo desenhados em 3D</span></li>
-          <li><strong>3</strong><span>acabamentos: polido, escovado e oxidado</span></li>
-          <li><strong>11</strong><span>telas no painel do dono</span></li>
-        </ul>
-
-        <div class="painel">
-          <div class="painel__texto">
-            <p class="rotulo rotulo--claro">Painel do dono</p>
-            <h3 class="painel__titulo">Duas perguntas respondidas em segundos: o que preciso fazer hoje, e quanto lucrei este mês.</h3>
+      <!-- PROJETO VO NEIS -->
+      <article class="projeto projeto--papel" id="voneis" aria-labelledby="voneis-titulo" data-projeto="Vó Neis Confeitaria">
+        <div class="capa" data-capa>
+          <div class="capa__nome envelope" aria-hidden="true"><span>Vó</span><span>Neis</span></div>
+          <div class="capa__palco envelope">
+            <div class="navegador capa__janela" data-capa-janela>
+              <div class="navegador__barra" aria-hidden="true"><i></i><i></i><i></i><span>cardapio-vo-neis.vercel.app</span></div>
+              <div class="navegador__tela" data-capa-tela>
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/voneis-desktop-800.avif 800w, assets/img/r/voneis-desktop-1440.avif 1440w" sizes="(min-width: 1360px) 1280px, 94vw">
+                  <img src="assets/img/voneis-desktop.webp" srcset="assets/img/r/voneis-desktop-800.webp 800w, assets/img/voneis-desktop.webp 1440w" sizes="(min-width: 1360px) 1280px, 94vw" width="1440" height="900" loading="lazy" decoding="async" alt="Cardápio digital da Vó Neis no computador: logo da loja, categorias e fatias de bolo com foto e preço.">
+                </picture>
+              </div>
+            </div>
+            <div class="celular celular--claro capa__celular" data-capa-celular>
+              <picture>
+                <source type="image/avif" srcset="assets/img/r/voneis-mobile-produtos-390.avif">
+                <img src="assets/img/r/voneis-mobile-produtos-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="O cardápio no celular, com fotos reais dos bolos e botão de adicionar.">
+              </picture>
+            </div>
           </div>
-          <ol class="lista-num lista-num--claro">
-            <li><strong>Pedidos</strong> com linha do tempo. Pedido parado há mais de 48 horas fica vermelho.</li>
-            <li><strong>Peças</strong> com custo, preço e margem em cores: verde acima de 40%, amarelo entre 20 e 40, vermelho abaixo.</li>
-            <li><strong>Insumos</strong> com alerta quando estão acabando e custo médio recalculado a cada compra.</li>
-            <li><strong>Financeiro</strong> com a conta do mês aberta linha a linha e exportação para o contador.</li>
-            <li><strong>Montador</strong> ajustável: desligar uma opção tira ela da loja na hora.</li>
-          </ol>
         </div>
 
-        <div class="rolo" aria-label="Mais telas da loja">
-          <figure>
-            <img src="assets/img/erk-peca.webp" width="1440" height="900" loading="lazy" alt="Página da corrente cubana com fotos, medidas de 45 a 70 cm, preço em 6 vezes e botão Ver em 3D.">
-            <figcaption class="legenda mono">Página da peça, com medidas e o botão Ver em 3D.</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/img/erk-montar.webp" width="1440" height="900" loading="lazy" alt="Montador de peças na etapa 1 de 8, com a corrente em 3D à esquerda e as opções à direita.">
-            <figcaption class="legenda mono">Montador: uma escolha por etapa, o 3D acompanha.</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/img/erk-catalogo.webp" width="1440" height="900" loading="lazy" alt="Catálogo da ERK Pratas com filtro por categoria e ordenação.">
-            <figcaption class="legenda mono">Catálogo com filtro e ordenação.</figcaption>
-          </figure>
-        </div>
-      </div>
-    </article>
-
-    <!-- CASE VO NEIS -->
-    <article class="case case--papel" id="voneis" aria-labelledby="voneis-titulo">
-      <div class="envelope">
-        <header class="case__cabeca">
-          <p class="rotulo"><span class="rotulo__num">02</span> Vó Neis Confeitaria</p>
-          <h2 class="case__titulo" id="voneis-titulo">O cardápio é o que o cliente vê. Por trás dele roda a loja inteira.</h2>
-        </header>
-
-        <div class="case__grade">
-          <aside class="ficha ficha--papel" aria-label="Ficha do projeto">
-            <dl>
-              <div><dt>Cliente</dt><dd>Vó Neis Confeitaria</dd></div>
-              <div><dt>Segmento</dt><dd>Confeitaria</dd></div>
-              <div><dt>Cidade</dt><dd>Salto, SP</dd></div>
-              <div><dt>Unidades</dt><dd>Jardim Sontag, e Centro a caminho</dd></div>
+        <div class="envelope projeto__intro">
+          <div class="projeto__titulos">
+            <p class="projeto__cat mono"><span class="projeto__num">02</span> Confeitaria · Salto, SP</p>
+            <h3 class="projeto__nome" id="voneis-titulo">Vó Neis Confeitaria</h3>
+            <p class="projeto__frase">O cardápio é o que o cliente vê. Por trás dele roda a loja inteira.</p>
+          </div>
+          <div class="projeto__resumo">
+            <p>
+              Na Vó Neis, toda venda fecha no WhatsApp ou no balcão. O cardápio online deixa o cliente
+              escolher com foto e preço e manda o pedido pronto para a conversa. No painel, a equipe abre o
+              caixa, registra as vendas do balcão, vê o que esgotou e sabe quanto sobrou no fim do mês.
+            </p>
+            <dl class="ficha ficha--papel">
               <div><dt>Entrega</dt><dd>Cardápio digital e sistema de gestão</dd></div>
               <div><dt>Tecnologia</dt><dd>React, Supabase</dd></div>
               <div><dt>Situação</dt><dd><span class="status status--ar mono">No ar</span></dd></div>
             </dl>
-            <a class="botao botao--tinta botao--bloco" href="https://cardapio-vo-neis.vercel.app" target="_blank" rel="noopener">
-              Abrir o cardápio <span aria-hidden="true">↗</span>
-            </a>
-          </aside>
-
-          <div class="case__corpo">
-            <p class="case__abre">
-              Na Vó Neis, toda venda fecha no WhatsApp ou no balcão. O cardápio online deixa o cliente
-              escolher com foto e preço e manda o pedido pronto para a conversa. No painel, a equipe abre
-              o caixa, registra as vendas do balcão, vê o que esgotou e sabe quanto sobrou no fim do mês.
-            </p>
-
-            <div class="fluxo" aria-label="Do cardápio ao WhatsApp em três telas">
-              <figure class="fluxo__passo">
-                <div class="celular celular--claro"><img src="assets/img/voneis-mobile.webp" width="780" height="1688" loading="lazy" alt="Topo do cardápio da Vó Neis no celular, com o logo e as categorias."></div>
-                <figcaption><span class="mono">1</span> Abre o cardápio da unidade</figcaption>
-              </figure>
-              <figure class="fluxo__passo">
-                <div class="celular celular--claro"><img src="assets/img/voneis-mobile-produtos.webp" width="780" height="1688" loading="lazy" alt="Fatias de bolo com fotos reais, preço e botão para adicionar. Três itens já na sacola."></div>
-                <figcaption><span class="mono">2</span> Escolhe com foto e preço</figcaption>
-              </figure>
-              <figure class="fluxo__passo">
-                <div class="celular celular--claro"><img src="assets/img/voneis-sacola.webp" width="780" height="1688" loading="lazy" alt="Sacola com três fatias, escolha de calda, total de R$ 54 e botão Pedir via WhatsApp."></div>
-                <figcaption><span class="mono">3</span> O pedido chega pronto no WhatsApp</figcaption>
-              </figure>
-            </div>
-            <p class="legenda mono">Telas do cardápio real, com os produtos e as fotos da própria loja.</p>
-          </div>
-        </div>
-
-        <div class="vitrine">
-          <figure class="vitrine__video">
-            <video muted loop playsinline preload="none" poster="assets/img/voneis-video-poster.webp" data-video data-video-preguica aria-label="Bolo Chocolatudo da Vó Neis sobre a mesa da loja, com a câmera se aproximando devagar.">
-              <source src="assets/video/voneis-bolo.mp4" type="video/mp4">
-              <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3K02vVuSs7rq9tHmdVvUCOsCh4U/hf_20260929_113307_7a09c871-82b3-4b6d-a543-1c01b8d0605c.mp4" type="video/mp4">
-            </video>
-            <figcaption class="legenda mono">Chocolatudo. Foto da loja, animada para o portfólio.</figcaption>
-          </figure>
-          <div class="vitrine__texto">
-            <p class="rotulo">Fotos</p>
-            <h3 class="vitrine__titulo">106 fotos analisadas. 31 prontas para o cardápio.</h3>
-            <p class="corrido">
-              A loja mandou tudo o que tinha no celular. Separamos as fotos boas, apontamos o que
-              precisava refazer (tema de cliente, embalagem refletindo, luz estourada) e deixamos um guia
-              simples para as próximas: mesa clara, luz do dia, produto ocupando o quadro.
-            </p>
-            <div class="miniaturas">
-              <img src="assets/img/voneis-olho-de-sogra.webp" width="750" height="1000" loading="lazy" alt="Olho de sogra em forminhas vermelhas.">
-              <img src="assets/img/voneis-bolo-raspas-chocolate.webp" width="563" height="1000" loading="lazy" alt="Bolo floresta negra com raspas de chocolate e cerejas.">
-              <img src="assets/img/voneis-bolo-abacaxi.webp" width="750" height="1000" loading="lazy" alt="Bolo de abacaxi com coco caramelizado.">
-              <img src="assets/img/voneis-cones-doces.webp" width="750" height="1000" loading="lazy" alt="Cones de chocolate com o selo da Vó Neis.">
+            <div class="projeto__acoes">
+              <a class="botao botao--tinta" href="#contato" data-quero="Vó Neis Confeitaria">Quero algo assim para minha empresa</a>
+              <a class="link-seta" href="https://cardapio-vo-neis.vercel.app" target="_blank" rel="noopener" data-evento="visitar_projeto" data-rotulo="Vó Neis Confeitaria">Abrir o cardápio <span aria-hidden="true">↗</span></a>
             </div>
           </div>
         </div>
 
-        <div class="modulos">
-          <h3 class="modulos__titulo">O que roda por trás do cardápio</h3>
+        <div class="envelope roteiro roteiro--celular" data-roteiro>
+          <div class="roteiro__palco" aria-hidden="true">
+            <div class="celular celular--claro roteiro__celular">
+              <div class="roteiro__telas">
+                <picture class="roteiro__tela ativa" data-tela="0">
+                  <source type="image/avif" srcset="assets/img/r/voneis-mobile-390.avif 390w, assets/img/r/voneis-mobile-780.avif 780w" sizes="340px">
+                  <img src="assets/img/r/voneis-mobile-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="">
+                </picture>
+                <picture class="roteiro__tela" data-tela="1">
+                  <source type="image/avif" srcset="assets/img/r/voneis-mobile-produtos-390.avif 390w, assets/img/r/voneis-mobile-produtos-780.avif 780w" sizes="340px">
+                  <img src="assets/img/r/voneis-mobile-produtos-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="">
+                </picture>
+                <picture class="roteiro__tela" data-tela="2">
+                  <source type="image/avif" srcset="assets/img/r/voneis-sacola-390.avif 390w, assets/img/r/voneis-sacola-780.avif 780w" sizes="340px">
+                  <img src="assets/img/r/voneis-sacola-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="">
+                </picture>
+              </div>
+            </div>
+          </div>
+
+          <ol class="roteiro__passos">
+            <li class="passo" data-passo="0">
+              <figure class="passo__tela celular celular--claro">
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/voneis-mobile-390.avif">
+                  <img src="assets/img/r/voneis-mobile-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="Topo do cardápio da Vó Neis no celular, com o logo e as categorias.">
+                </picture>
+              </figure>
+              <span class="passo__num mono">01 / 03</span>
+              <h4 class="passo__titulo">O cliente abre o cardápio da unidade.</h4>
+              <p>Cada loja com seu catálogo, endereço e WhatsApp. A segunda unidade entra no ar sem refazer nada.</p>
+            </li>
+            <li class="passo" data-passo="1">
+              <figure class="passo__tela celular celular--claro">
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/voneis-mobile-produtos-390.avif">
+                  <img src="assets/img/r/voneis-mobile-produtos-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="Fatias de bolo com fotos reais, preço e botão para adicionar. Três itens já na sacola.">
+                </picture>
+              </figure>
+              <span class="passo__num mono">02 / 03</span>
+              <h4 class="passo__titulo">Escolhe com foto e preço.</h4>
+              <p>Fotos da própria loja. O que esgotou no balcão aparece como esgotado no cardápio na mesma hora.</p>
+            </li>
+            <li class="passo" data-passo="2">
+              <figure class="passo__tela celular celular--claro">
+                <picture>
+                  <source type="image/avif" srcset="assets/img/r/voneis-sacola-390.avif">
+                  <img src="assets/img/r/voneis-sacola-390.webp" width="390" height="844" loading="lazy" decoding="async" alt="Sacola com três fatias, escolha de calda, total de R$ 54 e botão Pedir via WhatsApp.">
+                </picture>
+              </figure>
+              <span class="passo__num mono">03 / 03</span>
+              <h4 class="passo__titulo">O pedido chega pronto no WhatsApp.</h4>
+              <p>Itens, quantidades, calda e total na mensagem. A equipe só confirma.</p>
+            </li>
+          </ol>
+        </div>
+
+        <div class="envelope modulos">
+          <h4 class="modulos__titulo">O que roda por trás do cardápio</h4>
           <dl class="modulos__lista">
-            <div><dt>Cardápio por unidade</dt><dd>Cada loja com seu catálogo, endereço e WhatsApp. A segunda unidade entra no ar sem refazer nada.</dd></div>
-            <div><dt>Pedido pronto</dt><dd>A mensagem chega no WhatsApp com itens, quantidades, calda e total.</dd></div>
             <div><dt>Caixa do dia</dt><dd>Abertura com troco, sangria e fechamento com conferência do dinheiro contado.</dd></div>
             <div><dt>Estoque do dia</dt><dd>O que acabou aparece como esgotado no cardápio na mesma hora.</dd></div>
             <div><dt>Ficha técnica</dt><dd>Custo de cada receita pelos ingredientes e a margem real de cada produto.</dd></div>
@@ -400,169 +391,224 @@
             <div><dt>iFood</dt><dd>Mudou preço ou esgotou, a alteração entra na fila de sincronização com o iFood.</dd></div>
             <div><dt>PIN do dono</dt><dd>Excluir venda, reabrir caixa ou apagar produto pede a senha de quem manda.</dd></div>
           </dl>
+          <p class="legenda mono">Telas do cardápio real, com os produtos e as fotos da própria loja.</p>
         </div>
-      </div>
-    </article>
-
-    <!-- 03 DENTRO DE CASA -->
-    <section class="secao casa" id="casa" aria-labelledby="casa-titulo">
-      <div class="envelope">
-        <div class="cabeca-secao">
-          <p class="rotulo"><span class="rotulo__num">03</span> Dentro de casa</p>
-          <h2 class="titulo-secao" id="casa-titulo">A gente usa o que vende.</h2>
-        </div>
-        <ol class="casa__lista">
-          <li class="casa__item">
-            <span class="casa__num mono">03</span>
-            <div>
-              <h3 class="casa__nome">Vera Prospect</h3>
-              <p class="corrido">Nosso painel comercial. Organiza contatos, conversas e retornos da equipe, com automação de WhatsApp. É a mesma tecnologia de atendimento automático que instalamos nos clientes.</p>
-            </div>
-            <span class="status status--uso mono">Em uso</span>
-          </li>
-          <li class="casa__item">
-            <span class="casa__num mono">04</span>
-            <div>
-              <h3 class="casa__nome">Vera Finances</h3>
-              <p class="corrido">Aplicativo de finanças pessoais que conecta as contas do banco por Open Finance, organiza os gastos por categoria e acompanha metas do mês.</p>
-            </div>
-            <span class="status status--dev mono">Em desenvolvimento</span>
-          </li>
-        </ol>
-      </div>
+      </article>
     </section>
 
-    <!-- 04 PRECOS -->
-    <section class="secao precos" id="precos" aria-labelledby="precos-titulo">
+    <!-- 03 SOLUCOES -->
+    <section class="secao solucoes" id="solucoes" aria-labelledby="solucoes-titulo">
       <div class="envelope">
         <div class="cabeca-secao cabeca-secao--dupla">
           <div>
-            <p class="rotulo"><span class="rotulo__num">04</span> Preços</p>
-            <h2 class="titulo-secao" id="precos-titulo">Preço na mesa.</h2>
+            <p class="rotulo"><span class="rotulo__num">02</span> Nossas soluções</p>
+            <h2 class="titulo-secao" id="solucoes-titulo" data-revela-titulo>
+              Hoje alguém procurou <span class="nobr"><span class="busca" data-busca>dentista em Itu</span>.</span> Encontrou você?
+            </h2>
           </div>
           <p class="corrido">
-            Valores de referência dos projetos mais pedidos. Antes de começar, você recebe a proposta
-            por escrito com escopo, prazo e preço fechado.
+            Cada solução começa por um problema que custa cliente. Os valores são de referência:
+            antes de começar, você recebe a proposta por escrito com escopo, prazo e preço fechado.
           </p>
         </div>
 
-        <ol class="tabela">
-          <li class="tabela__linha">
-            <div class="tabela__nome"><h3>Landing Express</h3><p>Uma página completa para o seu negócio ser encontrado: serviços, fotos, localização e botão de WhatsApp.</p></div>
-            <span class="tabela__prazo mono">5 dias</span>
-            <span class="tabela__preco">R$ 1.200</span>
+        <ol class="servicos">
+          <li class="servico">
+            <div class="servico__cabeca">
+              <span class="servico__num mono">01</span>
+              <h3 class="servico__nome">Landing page</h3>
+              <p class="servico__preco"><strong>R$ 1.200</strong><span class="mono">5 dias</span></p>
+            </div>
+            <dl class="servico__corpo">
+              <div><dt class="mono">O problema</dt><dd>Quem pesquisa o seu serviço não encontra uma página sua, ou encontra uma que não convence.</dd></div>
+              <div><dt class="mono">O que fazemos</dt><dd>Uma página completa com serviços, fotos, localização e botão de WhatsApp, escrita para o seu cliente.</dd></div>
+              <div><dt class="mono">O que muda</dt><dd>Quem chega entende o que você faz e chama no WhatsApp com um toque.</dd></div>
+            </dl>
+            <a class="link-seta servico__cta" href="#contato" data-whats data-origem="solucoes" data-assunto="Quero uma landing page">Quero uma landing page <span aria-hidden="true">→</span></a>
           </li>
-          <li class="tabela__linha">
-            <div class="tabela__nome"><h3>Landing com WhatsApp automático</h3><p>A página e um atendimento automático que responde as dúvidas mais comuns e encaminha o cliente.</p></div>
-            <span class="tabela__prazo mono">7 dias</span>
-            <span class="tabela__preco">R$ 1.800</span>
+          <li class="servico">
+            <div class="servico__cabeca">
+              <span class="servico__num mono">02</span>
+              <h3 class="servico__nome">Landing com WhatsApp automático</h3>
+              <p class="servico__preco"><strong>R$ 1.800</strong><span class="mono">7 dias</span></p>
+            </div>
+            <dl class="servico__corpo">
+              <div><dt class="mono">O problema</dt><dd>As mesmas perguntas chegam o dia inteiro, e o cliente desiste quando a resposta demora.</dd></div>
+              <div><dt class="mono">O que fazemos</dt><dd>A página e um atendimento automático que responde as dúvidas mais comuns e encaminha o cliente.</dd></div>
+              <div><dt class="mono">O que muda</dt><dd>O cliente recebe resposta na hora e a sua equipe fica livre para atender quem já decidiu.</dd></div>
+            </dl>
+            <a class="link-seta servico__cta" href="#contato" data-whats data-origem="solucoes" data-assunto="Quero uma landing com WhatsApp automático">Quero página e atendimento automático <span aria-hidden="true">→</span></a>
           </li>
-          <li class="tabela__linha">
-            <div class="tabela__nome"><h3>Site completo</h3><p>Várias páginas, serviços detalhados, galeria, catálogo ou blog. Para quem precisa mostrar mais.</p></div>
-            <span class="tabela__prazo mono">14 dias</span>
-            <span class="tabela__preco">R$ 2.500 <small>a</small> R$ 4.000</span>
+          <li class="servico">
+            <div class="servico__cabeca">
+              <span class="servico__num mono">03</span>
+              <h3 class="servico__nome">Site institucional completo</h3>
+              <p class="servico__preco"><strong>R$ 2.500 <small>a</small> 4.000</strong><span class="mono">14 dias</span></p>
+            </div>
+            <dl class="servico__corpo">
+              <div><dt class="mono">O problema</dt><dd>Uma página só não dá conta de tudo o que a sua empresa faz e oferece.</dd></div>
+              <div><dt class="mono">O que fazemos</dt><dd>Várias páginas, serviços detalhados, galeria, catálogo ou blog, com a sua marca.</dd></div>
+              <div><dt class="mono">O que muda</dt><dd>Sua empresa apresentada por inteiro, com a mesma seriedade que você tem no atendimento.</dd></div>
+            </dl>
+            <a class="link-seta servico__cta" href="#contato" data-whats data-origem="solucoes" data-assunto="Quero um site institucional completo">Quero um site completo <span aria-hidden="true">→</span></a>
           </li>
-          <li class="tabela__linha">
-            <div class="tabela__nome"><h3>Automação de WhatsApp</h3><p>Para quem já tem site: respostas automáticas, agendamento e lembretes para o cliente.</p></div>
-            <span class="tabela__prazo mono">5 dias</span>
-            <span class="tabela__preco">R$ 800</span>
+          <li class="servico">
+            <div class="servico__cabeca">
+              <span class="servico__num mono">04</span>
+              <h3 class="servico__nome">Automação de WhatsApp</h3>
+              <p class="servico__preco"><strong>R$ 800</strong><span class="mono">5 dias</span></p>
+            </div>
+            <dl class="servico__corpo">
+              <div><dt class="mono">O problema</dt><dd>Você já tem site, mas agenda, lembrete e dúvida de cliente ainda passam todos pela sua mão.</dd></div>
+              <div><dt class="mono">O que fazemos</dt><dd>Respostas automáticas, agendamento e lembretes para o cliente, no WhatsApp que você já usa.</dd></div>
+              <div><dt class="mono">O que muda</dt><dd>Menos tempo preso no celular respondendo a mesma coisa.</dd></div>
+            </dl>
+            <a class="link-seta servico__cta" href="#contato" data-whats data-origem="solucoes" data-assunto="Quero automatizar meu WhatsApp">Quero automatizar meu WhatsApp <span aria-hidden="true">→</span></a>
           </li>
-          <li class="tabela__linha tabela__linha--sob">
-            <div class="tabela__nome"><h3>Sistema sob medida</h3><p>Loja online, cardápio com gestão, painel de controle. Como a ERK Pratas e a Vó Neis.</p></div>
-            <span class="tabela__prazo mono">na proposta</span>
-            <span class="tabela__preco">Sob consulta</span>
+          <li class="servico servico--sob">
+            <div class="servico__cabeca">
+              <span class="servico__num mono">05</span>
+              <h3 class="servico__nome">Sistema web sob medida</h3>
+              <p class="servico__preco"><strong>Sob consulta</strong><span class="mono">prazo na proposta</span></p>
+            </div>
+            <dl class="servico__corpo">
+              <div><dt class="mono">O problema</dt><dd>Planilha, caderno e mensagem solta não mostram quanto o negócio está lucrando.</dd></div>
+              <div><dt class="mono">O que fazemos</dt><dd>Loja online, cardápio com gestão, painel de controle e integrações, feitos para a rotina da sua empresa.</dd></div>
+              <div><dt class="mono">O que muda</dt><dd>Você abre o painel e sabe o que fazer hoje e quanto sobrou no mês, como na ERK Pratas e na Vó Neis.</dd></div>
+            </dl>
+            <a class="link-seta servico__cta" href="#contato" data-whats data-origem="solucoes" data-assunto="Quero um sistema sob medida">Quero conversar sobre um sistema <span aria-hidden="true">→</span></a>
           </li>
         </ol>
-        <div class="precos__acao">
-          <a class="botao botao--tinta" href="#contato" data-whats data-origem="precos" data-assunto="Quero um orçamento">Pedir orçamento pelo WhatsApp</a>
-        </div>
       </div>
     </section>
 
-    <!-- 05 PROCESSO -->
+    <!-- 04 PROCESSO -->
     <section class="secao processo" id="processo" aria-labelledby="processo-titulo">
-      <div class="envelope">
-        <div class="cabeca-secao">
-          <p class="rotulo"><span class="rotulo__num">05</span> Como funciona</p>
-          <h2 class="titulo-secao" id="processo-titulo">Do primeiro oi ao site no ar.</h2>
+      <div class="envelope processo__grade">
+        <div class="processo__cabeca">
+          <p class="rotulo"><span class="rotulo__num">03</span> Nosso processo</p>
+          <h2 class="titulo-secao" id="processo-titulo" data-revela-titulo>Do primeiro oi ao projeto no ar.</h2>
+          <p class="corrido corrido--fraco">Quatro etapas, prazo em dias e tudo combinado por escrito antes de começar.</p>
         </div>
-        <ol class="etapas">
+        <ol class="etapas" data-etapas>
           <li class="etapa">
+            <span class="etapa__marca" aria-hidden="true"></span>
             <span class="etapa__quando mono">Dia 1</span>
-            <h3 class="etapa__nome">Conversa</h3>
-            <p>Entendemos o negócio e olhamos como ele aparece hoje: Google, Maps, Instagram e WhatsApp.</p>
+            <h3 class="etapa__nome">Entendemos seu negócio.</h3>
+            <p>Uma conversa para entender o que você vende, para quem, e como sua empresa aparece hoje no Google, no Maps, no Instagram e no WhatsApp.</p>
           </li>
           <li class="etapa">
+            <span class="etapa__marca" aria-hidden="true"></span>
             <span class="etapa__quando mono">Dia 1 ou 2</span>
-            <h3 class="etapa__nome">Proposta</h3>
-            <p>Escopo, prazo e preço fechados por escrito. Sem surpresa no meio do caminho.</p>
+            <h3 class="etapa__nome">Planejamos a solução.</h3>
+            <p>Proposta por escrito com escopo, prazo e preço fechado. Sem surpresa no meio do caminho.</p>
           </li>
           <li class="etapa">
+            <span class="etapa__marca" aria-hidden="true"></span>
             <span class="etapa__quando mono">5 a 14 dias</span>
-            <h3 class="etapa__nome">Construção</h3>
-            <p>Você acompanha por um link de prévia e pede ajustes enquanto a gente constrói.</p>
+            <h3 class="etapa__nome">Desenvolvemos seu projeto.</h3>
+            <p>Você acompanha por um link de prévia e pede ajustes enquanto a gente constrói. Sistemas sob medida têm o prazo definido na proposta.</p>
           </li>
           <li class="etapa">
+            <span class="etapa__marca" aria-hidden="true"></span>
             <span class="etapa__quando mono">Entrega</span>
-            <h3 class="etapa__nome">No ar</h3>
-            <p>Publicamos, conectamos o endereço do site e mostramos como usar o que for seu de mexer.</p>
-          </li>
-          <li class="etapa">
-            <span class="etapa__quando mono">Depois</span>
-            <h3 class="etapa__nome">Perto</h3>
-            <p>Seguimos por perto para ajustes, novas páginas e novos recursos quando o negócio pedir.</p>
+            <h3 class="etapa__nome">Entregamos e acompanhamos.</h3>
+            <p>Publicamos, conectamos o endereço do site e mostramos como usar o que for seu de mexer. O acompanhamento depois da entrega segue o que foi contratado.</p>
           </li>
         </ol>
       </div>
     </section>
 
-    <!-- 06 REGIAO -->
-    <section class="secao regiao" id="regiao" aria-labelledby="regiao-titulo">
-      <div class="envelope regiao__grade">
-        <div class="regiao__texto">
-          <p class="rotulo"><span class="rotulo__num">06</span> Onde atendemos</p>
-          <h2 class="titulo-secao" id="regiao-titulo">Daqui, para quem é daqui.</h2>
+    <!-- 05 PROVA -->
+    <section class="secao prova" id="prova" aria-labelledby="prova-titulo">
+      <div class="envelope">
+        <div class="cabeca-secao cabeca-secao--dupla">
+          <div>
+            <p class="rotulo"><span class="rotulo__num">04</span> Prova de qualidade</p>
+            <h2 class="titulo-secao" id="prova-titulo" data-revela-titulo>Prova, não promessa.</h2>
+          </div>
           <p class="corrido">
-            Atendemos negócios de Itu, Salto, Sorocaba, Indaiatuba, Porto Feliz, Tietê e cidades vizinhas.
-            Os dois clientes desta página ficam em Salto, cidade cortada pelo Rio Tietê.
+            Aqui não tem depoimento inventado nem número de vitrine. Tem trabalho no ar, que você pode
+            abrir agora, e o que foi construído em cada um.
           </p>
-          <ul class="cidades mono">
-            <li>Itu</li><li class="cidades__cliente">Salto</li><li>Sorocaba</li><li>Indaiatuba</li><li>Porto Feliz</li><li>Tietê</li>
+        </div>
+
+        <ul class="conferir">
+          <li>
+            <a class="conferir__linha" href="https://site-production-0686.up.railway.app" target="_blank" rel="noopener" data-evento="visitar_projeto" data-rotulo="ERK Pratas">
+              <span class="conferir__nome">ERK Pratas</span>
+              <span class="conferir__oque">Loja online, montador 3D e painel do dono</span>
+              <span class="status status--ar mono">No ar</span>
+              <span class="conferir__seta" aria-hidden="true">↗</span>
+            </a>
+          </li>
+          <li>
+            <a class="conferir__linha" href="https://cardapio-vo-neis.vercel.app" target="_blank" rel="noopener" data-evento="visitar_projeto" data-rotulo="Vó Neis Confeitaria">
+              <span class="conferir__nome">Vó Neis Confeitaria</span>
+              <span class="conferir__oque">Cardápio digital e sistema de gestão</span>
+              <span class="status status--ar mono">No ar</span>
+              <span class="conferir__seta" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="numeros" aria-label="O que foi construído">
+          <li><strong data-contar="8">8</strong><span>etapas no montador de peças da ERK</span></li>
+          <li><strong data-contar="5">5</strong><span>tipos de elo desenhados em 3D</span></li>
+          <li><strong data-contar="11">11</strong><span>telas no painel do dono da ERK</span></li>
+          <li><strong data-contar="106">106</strong><span>fotos da Vó Neis analisadas, 31 aprovadas para o cardápio</span></li>
+        </ul>
+
+        <div class="vitrine">
+          <figure class="vitrine__video">
+            <video muted loop playsinline preload="none" width="750" height="750" poster="assets/img/voneis-video-poster.webp" data-video aria-label="Bolo Chocolatudo da Vó Neis sobre a mesa da loja, com a câmera se aproximando devagar.">
+              <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3K02vVuSs7rq9tHmdVvUCOsCh4U/hf_20260929_113307_7a09c871-82b3-4b6d-a543-1c01b8d0605c.mp4" type="video/mp4">
+            </video>
+            <figcaption class="legenda mono">Chocolatudo. Foto da loja, animada para o portfólio.</figcaption>
+          </figure>
+          <div class="vitrine__texto">
+            <h3 class="vitrine__titulo">O cuidado com a foto também é parte do trabalho.</h3>
+            <p class="corrido">
+              A Vó Neis mandou tudo o que tinha no celular. Separamos as fotos boas, apontamos o que precisava
+              refazer (embalagem refletindo, luz estourada) e deixamos um guia simples para as próximas:
+              mesa clara, luz do dia, produto ocupando o quadro.
+            </p>
+            <div class="miniaturas">
+              <img src="assets/img/voneis-olho-de-sogra.webp" width="750" height="1000" loading="lazy" decoding="async" alt="Olho de sogra em forminhas vermelhas.">
+              <img src="assets/img/voneis-bolo-raspas-chocolate.webp" width="563" height="1000" loading="lazy" decoding="async" alt="Bolo floresta negra com raspas de chocolate e cerejas.">
+              <img src="assets/img/voneis-bolo-abacaxi.webp" width="750" height="1000" loading="lazy" decoding="async" alt="Bolo de abacaxi com coco caramelizado.">
+              <img src="assets/img/voneis-cones-doces.webp" width="750" height="1000" loading="lazy" decoding="async" alt="Cones de chocolate com o selo da Vó Neis.">
+            </div>
+          </div>
+        </div>
+
+        <div class="casa">
+          <h3 class="casa__titulo">A gente usa o que vende.</h3>
+          <ul class="casa__lista">
+            <li>
+              <div><h4>Vera Prospect</h4><p>Nosso painel comercial, com automação de WhatsApp. A mesma tecnologia de atendimento que instalamos nos clientes.</p></div>
+              <span class="status status--uso mono">Em uso</span>
+            </li>
+            <li>
+              <div><h4>Vera Finances</h4><p>Aplicativo de finanças pessoais que conecta as contas do banco por Open Finance.</p></div>
+              <span class="status status--dev mono">Em desenvolvimento</span>
+            </li>
           </ul>
         </div>
-        <figure class="mapa">
-          <svg viewBox="0 0 1000 780" role="img" aria-labelledby="mapa-titulo">
-            <title id="mapa-titulo">Mapa das cidades atendidas, ligadas pelo Rio Tietê. Salto em destaque, com dois clientes no ar.</title>
-            <g class="mapa__aneis">
-              <circle cx="693" cy="251" r="132"/>
-              <circle cx="693" cy="251" r="264"/>
-              <circle cx="693" cy="251" r="396"/>
-            </g>
-            <path class="mapa__rio" d="M1000 300 C 900 300, 800 250, 693 251 S 520 300, 450 290 S 380 268, 373 272 S 250 240, 200 190 S 140 120, 113 118 S 40 80, 0 70"/>
-            <text class="mapa__rio-nome" x="520" y="318">Rio Tietê</text>
-            <g class="mapa__cidade"><circle cx="677" cy="345" r="7"/><text x="692" y="372">Itu</text></g>
-            <g class="mapa__cidade mapa__cidade--cliente"><circle class="mapa__pulso" cx="693" cy="251" r="7"/><circle cx="693" cy="251" r="9"/><text x="716" y="262">Salto</text><text class="mapa__nota" x="716" y="206">2 clientes no ar</text></g>
-            <g class="mapa__cidade"><circle cx="469" cy="694" r="7"/><text x="484" y="720">Sorocaba</text></g>
-            <g class="mapa__cidade"><circle cx="786" cy="89" r="7"/><text x="801" y="80">Indaiatuba</text></g>
-            <g class="mapa__cidade"><circle cx="373" cy="272" r="7"/><text x="300" y="310">Porto Feliz</text></g>
-            <g class="mapa__cidade"><circle cx="113" cy="118" r="7"/><text x="128" y="160">Tietê</text></g>
-          </svg>
-          <figcaption class="legenda mono">Posições reais, em escala. Anéis a cada 10 km a partir de Salto.</figcaption>
-        </figure>
       </div>
     </section>
 
-    <!-- 07 PERGUNTAS -->
+    <!-- PERGUNTAS -->
     <section class="secao perguntas" id="perguntas" aria-labelledby="perguntas-titulo">
       <div class="envelope perguntas__grade">
         <div>
-          <p class="rotulo"><span class="rotulo__num">07</span> Perguntas</p>
+          <p class="rotulo"><span class="rotulo__num">05</span> Perguntas</p>
           <h2 class="titulo-secao" id="perguntas-titulo">O que todo dono pergunta antes.</h2>
         </div>
         <div class="sanfona">
           <details>
             <summary>Como eu sei que vocês entregam?</summary>
-            <p>Clique nos trabalhos desta página: estão no ar, com cliente usando agora. E antes de começar você recebe a proposta por escrito, com escopo, prazo e preço.</p>
+            <p>Abra os projetos desta página: estão no ar, com cliente usando agora. E antes de começar você recebe a proposta por escrito, com escopo, prazo e preço.</p>
           </details>
           <details>
             <summary>Preciso chegar com alguma coisa pronta?</summary>
@@ -574,11 +620,11 @@
           </details>
           <details>
             <summary>Quanto tempo demora?</summary>
-            <p>De 5 a 14 dias nos projetos da tabela. Sistemas sob medida têm o prazo definido na proposta.</p>
+            <p>De 5 a 14 dias nos projetos com preço de referência. Sistemas sob medida têm o prazo definido na proposta.</p>
           </details>
           <details>
-            <summary>E se eu não tiver fotos boas?</summary>
-            <p>A gente ajuda a escolher e a produzir. Na Vó Neis analisamos 106 fotos, separamos as que estavam prontas e deixamos um guia para as próximas.</p>
+            <summary>Vocês atendem a minha cidade?</summary>
+            <p>Atendemos empresas de Salto, Itu, Sorocaba, Indaiatuba, Porto Feliz, Tietê e cidades vizinhas. A conversa começa pelo WhatsApp e, quando faz sentido, pessoalmente.</p>
           </details>
           <details>
             <summary>Vocês fazem só site?</summary>
@@ -588,50 +634,56 @@
       </div>
     </section>
 
-    <!-- 08 CONTATO -->
-    <section class="secao contato" id="contato" aria-labelledby="contato-titulo">
+    <!-- 06 CTA FINAL -->
+    <section class="contato" id="contato" aria-labelledby="contato-titulo">
       <div class="envelope contato__grade">
         <div class="contato__texto">
-          <p class="rotulo rotulo--claro"><span class="rotulo__num">08</span> Contato</p>
-          <h2 class="contato__titulo" id="contato-titulo">Conta pra gente o que o seu negócio precisa.</h2>
+          <p class="rotulo rotulo--claro"><span class="rotulo__num">06</span> Contato</p>
+          <h2 class="contato__titulo" id="contato-titulo" data-revela-titulo>Vamos construir o próximo nível da sua empresa?</h2>
           <p class="corrido corrido--claro">
-            A mensagem sai pronta no seu WhatsApp. Quem responde é a equipe da Vera, em horário comercial.
+            Conte em poucas linhas o que você precisa. A mensagem sai pronta no seu WhatsApp e quem
+            responde é a equipe da Vera, em horário comercial.
           </p>
+          <p class="contato__cidades mono">Salto · Itu · Sorocaba · Indaiatuba · Porto Feliz · Tietê</p>
         </div>
 
         <form class="formulario" data-formulario novalidate>
+          <p class="formulario__ref" data-ref hidden>
+            <span class="mono">Referência</span>
+            <strong data-ref-nome></strong>
+            <button type="button" class="formulario__ref-tirar" data-ref-tirar aria-label="Remover projeto de referência">×</button>
+          </p>
           <label class="campo">
             <span class="campo__rotulo mono">Seu nome</span>
-            <input name="nome" autocomplete="name" required maxlength="60">
+            <input name="nome" autocomplete="name" required maxlength="60" aria-describedby="aviso-form">
           </label>
           <label class="campo">
-            <span class="campo__rotulo mono">Nome do negócio</span>
+            <span class="campo__rotulo mono">Nome da empresa</span>
             <input name="negocio" autocomplete="organization" maxlength="80" data-campo-empresa>
           </label>
           <label class="campo">
             <span class="campo__rotulo mono">Cidade</span>
             <select name="cidade" data-campo-cidade>
               <option value="">Escolha</option>
-              <option>Itu</option><option>Salto</option><option>Sorocaba</option><option>Indaiatuba</option>
+              <option>Salto</option><option>Itu</option><option>Sorocaba</option><option>Indaiatuba</option>
               <option>Porto Feliz</option><option>Tietê</option><option>Outra</option>
             </select>
           </label>
           <fieldset class="campo campo--escolha">
             <legend class="campo__rotulo mono">O que você precisa</legend>
             <div class="escolhas">
-              <label><input type="radio" name="precisa" value="um site" checked><span>Site</span></label>
-              <label><input type="radio" name="precisa" value="uma loja online"><span>Loja online</span></label>
-              <label><input type="radio" name="precisa" value="um cardápio digital"><span>Cardápio</span></label>
+              <label><input type="radio" name="precisa" value="uma landing page"><span>Landing page</span></label>
+              <label><input type="radio" name="precisa" value="um site institucional"><span>Site</span></label>
               <label><input type="radio" name="precisa" value="automação de WhatsApp"><span>WhatsApp automático</span></label>
               <label><input type="radio" name="precisa" value="um sistema sob medida"><span>Sistema</span></label>
-              <label><input type="radio" name="precisa" value="ajuda para decidir"><span>Ainda não sei</span></label>
+              <label><input type="radio" name="precisa" value="ajuda para decidir" checked><span>Ainda não sei</span></label>
             </div>
           </fieldset>
-          <button class="botao botao--sinal botao--bloco" type="submit">
+          <button class="botao botao--sinal botao--bloco" type="submit" data-enviar>
             <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1L4 20z"/></svg>
-            Enviar pelo WhatsApp
+            <span data-enviar-texto>Conversar sobre meu projeto</span>
           </button>
-          <p class="formulario__aviso mono" data-aviso role="status"></p>
+          <p class="formulario__aviso" id="aviso-form" data-aviso role="status" aria-live="polite"></p>
         </form>
       </div>
     </section>
@@ -641,8 +693,8 @@
     <div class="envelope">
       <p class="rodape__marca" aria-hidden="true">Vera<span class="marca__ponto">.</span></p>
       <div class="rodape__linha mono">
-        <span>Vera Group · Sites, lojas e sistemas</span>
-        <span>Itu, Salto, Sorocaba e região</span>
+        <span>Vera Group · Sites, sistemas e experiências digitais</span>
+        <span>Salto, Itu, Sorocaba e região</span>
         <span>© <span data-ano>2026</span></span>
       </div>
     </div>
@@ -650,7 +702,7 @@
 
   <a class="barra-whats" href="#contato" data-whats data-origem="barra" data-barra>
     <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1L4 20z"/></svg>
-    <span>Conversar com a Vera no WhatsApp</span>
+    <span>Conversar sobre meu projeto</span>
   </a>
 
   <script src="assets/js/config.js"></script>

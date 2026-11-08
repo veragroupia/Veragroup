@@ -1,13 +1,13 @@
-/* Configuracao do site da Vera Group.
+/* Configuração do site da Vera Group.
    Tudo que muda sem mexer no layout fica aqui. */
 window.VERA = {
-  // Numero do WhatsApp comercial, so digitos, com 55 e DDD. Ex.: '5511999999999'.
-  // Enquanto estiver vazio, os botoes levam para a secao de contato e o
-  // formulario abre o WhatsApp para a pessoa escolher o contato.
+  // Número do WhatsApp comercial, só dígitos, com 55 e DDD. Ex.: '5511999999999'.
+  // Enquanto estiver vazio, os botões levam para o formulário de contato, e o
+  // formulário abre o WhatsApp com a mensagem pronta para a pessoa escolher o contato.
   whatsapp: '',
 
-  // Pesquisas que aparecem no topo quando o link nao vem personalizado.
-  // Nichos e cidades do radar de prospeccao.
+  // Pesquisas que aparecem no título de Soluções quando o link não vem personalizado.
+  // Nichos e cidades do radar de prospecção.
   pesquisas: [
     'dentista em Itu',
     'pet shop em Salto',
@@ -18,4 +18,11 @@ window.VERA = {
     'barbearia em Salto',
     'clínica veterinária em Itu',
   ],
+
+  // Projetos que podem ser citados na mensagem de contato.
+  // A chave é o que vai no link (?projeto=erk); o valor é o nome que aparece.
+  projetos: {
+    erk: 'ERK Pratas',
+    voneis: 'Vó Neis Confeitaria',
+  },
 };
