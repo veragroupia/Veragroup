@@ -1,6 +1,5 @@
 node_modules/
 dist/
 .cache/
-public/fontes/
 .DS_Store
 *.local

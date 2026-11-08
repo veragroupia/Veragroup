@@ -1,8 +1,5 @@
 import { CanvasTexture, NoColorSpace, RepeatWrapping, SRGBColorSpace, type Texture } from 'three';
-import Check from 'lucide/dist/esm/icons/check.mjs';
-import SearchX from 'lucide/dist/esm/icons/search-x.mjs';
-import Hammer from 'lucide/dist/esm/icons/hammer.mjs';
-import type { Letreiro, Status, Vitrine } from '../data/rua';
+import type { Letreiro, Vitrine } from '../data/rua';
 import { semente } from './kit';
 
 // Fontes dos letreiros (OFL). Ficam só no pacote da cena.
@@ -12,6 +9,7 @@ import '@fontsource/cinzel/600';
 
 const SINAL = '"Big Shoulders Display"';
 const MARCA = 'Cinzel';
+const SYNE = 'Syne';
 
 export async function carregarFontesDaCena() {
   if (typeof document === 'undefined' || !document.fonts) return;
@@ -19,10 +17,11 @@ export async function carregarFontesDaCena() {
     document.fonts.load(`800 64px ${SINAL}`),
     document.fonts.load(`500 64px ${SINAL}`),
     document.fonts.load(`600 64px ${MARCA}`),
+    document.fonts.load(`700 64px ${SYNE}`),
   ]);
 }
 
-function tela(w: number, h: number) {
+export function tela(w: number, h: number) {
   const c = document.createElement('canvas');
   c.width = Math.max(2, Math.round(w));
   c.height = Math.max(2, Math.round(h));
@@ -30,7 +29,7 @@ function tela(w: number, h: number) {
   return { c, ctx };
 }
 
-function textura(c: HTMLCanvasElement, cor = true): CanvasTexture {
+export function textura(c: HTMLCanvasElement, cor = true): CanvasTexture {
   const t = new CanvasTexture(c);
   t.colorSpace = cor ? SRGBColorSpace : NoColorSpace;
   t.anisotropy = 4;
@@ -48,34 +47,68 @@ function carregarImagem(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function textoAjustado(
-  ctx: CanvasRenderingContext2D,
-  texto: string,
-  fonte: string,
-  peso: number,
-  alturaMax: number,
-  larguraMax: number,
-  espacamento: number,
-) {
+function ajustarTexto(ctx: CanvasRenderingContext2D, texto: string, fonte: string, peso: number, alturaMax: number, larguraMax: number, esp: number) {
   let tam = alturaMax;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 40; i++) {
     ctx.font = `${peso} ${tam}px ${fonte}`;
-    ctx.letterSpacing = `${tam * espacamento}px`;
+    ctx.letterSpacing = `${tam * esp}px`;
     if (ctx.measureText(texto).width <= larguraMax) break;
     tam *= 0.94;
   }
   return tam;
 }
 
+/**
+ * Desenha um letreiro num retângulo do canvas. `brilho` desenha a máscara do que acende
+ * (letras brancas; na caixa luminosa o acrílico inteiro).
+ */
+export function desenharLetreiro(ctx: CanvasRenderingContext2D, l: Letreiro, x: number, y: number, W: number, H: number, brilho = false) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, W, H);
+  ctx.clip();
+  const fonte = l.fonte === 'marca' ? MARCA : l.fonte === 'syne' ? SYNE : SINAL;
+  const peso = l.fonte === 'marca' ? 600 : l.fonte === 'syne' ? 700 : 800;
+  if (l.estilo === 'caixa') {
+    ctx.fillStyle = l.fundo;
+    ctx.fillRect(x, y, W, H);
+    if (brilho) {
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x, y, W, H);
+      ctx.globalAlpha = 1;
+    }
+  } else {
+    ctx.fillStyle = brilho ? '#000' : l.fundo;
+    ctx.fillRect(x, y, W, H);
+  }
+  const temSub = Boolean(l.sub);
+  const esp = l.fonte === 'marca' ? 0.14 : l.fonte === 'syne' ? -0.01 : 0.05;
+  const tam = ajustarTexto(ctx, l.texto, fonte, peso, H * (temSub ? 0.5 : 0.64), W * 0.86, esp);
+  ctx.font = `${peso} ${tam}px ${fonte}`;
+  ctx.letterSpacing = `${tam * esp}px`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = brilho && l.estilo !== 'caixa' ? '#ffffff' : l.tinta;
+  ctx.fillText(l.texto, x + W / 2 + (tam * esp) / 2, y + H * (temSub ? 0.46 : 0.53));
+  if (l.sub) {
+    const ts = H * 0.13;
+    ctx.font = `500 ${ts}px ${SINAL}`;
+    ctx.letterSpacing = `${ts * 0.32}px`;
+    ctx.globalAlpha = 0.82;
+    ctx.fillText(l.sub, x + W / 2 + (ts * 0.32) / 2, y + H * 0.8);
+  }
+  ctx.restore();
+}
+
 const PX_M = 200;
 
-/** Letreiro: textura de cor e máscara de brilho (o que acende). */
+/** Letreiro de uma loja só (cases e a loja do visitante): cor + máscara de brilho. */
 export async function texturaLetreiro(l: Letreiro, wM: number, hM: number): Promise<{ cor: Texture; brilho: Texture }> {
   const W = wM * PX_M;
   const H = hM * PX_M;
   const a = tela(W, H);
   const b = tela(W, H);
-
   if (l.estilo === 'logo' && l.imagem) {
     const img = await carregarImagem(l.imagem);
     for (const { ctx } of [a, b]) {
@@ -83,103 +116,81 @@ export async function texturaLetreiro(l: Letreiro, wM: number, hM: number): Prom
       ctx.fillRect(0, 0, W, H);
       ctx.drawImage(img, 0, 0, W, H);
     }
-    return { cor: textura(a.c), brilho: textura(b.c) };
-  }
-
-  const fonte = l.fonte === 'marca' ? MARCA : SINAL;
-  const peso = l.fonte === 'marca' ? 600 : 800;
-
-  // fundo
-  if (l.estilo === 'caixa') {
-    const g = a.ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, l.fundo);
-    g.addColorStop(0.5, l.fundo);
-    g.addColorStop(1, l.fundo);
-    a.ctx.fillStyle = g;
-    a.ctx.fillRect(0, 0, W, H);
-    // caixa luminosa: o acrílico todo acende, mais forte no meio
-    const gb = b.ctx.createLinearGradient(0, 0, 0, H);
-    gb.addColorStop(0, l.fundo);
-    gb.addColorStop(0.5, l.fundo);
-    gb.addColorStop(1, l.fundo);
-    b.ctx.fillStyle = gb;
-    b.ctx.fillRect(0, 0, W, H);
-    b.ctx.globalAlpha = 0.35;
-    b.ctx.fillStyle = '#000';
-    b.ctx.fillRect(0, 0, W, H);
-    b.ctx.globalAlpha = 1;
   } else {
-    a.ctx.fillStyle = l.fundo;
-    a.ctx.fillRect(0, 0, W, H);
-    b.ctx.fillStyle = '#000';
-    b.ctx.fillRect(0, 0, W, H);
-  }
-
-  const temSub = Boolean(l.sub);
-  const alturaTexto = H * (temSub ? 0.5 : 0.66);
-  const espac = l.fonte === 'marca' ? 0.14 : 0.05;
-  const tam = textoAjustado(a.ctx, l.texto, fonte, peso, alturaTexto, W * 0.84, espac);
-  const yTexto = temSub ? H * 0.47 : H * 0.54;
-
-  for (const [ctx, cor] of [
-    [a.ctx, l.tinta],
-    [b.ctx, l.estilo === 'caixa' ? l.tinta : '#ffffff'],
-  ] as const) {
-    ctx.font = `${peso} ${tam}px ${fonte}`;
-    ctx.letterSpacing = `${tam * espac}px`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = cor;
-    // letterSpacing adiciona espaço depois da última letra: compensa para centralizar
-    ctx.fillText(l.texto, W / 2 + (tam * espac) / 2, yTexto);
-    if (l.sub) {
-      const tSub = H * 0.13;
-      ctx.font = `500 ${tSub}px ${SINAL}`;
-      ctx.letterSpacing = `${tSub * 0.32}px`;
-      ctx.globalAlpha = 0.82;
-      ctx.fillText(l.sub, W / 2 + (tSub * 0.32) / 2, H * 0.8);
-      ctx.globalAlpha = 1;
-    }
+    desenharLetreiro(a.ctx, l, 0, 0, W, H, false);
+    desenharLetreiro(b.ctx, l, 0, 0, W, H, true);
   }
   return { cor: textura(a.c), brilho: textura(b.c) };
 }
 
-/** Parede do fundo da loja vista pela vitrine. Formas simples: de longe e atrás do vidro, lê como interior. */
-export function texturaInterior(v: Vitrine): Texture {
+/**
+ * Atlas de letreiros de um quarteirão inteiro: um canvas, uma textura, um material.
+ * Devolve o retângulo (UV) de cada letreiro e um ponto escuro para as laterais das caixas.
+ */
+export function atlasLetreiros(itens: { l: Letreiro; w: number; h: number }[]) {
+  const LARG = 2048;
+  const escala = 110; // px por metro no atlas
+  let x = 8;
+  let y = 8;
+  let alturaLinha = 0;
+  const pos: { x: number; y: number; w: number; h: number }[] = [];
+  for (const it of itens) {
+    const w = Math.round(it.w * escala);
+    const h = Math.round(it.h * escala);
+    if (x + w > LARG - 8) {
+      x = 8;
+      y += alturaLinha + 6;
+      alturaLinha = 0;
+    }
+    pos.push({ x, y, w, h });
+    x += w + 6;
+    alturaLinha = Math.max(alturaLinha, h);
+  }
+  const ALT = Math.pow(2, Math.ceil(Math.log2(y + alturaLinha + 8)));
+  const { c, ctx } = tela(LARG, ALT);
+  ctx.fillStyle = '#101114';
+  ctx.fillRect(0, 0, LARG, ALT);
+  itens.forEach((it, i) => desenharLetreiro(ctx, it.l, pos[i].x, pos[i].y, pos[i].w, pos[i].h, false));
+  const uv = pos.map((p) => [p.x / LARG, 1 - (p.y + p.h) / ALT, (p.x + p.w) / LARG, 1 - p.y / ALT] as [number, number, number, number]);
+  const escuro: [number, number] = [2 / LARG, 1 - 2 / ALT];
+  return { textura: textura(c), uv, escuro };
+}
+
+const TIPOS_VITRINE: Vitrine[] = ['joias', 'doces', 'roupas', 'clinica', 'academia', 'pet', 'oficina'];
+
+function pintarInterior(ctx: CanvasRenderingContext2D, v: Vitrine, ox: number, oy: number) {
   const W = 512;
   const H = 256;
-  const { c, ctx } = tela(W, H);
   const r = semente(v.length * 97);
   const ret = (x: number, y: number, w: number, h: number, cor: string) => {
     ctx.fillStyle = cor;
-    ctx.fillRect(x, y, w, h);
+    ctx.fillRect(ox + x, oy + y, w, h);
   };
   switch (v) {
-    case 'joias': {
-      ret(0, 0, W, H, '#3a2a20');
+    case 'joias':
+      ret(0, 0, W, H, '#5a4434');
       for (let i = 0; i < 3; i++) {
         const x = 60 + i * 150;
-        ret(x, 50, 92, 120, '#1c1410');
-        const g = ctx.createLinearGradient(0, 50, 0, 170);
+        ret(x, 50, 92, 120, '#2a1e17');
+        const g = ctx.createLinearGradient(0, oy + 50, 0, oy + 170);
         g.addColorStop(0, '#fff3dc');
         g.addColorStop(1, '#a8885e');
         ctx.fillStyle = g;
-        ctx.fillRect(x + 6, 56, 80, 108);
+        ctx.fillRect(ox + x + 6, oy + 56, 80, 108);
         for (let k = 0; k < 7; k++) {
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          ctx.arc(x + 16 + (k % 4) * 18, 80 + Math.floor(k / 4) * 44, 3, 0, Math.PI * 2);
+          ctx.arc(ox + x + 16 + (k % 4) * 18, oy + 80 + Math.floor(k / 4) * 44, 3, 0, Math.PI * 2);
           ctx.fill();
         }
       }
-      ret(0, 196, W, 60, '#20160f');
+      ret(0, 196, W, 60, '#3a2a20');
       break;
-    }
-    case 'doces': {
+    case 'doces':
       ret(0, 0, W, H, '#f2e2cf');
-      ret(30, 30, 150, 96, '#2f2a26'); // quadro de giz
+      ret(30, 30, 150, 96, '#2f2a26');
       ctx.fillStyle = '#e9e2d6';
-      for (let i = 0; i < 5; i++) ctx.fillRect(44, 46 + i * 15, 60 + r() * 60, 4);
+      for (let i = 0; i < 5; i++) ctx.fillRect(ox + 44, oy + 46 + i * 15, 60 + r() * 60, 4);
       for (let p = 0; p < 2; p++) {
         const y = 70 + p * 70;
         ret(220, y + 34, 270, 6, '#b48a6a');
@@ -188,187 +199,247 @@ export function texturaInterior(v: Vitrine): Texture {
           const cores = ['#6b3b2a', '#f4d9de', '#e8b4bd', '#c98a4a', '#fff6ea'];
           ctx.fillStyle = cores[(i + p) % cores.length];
           ctx.beginPath();
-          ctx.ellipse(x + 16, y + 22, 20, 13, 0, 0, Math.PI * 2);
+          ctx.ellipse(ox + x + 16, oy + y + 22, 20, 13, 0, 0, Math.PI * 2);
           ctx.fill();
           ret(x - 4, y + 22, 40, 12, cores[(i + p + 2) % cores.length]);
         }
       }
       ret(0, 206, W, 50, '#d9bfa6');
       break;
-    }
     case 'roupas': {
       ret(0, 0, W, H, '#ece9e3');
       ret(20, 60, W - 40, 5, '#8a8a8a');
       const cores = ['#2d3a4a', '#b9a58b', '#7d2f2f', '#d8d3c8', '#3e4b3a', '#c8b7a6', '#1f1f22'];
       for (let i = 0; i < 16; i++) {
-        const x = 30 + i * 29;
         ctx.fillStyle = cores[i % cores.length];
-        ctx.fillRect(x, 66, 22, 90 + r() * 40);
+        ctx.fillRect(ox + 30 + i * 29, oy + 66, 22, 90 + r() * 40);
       }
       ret(0, 210, W, 46, '#d7d2c8');
       break;
     }
-    case 'clinica': {
+    case 'clinica':
       ret(0, 0, W, H, '#eef2f2');
       ret(0, 120, W, 14, '#2f6f73');
       ret(150, 150, 220, 70, '#dfe6e6');
-      ret(150, 150, 220, 8, '#c3cdcd');
       ret(60, 40, 90, 60, '#d6dede');
       break;
-    }
-    case 'academia': {
-      ret(0, 0, W, H, '#2a2c30');
-      ret(0, 30, W, 120, '#4a5058'); // espelho
+    case 'academia':
+      ret(0, 0, W, H, '#3a3c40');
+      ret(0, 30, W, 120, '#5a6068');
       ret(0, 150, W, 10, '#e9c64a');
-      for (let i = 0; i < 5; i++) ret(40 + i * 95, 120, 60, 80, '#16171a');
-      ret(0, 200, W, 56, '#1d1e21');
+      for (let i = 0; i < 5; i++) ret(40 + i * 95, 120, 60, 80, '#1d1e21');
+      ret(0, 200, W, 56, '#25262a');
       break;
-    }
-    case 'pet': {
+    case 'pet':
       ret(0, 0, W, H, '#e9e4d8');
       for (let p = 0; p < 3; p++) {
         ret(20, 60 + p * 55, W - 40, 5, '#9a8f7e');
         for (let i = 0; i < 18; i++) {
           const cores = ['#d07a3a', '#2b5c61', '#e8c55a', '#7aa36d', '#c94f4f', '#5b7fb0'];
           ctx.fillStyle = cores[Math.floor(r() * cores.length)];
-          ctx.fillRect(26 + i * 26, 30 + p * 55, 20, 30);
+          ctx.fillRect(ox + 26 + i * 26, oy + 30 + p * 55, 20, 30);
         }
       }
       ret(0, 222, W, 34, '#cfc7b6');
       break;
-    }
-    case 'oficina': {
-      ret(0, 0, W, H, '#5d6266');
-      ret(30, 30, 260, 120, '#7b7f80'); // painel de ferramentas
+    case 'oficina':
+      ret(0, 0, W, H, '#6d7276');
+      ret(30, 30, 260, 120, '#8b8f90');
       ctx.strokeStyle = '#2b2e30';
       ctx.lineWidth = 5;
       for (let i = 0; i < 12; i++) {
         ctx.beginPath();
-        const x = 45 + i * 20;
-        ctx.moveTo(x, 45);
-        ctx.lineTo(x, 70 + r() * 60);
+        ctx.moveTo(ox + 45 + i * 20, oy + 45);
+        ctx.lineTo(ox + 45 + i * 20, oy + 70 + r() * 60);
         ctx.stroke();
       }
-      for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = '#1b1c1d';
-        ctx.beginPath();
-        ctx.ellipse(380, 210 - i * 34, 60, 18, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ret(0, 222, W, 34, '#3b3e40');
+      ret(0, 222, W, 34, '#4b4e50');
       break;
-    }
   }
+}
+
+let atlasInt: { textura: Texture; uv: (v: Vitrine) => [number, number, number, number] } | null = null;
+
+/** Atlas dos fundos de loja vistos pela vitrine (7 tipos num canvas só). */
+export function atlasInteriores() {
+  if (atlasInt) return atlasInt;
+  const { c, ctx } = tela(2048, 512);
+  TIPOS_VITRINE.forEach((v, i) => pintarInterior(ctx, v, (i % 4) * 512, Math.floor(i / 4) * 256));
+  const uv = (v: Vitrine): [number, number, number, number] => {
+    const i = Math.max(0, TIPOS_VITRINE.indexOf(v));
+    const x = (i % 4) * 512;
+    const y = Math.floor(i / 4) * 256;
+    return [x / 2048, 1 - (y + 256) / 512, (x + 512) / 2048, 1 - y / 512];
+  };
+  atlasInt = { textura: textura(c), uv };
+  return atlasInt;
+}
+
+/** Fundo de uma loja só (cases), recortado do atlas. */
+export function texturaInterior(v: Vitrine): Texture {
+  const { c, ctx } = tela(512, 256);
+  pintarInterior(ctx, v, 0, 0);
   return textura(c);
 }
 
-const COR_STATUS: Record<Status, string> = {
-  presente: '#3DDC84',
-  perdendo: '#FF5A4E',
-  construcao: '#FFB347',
-};
-
-const ICONE_STATUS = { presente: Check, perdendo: SearchX, construcao: Hammer };
-
-type NoIcone = [string, Record<string, string>];
-
-function desenharIcone(ctx: CanvasRenderingContext2D, nos: NoIcone[], cx: number, cy: number, tam: number, cor: string) {
-  ctx.save();
-  ctx.translate(cx - tam / 2, cy - tam / 2);
-  ctx.scale(tam / 24, tam / 24);
-  ctx.strokeStyle = cor;
-  ctx.lineWidth = 2.25;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  for (const [tag, at] of nos) {
-    if (tag === 'path') ctx.stroke(new Path2D(at.d));
-    else if (tag === 'circle') {
+/** Pinos: 4 estados num atlas (apagada, acesa, lote livre, selecionada). Ícones de traço fino. */
+let atlasPino: Texture | null = null;
+export function atlasPinos(): Texture {
+  if (atlasPino) return atlasPino;
+  const S = 128;
+  const { c, ctx } = tela(S * 4, S);
+  const desenhar = (i: number, aro: string, fundo: string, icone: (cx: number, cy: number) => void, tracejado = false) => {
+    const cx = i * S + S / 2;
+    const cy = S * 0.42;
+    const r = S * 0.3;
+    ctx.save();
+    // ponta
+    ctx.fillStyle = fundo;
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.38, cy + r * 0.82);
+    ctx.lineTo(cx, cy + r * 1.55);
+    ctx.lineTo(cx + r * 0.38, cy + r * 0.82);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = S * 0.035;
+    ctx.strokeStyle = aro;
+    if (tracejado) ctx.setLineDash([S * 0.06, S * 0.045]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = aro;
+    ctx.lineWidth = S * 0.03;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    icone(cx, cy);
+    ctx.restore();
+  };
+  const lampada = (cx: number, cy: number, risco: boolean) => {
+    const s = S * 0.012;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 2 * s, 6 * s, Math.PI * 0.8, Math.PI * 2.2);
+    ctx.lineTo(cx + 3 * s, cy + 6 * s);
+    ctx.lineTo(cx - 3 * s, cy + 6 * s);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 3 * s, cy + 9 * s);
+    ctx.lineTo(cx + 3 * s, cy + 9 * s);
+    ctx.stroke();
+    if (risco) {
       ctx.beginPath();
-      ctx.arc(+at.cx, +at.cy, +at.r, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (tag === 'line') {
-      ctx.beginPath();
-      ctx.moveTo(+at.x1, +at.y1);
-      ctx.lineTo(+at.x2, +at.y2);
-      ctx.stroke();
-    } else if (tag === 'rect') {
-      ctx.beginPath();
-      ctx.roundRect(+at.x, +at.y, +at.width, +at.height, +(at.rx ?? 0));
+      ctx.moveTo(cx - 9 * s, cy - 10 * s);
+      ctx.lineTo(cx + 9 * s, cy + 11 * s);
       ctx.stroke();
     }
-  }
-  ctx.restore();
+  };
+  desenhar(0, 'rgba(242,239,232,0.42)', 'rgba(9,9,15,0.9)', (x, y) => lampada(x, y, true));
+  desenhar(1, '#e2c48a', 'rgba(9,9,15,0.92)', (x, y) => lampada(x, y, false));
+  desenhar(2, '#c9a96e', 'rgba(9,9,15,0.9)', (x, y) => {
+    const s = S * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(x - s, y);
+    ctx.lineTo(x + s, y);
+    ctx.moveTo(x, y - s);
+    ctx.lineTo(x, y + s);
+    ctx.stroke();
+  }, true);
+  desenhar(3, '#05060a', '#c9a96e', (x, y) => {
+    const s = S * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(x - s, y);
+    ctx.lineTo(x - s * 0.25, y + s * 0.7);
+    ctx.lineTo(x + s, y - s * 0.7);
+    ctx.stroke();
+  });
+  atlasPino = textura(c);
+  return atlasPino;
 }
 
-const cachePino = new Map<string, Texture>();
-
-/** Pino de mapa: círculo escuro com aro na cor do status, ícone e uma ponta embaixo. */
-export function texturaPino(status: Status, selecionado = false): Texture {
-  const chave = status + (selecionado ? ':sel' : '');
-  const pronto = cachePino.get(chave);
-  if (pronto) return pronto;
-  const S = 160;
-  const { c, ctx } = tela(S, S * 1.25);
-  const cx = S / 2;
-  const cy = S / 2;
-  const raio = S * 0.36;
-  const cor = selecionado ? '#D4371C' : COR_STATUS[status];
-  // ponta
-  ctx.fillStyle = 'rgba(10,13,18,0.92)';
-  ctx.beginPath();
-  ctx.moveTo(cx - raio * 0.42, cy + raio * 0.8);
-  ctx.lineTo(cx, cy + raio * 1.62);
-  ctx.lineTo(cx + raio * 0.42, cy + raio * 0.8);
-  ctx.closePath();
-  ctx.fill();
-  // corpo
-  ctx.beginPath();
-  ctx.arc(cx, cy, raio, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = S * 0.035;
-  ctx.strokeStyle = cor;
-  ctx.stroke();
-  desenharIcone(ctx, ICONE_STATUS[status] as unknown as NoIcone[], cx, cy, raio * 1.02, cor);
-  const t = textura(c);
-  cachePino.set(chave, t);
-  return t;
-}
-
-/** Mapa de rugosidade do asfalto: poças lisas sobre asfalto áspero. */
-export function texturaPocas(): Texture {
-  const S = 512;
-  const { c, ctx } = tela(S, S);
-  ctx.fillStyle = 'rgb(185,185,185)';
-  ctx.fillRect(0, 0, S, S);
-  const r = semente(7);
-  for (let i = 0; i < 26; i++) {
-    const x = r() * S;
-    const y = r() * S;
-    const rr = 30 + r() * 90;
-    for (const dx of [-S, 0, S])
-      for (const dy of [-S, 0, S]) {
-        const g = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, rr);
-        g.addColorStop(0, 'rgba(30,30,30,0.9)');
-        g.addColorStop(0.6, 'rgba(60,60,60,0.5)');
-        g.addColorStop(1, 'rgba(185,185,185,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.ellipse(x + dx, y + dy, rr * (1 + r()), rr, r() * Math.PI, 0, Math.PI * 2);
-        ctx.fill();
-      }
-  }
-  const img = ctx.getImageData(0, 0, S, S);
+/** Calçada de placas de concreto, com a sombra de contato junto da fachada já assada. */
+export function texturaCalcada(): Texture {
+  const W = 256;
+  const H = 256;
+  const { c, ctx } = tela(W, H);
+  const r = semente(31);
+  ctx.fillStyle = '#5b5852';
+  ctx.fillRect(0, 0, W, H);
+  // placas 1 m (256 px = 1 m)
+  const img = ctx.getImageData(0, 0, W, H);
   for (let i = 0; i < img.data.length; i += 4) {
-    const n = (r() - 0.5) * 34;
-    img.data[i] = img.data[i + 1] = img.data[i + 2] = Math.max(0, Math.min(255, img.data[i] + n));
+    const n = (r() - 0.5) * 16;
+    img.data[i] += n;
+    img.data[i + 1] += n;
+    img.data[i + 2] += n;
   }
   ctx.putImageData(img, 0, 0);
-  const t = textura(c, false);
+  ctx.fillStyle = 'rgba(20,20,20,0.55)';
+  ctx.fillRect(0, 0, W, 3);
+  ctx.fillRect(0, 0, 3, H);
+  const t = textura(c);
   t.wrapS = t.wrapT = RepeatWrapping;
   return t;
 }
 
-/** Mancha de luz que a vitrine joga na calçada. */
+/** Asfalto: grão fino e a faixa central tracejada amarelada, repetindo a cada 6 m. */
+export function texturaAsfalto(): { cor: Texture; rugosidade: Texture } {
+  const W = 512;
+  const H = 512;
+  const a = tela(W, H);
+  const b = tela(W, H);
+  const r = semente(9);
+  a.ctx.fillStyle = '#16181c';
+  a.ctx.fillRect(0, 0, W, H);
+  const img = a.ctx.getImageData(0, 0, W, H);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = (r() - 0.5) * 18;
+    img.data[i] += n;
+    img.data[i + 1] += n;
+    img.data[i + 2] += n;
+  }
+  a.ctx.putImageData(img, 0, 0);
+  // faixa central (a textura cobre 6 m × 9 m; a faixa fica no meio)
+  a.ctx.fillStyle = 'rgba(160,132,62,0.55)';
+  a.ctx.fillRect(0, H / 2 - 4, W * 0.5, 7);
+  // rugosidade: poças lisas sobre asfalto áspero
+  b.ctx.fillStyle = 'rgb(190,190,190)';
+  b.ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 9; i++) {
+    const x = r() * W;
+    const y = r() * H;
+    const rr = 30 + r() * 80;
+    for (const dx of [-W, 0, W]) {
+      const g = b.ctx.createRadialGradient(x + dx, y, 0, x + dx, y, rr);
+      g.addColorStop(0, 'rgba(40,40,40,0.9)');
+      g.addColorStop(1, 'rgba(190,190,190,0)');
+      b.ctx.fillStyle = g;
+      b.ctx.beginPath();
+      b.ctx.ellipse(x + dx, y, rr * 1.8, rr, 0, 0, Math.PI * 2);
+      b.ctx.fill();
+    }
+  }
+  const cor = textura(a.c);
+  const rug = textura(b.c, false);
+  for (const t of [cor, rug]) t.wrapS = t.wrapT = RepeatWrapping;
+  return { cor, rugosidade: rug };
+}
+
+/** Mancha radial genérica (poça de luz do poste, luz da vitrine na calçada, sombra de pedestre). */
+export function texturaRadial(dura = 0.35): Texture {
+  const S = 128;
+  const { c, ctx } = tela(S, S);
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(dura, 'rgba(255,255,255,0.55)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  return textura(c);
+}
+
+/** Luz da vitrine derramando na calçada (mais forte junto da fachada). */
 export function texturaMancha(): Texture {
   const S = 256;
   const { c, ctx } = tela(S, S);
@@ -385,7 +456,7 @@ export function texturaMancha(): Texture {
   return textura(c);
 }
 
-/** Reflexo esticado no asfalto molhado (luz da vitrine ou do poste vista de longe). */
+/** Reflexo esticado no asfalto molhado. */
 export function texturaReflexo(): Texture {
   const W = 64;
   const H = 512;
@@ -399,35 +470,16 @@ export function texturaReflexo(): Texture {
       const u = (x / (W - 1)) * 2 - 1;
       const lat = Math.exp(-u * u * 5.5);
       const ruido = 0.75 + 0.25 * Math.sin(y * 0.21 + r() * 0.6) * Math.sin(y * 0.047);
-      const a = Math.max(0, ao * lat * ruido);
       const i = (y * W + x) * 4;
       img.data[i] = img.data[i + 1] = img.data[i + 2] = 255;
-      img.data[i + 3] = Math.round(a * 255);
+      img.data[i + 3] = Math.round(Math.max(0, ao * lat * ruido) * 255);
     }
   }
   ctx.putImageData(img, 0, 0);
   return textura(c);
 }
 
-/** Porta de enrolar (oficina fechada). */
-export function texturaPersiana(): Texture {
-  const W = 64;
-  const H = 256;
-  const { c, ctx } = tela(W, H);
-  for (let y = 0; y < H; y += 8) {
-    const g = ctx.createLinearGradient(0, y, 0, y + 8);
-    g.addColorStop(0, '#8d9296');
-    g.addColorStop(0.5, '#6d7276');
-    g.addColorStop(1, '#4a4e52');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, y, W, 8);
-  }
-  const t = textura(c);
-  t.wrapS = t.wrapT = RepeatWrapping;
-  return t;
-}
-
-/** Véu de luz da vitrine: mais forte embaixo e no meio, some nas bordas. */
+/** Véu de luz da vitrine: mais forte embaixo e no meio. */
 export function texturaHalo(): Texture {
   const W = 128;
   const H = 128;

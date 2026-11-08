@@ -29,7 +29,7 @@ export interface Letreiro {
   fundo: string;
   tinta: string;
   /** sinal = fonte de letreiro (OFL); marca = fonte próxima da marca do cliente */
-  fonte?: 'sinal' | 'marca';
+  fonte?: 'sinal' | 'marca' | 'syne';
   sub?: string;
   imagem?: string;
 }
@@ -193,3 +193,15 @@ export const lotes: Lote[] = [
 ];
 
 export const loteDoCase = (caseId: Lote['caseId']) => lotes.find((l) => l.caseId === caseId);
+
+/** Segmento (da calculadora) de cada tipo de lote. */
+export const SEGMENTO_DO_LOTE = {
+  joalheria: 'joalheria',
+  confeitaria: 'confeitaria',
+  oficina: 'oficina',
+  academia: 'academia',
+  petshop: 'petshop',
+  odonto: 'odonto',
+  roupa: 'roupa',
+  terreno: 'outro',
+} as const;

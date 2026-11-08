@@ -1,97 +1,109 @@
-import { Suspense, useEffect, useRef } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { PerformanceMonitor } from '@react-three/drei';
+import { Suspense, useMemo } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import { suspend } from 'suspend-react';
-import { lotes } from '../data/rua';
-import { relogio, useEstado, type Qualidade } from '../estado';
+import { MeshStandardMaterial } from 'three';
+import { LARGURA_RUA, RECUO_FACHADA } from '../data/rua';
+import { useEstado, type Qualidade } from '../estado';
 import { Ambiente } from './Ambiente';
-import { Controles, enquadramento } from './Controles';
-import { Loja, Terreno } from './Loja';
+import { Carros } from './Carros';
+import { Diretor, fovDoAspecto } from './Diretor';
+import { Mapa } from './Mapa';
+import { Pedestres } from './Pedestres';
+import { Pinos } from './Pinos';
 import { Pos } from './Pos';
+import { Quarteiroes } from './Quarteiroes';
 import { Reflexos } from './Reflexos';
-import { Rua } from './Rua';
-import { ENTRADA } from './luz';
-import { carregarFontesDaCena } from './texturas';
+import { lojaDoRegistro } from './registro';
+import { Ritmo } from './Ritmo';
+import { carregarFontesDaCena, texturaAsfalto } from './texturas';
 
+const parametros = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 const celular = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
-const dprForcado = Number(new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('dpr')) || 0;
-const DPR_MAX = dprForcado || (celular ? 1.75 : 2);
+const dprForcado = Number(parametros.get('dpr')) || 0;
+/** Resolução limitada: 1,5 no desktop e 1,25 no celular (lição da tentativa anterior). */
 const DPR: Record<Qualidade, number> = dprForcado
   ? { alta: dprForcado, media: dprForcado, baixa: dprForcado }
-  : { alta: DPR_MAX, media: Math.min(1.5, DPR_MAX), baixa: 1 };
+  : { alta: celular ? 1.25 : 1.5, media: celular ? 1.25 : 1.25, baixa: 1 };
 
-/** Avança o relógio da cena e avisa o HTML quando o primeiro quadro saiu e quando a entrada acabou. */
-function Relogio() {
-  const quadros = useRef(0);
-  const setCenaPronta = useEstado((s) => s.setCenaPronta);
-  const setEntradaFeita = useEstado((s) => s.setEntradaFeita);
-  useFrame((_, dt) => {
-    if (relogio.congelado !== null) relogio.t = relogio.congelado;
-    else if (relogio.semMovimento) relogio.t = 99;
-    else relogio.t += Math.min(dt, 0.1);
-    quadros.current++;
-    if (quadros.current === 3) setCenaPronta();
-    if (relogio.t >= ENTRADA.fim && !useEstado.getState().entradaFeita) setEntradaFeita();
-  });
-  return null;
-}
-
-function Qualidade() {
-  const qualidade = useEstado((s) => s.qualidade);
-  const setQualidade = useEstado((s) => s.setQualidade);
-  const setDpr = useThree((s) => s.setDpr);
-  const forcada = useRef(new URLSearchParams(location.search).get('q'));
-  useEffect(() => {
-    setDpr(DPR[qualidade]);
-  }, [qualidade, setDpr]);
-  if (forcada.current) return null;
+/** A rua principal é uma faixa só, contínua, com o asfalto molhado (reflexo do ambiente, sem redesenhar a cidade). */
+function Asfalto() {
+  const mats = useMemo(() => {
+    const { cor, rugosidade } = texturaAsfalto();
+    cor.repeat.set(8000 / 6, 1);
+    rugosidade.repeat.set(8000 / 14, 1.4);
+    return {
+      asfalto: new MeshStandardMaterial({ map: cor, roughnessMap: rugosidade, roughness: 0.62, metalness: 0.32, envMapIntensity: 1.25 }),
+      chao: new MeshStandardMaterial({ color: '#0d0e12', roughness: 1 }),
+    };
+  }, []);
   return (
-    <PerformanceMonitor
-      bounds={() => [42, 58]}
-      flipflops={4}
-      onDecline={() => {
-        const q = useEstado.getState().qualidade;
-        setQualidade(q === 'alta' ? 'media' : 'baixa');
-      }}
-      onFallback={() => setQualidade('baixa')}
-    />
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]} material={mats.asfalto} raycast={() => null}>
+        <planeGeometry args={[8000, LARGURA_RUA + 0.4]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.12, 0]} material={mats.chao} raycast={() => null}>
+        <planeGeometry args={[8000, 400]} />
+      </mesh>
+    </>
   );
 }
 
-function Rua3D() {
+/** Nome da loja sob o ponteiro, flutuando acima do pino. */
+function RotuloHover() {
+  const sobre = useEstado((s) => s.sobre);
+  const l = sobre ? lojaDoRegistro(sobre) : undefined;
+  if (!l) return null;
+  return (
+    <Html position={[l.x, l.altura + 3.6, l.lado * (RECUO_FACHADA + 1.2)]} center zIndexRange={[20, 10]} style={{ pointerEvents: 'none' }}>
+      <div className="rotulo-loja">{l.nome}</div>
+    </Html>
+  );
+}
+
+function Mundo() {
   suspend(carregarFontesDaCena, ['fontes-cena']);
+  const momento = useEstado((s) => s.momento);
+  const naMapa = momento === 'perto' || momento === 'contato';
+  const qualidade = useEstado((s) => s.qualidade);
+  const fraco = qualidade === 'baixa';
   return (
     <>
-      <Rua />
-      {lotes.map((l) => (l.andares === 0 ? <Terreno key={l.id} lote={l} /> : <Loja key={l.id} lote={l} />))}
-      <Reflexos />
+      <group visible={!naMapa}>
+        <Asfalto />
+        <Quarteiroes raio={celular || fraco ? 1 : 2} />
+        <Reflexos />
+        <Pinos />
+        <Pedestres quantidade={fraco ? 14 : celular ? 22 : 34} />
+        <Carros quantidade={fraco ? 4 : celular ? 6 : 10} />
+        <RotuloHover />
+      </group>
+      <Mapa visivel={naMapa} />
     </>
   );
 }
 
 export default function Cena() {
   const aspecto = typeof window !== 'undefined' ? window.innerWidth / window.innerHeight : 1.6;
-  const e = enquadramento(aspecto);
   const qualidade = useEstado((s) => s.qualidade);
   return (
     <Canvas
       className="cena-canvas"
+      frameloop="demand"
       dpr={[1, DPR[qualidade]]}
-      shadows="percentage"
       gl={{ antialias: false, powerPreference: 'high-performance', stencil: false, alpha: false }}
-      camera={{ fov: e.fov, near: 2.5, far: 420, position: [-30, 30, -40] }}
-      aria-hidden="true"
+      camera={{ fov: fovDoAspecto(aspecto), near: 2.5, far: 520, position: [-30, 30, -40] }}
       onCreated={({ gl, scene }) => {
         gl.localClippingEnabled = true;
         if (import.meta.env.DEV) (window as unknown as { __vera: unknown }).__vera = { gl, scene };
       }}
+      aria-hidden="true"
     >
-      <Qualidade />
       <Ambiente />
       <Suspense fallback={null}>
-        <Rua3D />
-        <Relogio />
-        <Controles />
+        <Mundo />
+        <Diretor />
+        <Ritmo />
         <Pos />
       </Suspense>
     </Canvas>

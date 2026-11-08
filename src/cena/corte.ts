@@ -51,3 +51,31 @@ export function raycastCortado(fileira: Fileira) {
     for (let i = hits.length - 1; i >= antes; i--) if (hits[i].point.y > limite) hits.splice(i, 1);
   };
 }
+
+/** Corte de UMA loja (a fachada que abre): plano horizontal próprio, além do corte da fileira. */
+export const ALTURA_ABERTA = 2.7;
+const planosLoja = new Map<string, Plane>();
+export function planoDaLoja(id: string) {
+  let p = planosLoja.get(id);
+  if (!p) {
+    p = new Plane(new Vector3(0, -1, 0), INTEIRO);
+    planosLoja.set(id, p);
+  }
+  return p;
+}
+/** Abre (1) ou fecha (0) o corte de uma loja. */
+export function cortarLoja(id: string, aberta: number) {
+  const p = planoDaLoja(id);
+  p.constant = aberta > 0.999 ? ALTURA_ABERTA : aberta < 0.001 ? INTEIRO : ALTURA_ABERTA + Math.pow(1 - aberta, 2) * 40;
+}
+
+/** Raycast que respeita a fileira e, se houver, o corte da loja. */
+export function raycastCortadoLoja(fileira: Fileira, id: string) {
+  return function (this: Mesh, raycaster: Raycaster, hits: Intersection[]) {
+    const antes = hits.length;
+    Mesh.prototype.raycast.call(this, raycaster, hits);
+    const limite = Math.min(planos[fileira].constant, planoDaLoja(id).constant);
+    if (limite >= INTEIRO) return;
+    for (let i = hits.length - 1; i >= antes; i--) if (hits[i].point.y > limite) hits.splice(i, 1);
+  };
+}

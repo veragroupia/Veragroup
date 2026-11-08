@@ -21,7 +21,10 @@ type Geos = Partial<Record<Camada, BufferGeometry>>;
 
 export interface GeoLoja {
   corpo: Geos;
+  /** frente do térreo, metade esquerda (vitrine) — é ela que desliza ao abrir */
   frente: Geos;
+  /** frente do térreo, metade direita (porta) */
+  frenteD: Geos;
   /** interior do térreo; a cor de vértice é a cor da luz (ver material de interior) */
   interior: BufferGeometry;
   lampadas?: BufferGeometry;
@@ -55,7 +58,15 @@ function assarLuzInterior(geo: BufferGeometry) {
 
 export function construirLoja(l: Lote): GeoLoja {
   const corpo = new Montador();
-  const frente = new Montador();
+  // a frente nasce em duas metades (vitrine à esquerda, porta à direita) para poder abrir para os lados
+  const frenteE = new Montador();
+  const frenteDir = new Montador();
+  const metade = (x: number) => (x < 0.05 ? frenteE : frenteDir);
+  const frente = {
+    bloco: (c: Camada, w: number, h: number, d: number, x: number, base: number, z: number, cor: string, o?: { chanfro?: number }) =>
+      metade(x).bloco(c, w, h, d, x, base, z, cor, o),
+    plano: (c: Camada, w: number, h: number, pos: [number, number, number], cor: string) => metade(pos[0]).plano(c, w, h, pos, cor),
+  };
   const dentro = new Montador();
   const lamp = new Montador();
   const r = semente(l.id.length * 131 + Math.round(l.x * 10));
@@ -281,12 +292,15 @@ export function construirLoja(l: Lote): GeoLoja {
   }
 
   const geoCorpo = corpo.geometrias();
-  const geoFrente = frente.geometrias();
+  const geoFrente = frenteE.geometrias();
+  const geoFrenteD = frenteDir.geometrias();
+  escurecerBase(geoFrenteD.pintura, 0.25, 1.2);
   escurecerBase(geoCorpo.pintura, 0.32, 2.6);
   escurecerBase(geoFrente.pintura, 0.25, 1.2);
   return {
     corpo: geoCorpo,
     frente: geoFrente,
+    frenteD: geoFrenteD,
     interior,
     lampadas: lamp.geometrias().luzFixa,
     fundo: { w: 2 * xi, h: tetoI, pos: [0, tetoI / 2, -M.fundoLoja + 0.02] },

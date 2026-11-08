@@ -189,3 +189,31 @@ export function escurecerBase(geo: BufferGeometry | undefined, intensidade = 0.3
   }
   cor.needsUpdate = true;
 }
+
+/**
+ * Prepara uma geometria para ser mesclada com outras lojas: garante os atributos
+ * `luz` (luz assada, vec3) e `loja` (índice da loja no quarteirão, float).
+ */
+export function comAtributos(geo: BufferGeometry, loja = 0) {
+  const n = geo.getAttribute('position').count;
+  if (!geo.getAttribute('luz')) geo.setAttribute('luz', new BufferAttribute(new Float32Array(n * 3), 3));
+  const idx = new Float32Array(n).fill(loja);
+  geo.setAttribute('loja', new BufferAttribute(idx, 1));
+  if (!geo.getAttribute('uv')) geo.setAttribute('uv', new BufferAttribute(new Float32Array(n * 2), 2));
+  if (!geo.index) {
+    const ind = new Uint32Array(n);
+    for (let i = 0; i < n; i++) ind[i] = i;
+    geo.setIndex(new BufferAttribute(ind, 1));
+  }
+  return geo;
+}
+
+/** Mescla várias geometrias (já com os mesmos atributos). */
+export function juntar(geos: BufferGeometry[]): BufferGeometry | undefined {
+  const validas = geos.filter(Boolean);
+  if (!validas.length) return undefined;
+  const g = mergeGeometries(validas, false) ?? undefined;
+  g?.computeBoundingBox();
+  g?.computeBoundingSphere();
+  return g;
+}

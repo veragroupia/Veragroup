@@ -1,130 +1,137 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Check, Hammer, SearchX, Store, LayoutGrid, Building2, MessageCircle } from 'lucide-react';
-import { lotes, type Status } from './data/rua';
-import { empresa } from './data/empresa';
-import { relogio, useEstado } from './estado';
+import { useEstado } from './estado';
+import { useRotas } from './rotas';
+import { Abertura } from './ui/Abertura';
+import { Marca, useCelular } from './ui/basicos';
+import { BarraApp, NavDesktop } from './ui/Navegacao';
+import { Painel } from './ui/Painel';
+import { Heroi, Legenda, LojaApagada } from './momentos/Cidade';
+import { Trabalhos } from './momentos/Trabalhos';
+import { SuaLoja } from './momentos/SuaLoja';
+import { Perto } from './momentos/Perto';
+import { Contato } from './momentos/Contato';
 
 const Cena = lazy(() => import('./cena/Cena'));
 
 function temWebGL() {
   try {
     const c = document.createElement('canvas');
-    return Boolean(c.getContext('webgl2') || c.getContext('webgl'));
+    return Boolean(c.getContext('webgl2'));
   } catch {
     return false;
   }
 }
 
+/** Celular muito fraco: pouca memória ou poucos núcleos. Vai direto para a versão leve. */
+function aparelhoFraco() {
+  const n = navigator as Navigator & { deviceMemory?: number };
+  return (n.deviceMemory !== undefined && n.deviceMemory <= 2) || (navigator.hardwareConcurrency ?? 8) <= 2;
+}
+
 function lerParametros() {
   const p = new URLSearchParams(location.search);
-  const t = p.get('t');
-  if (t !== null && !Number.isNaN(Number(t))) relogio.congelado = Number(t);
-  const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches || p.get('mov') === '0';
-  relogio.semMovimento = reduzido;
   const q = p.get('q');
-  if (q === 'alta' || q === 'media' || q === 'baixa') useEstado.getState().setQualidade(q);
-  else if (matchMedia('(pointer: coarse)').matches) useEstado.getState().setQualidade('media');
-}
-
-const ROTULO: Record<Status, string> = {
-  presente: 'Aparece no Google',
-  perdendo: 'Perdendo cliente',
-  construcao: 'Em construção',
-};
-const ICONE: Record<Status, typeof Check> = { presente: Check, perdendo: SearchX, construcao: Hammer };
-
-function Legenda() {
-  const visivel = useEstado((s) => s.entradaFeita);
-  const acesas = useEstado((s) => s.acesasPeloVisitante);
-  const contagem: Record<Status, number> = { presente: 0, perdendo: 0, construcao: 0 };
-  for (const l of lotes) contagem[acesas[l.id] !== undefined ? 'presente' : l.status]++;
-  return (
-    <ul className={`legenda${visivel ? ' legenda--visivel' : ''}`} aria-label="O que as luzes querem dizer">
-      {(Object.keys(ROTULO) as Status[]).map((s) => {
-        const Icone = ICONE[s];
-        return (
-          <li key={s} className={`legenda-item legenda-item--${s}`}>
-            <Icone aria-hidden="true" size={16} strokeWidth={2} />
-            <span>{ROTULO[s]}</span>
-            <span className="legenda-num">{contagem[s]}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function BarraApp() {
-  const itens = [
-    { rotulo: 'Rua', Icone: Store, href: '#rua', ativo: true },
-    { rotulo: 'Trabalhos', Icone: LayoutGrid, href: '#trabalhos' },
-    { rotulo: 'Sua loja', Icone: Building2, href: '#sua-loja' },
-    { rotulo: 'Contato', Icone: MessageCircle, href: '#contato' },
-  ];
-  return (
-    <nav className="barra-app" aria-label="Seções">
-      {itens.map(({ rotulo, Icone, href, ativo }) => (
-        <a key={rotulo} href={href} className={`barra-app-item${ativo ? ' barra-app-item--ativo' : ''}`} aria-current={ativo ? 'page' : undefined}>
-          <Icone aria-hidden="true" size={22} strokeWidth={1.75} />
-          <span>{rotulo}</span>
-        </a>
-      ))}
-    </nav>
-  );
+  const s = useEstado.getState();
+  if (q === 'alta' || q === 'media' || q === 'baixa') s.setQualidade(q);
+  else if (matchMedia('(pointer: coarse)').matches) s.setQualidade('media');
+  const forcar2d = p.get('modo') === '2d';
+  if (forcar2d || !temWebGL() || (aparelhoFraco() && p.get('modo') !== '3d')) s.setModo2d(true);
 }
 
 export function App() {
+  const [montado, setMontado] = useState(false);
   const [carregar3D, setCarregar3D] = useState(false);
-  const [toque, setToque] = useState(true);
+  const momento = useEstado((s) => s.momento);
+  const caso = useEstado((s) => s.caso);
+  const lojaFoco = useEstado((s) => s.lojaFoco);
   const cenaPronta = useEstado((s) => s.cenaPronta);
-  const convidar = useEstado((s) => s.convidar);
+  const modo2d = useEstado((s) => s.modo2d);
+  const celular = useCelular();
+  useRotas();
 
   useEffect(() => {
     lerParametros();
-    setToque(matchMedia('(pointer: coarse)').matches);
-    if (!temWebGL()) return;
+    setMontado(true);
+    if (useEstado.getState().modo2d) return;
     const iniciar = () => setCarregar3D(true);
     const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-    if (ric) ric(iniciar, { timeout: 900 });
-    else setTimeout(iniciar, 200);
+    if (ric) ric(iniciar, { timeout: 800 });
+    else setTimeout(iniciar, 150);
   }, []);
 
-  const cidades = empresa.cidades;
-  const listaCidades = `${cidades.slice(0, -1).join(', ')} e ${cidades[cidades.length - 1]}`;
+  useEffect(() => {
+    document.body.classList.toggle('modo-2d', modo2d);
+    document.body.classList.toggle('modo-3d', !modo2d && montado);
+  }, [modo2d, montado]);
+
+  const naCidade = momento === 'cidade' && !lojaFoco;
+  const painelAberto = !naCidade;
+  // no celular, "Contato" junta o mapa das cidades e o contato num painel só
+  const contatoJunto = celular && (momento === 'perto' || momento === 'contato');
+
+  const secoes = (
+    <>
+      <section className="secao-2d" id="loja" hidden={!lojaFoco || modo2d} aria-label="Loja apagada">
+        {lojaFoco && <LojaApagada id={lojaFoco} />}
+      </section>
+      <section className="secao-2d" id="trabalhos" hidden={momento !== 'trabalhos'} aria-label="Trabalhos">
+        <Trabalhos caso={caso} todos={modo2d} />
+      </section>
+      <section className="secao-2d" id="sua-loja" hidden={momento !== 'sua-loja'} aria-label="Sua loja">
+        <SuaLoja />
+      </section>
+      <section className="secao-2d" id="perto" hidden={momento !== 'perto' && !contatoJunto} aria-label="A Vera perto de você">
+        <Perto />
+      </section>
+      <section className="secao-2d" id="contato" hidden={momento !== 'contato' && !contatoJunto} aria-label="Contato">
+        {contatoJunto && <div className="bloco" />}
+        <Contato />
+      </section>
+    </>
+  );
 
   return (
-    <>
+    <div className={painelAberto ? 'com-painel' : undefined}>
+      <Abertura />
       <header className="topo">
-        <a className="marca" href="/" aria-label="Vera Group, início">
-          Vera<span className="marca-ponto">.</span>
-        </a>
+        <Marca as="a" />
+        <NavDesktop />
       </header>
 
+      <div className="palco" aria-hidden={modo2d ? undefined : 'true'}>
+        <div className={`palco-cena${cenaPronta ? ' palco-cena--pronta' : ''}`}>
+          {carregar3D && !modo2d && (
+            <Suspense fallback={null}>
+              <Cena />
+            </Suspense>
+          )}
+        </div>
+        <picture>
+          <source media="(max-width: 899px)" srcSet="/poster-celular.webp" />
+          <img
+            className="palco-poster"
+            src="/poster-desktop.webp"
+            alt=""
+            fetchPriority="high"
+            onError={(e) => ((e.target as HTMLImageElement).style.visibility = 'hidden')}
+          />
+        </picture>
+        {!modo2d && (
+          <div className="palco-dica" style={{ opacity: naCidade && cenaPronta ? 1 : 0 }}>
+            {celular ? 'Arraste para andar pela rua · toque numa loja' : 'Arraste para andar pela rua · clique numa loja'}
+          </div>
+        )}
+      </div>
+
       <main>
-        <section id="rua" className="palco" aria-labelledby="titulo">
-          <div className={`palco-cena${cenaPronta ? ' palco-cena--pronta' : ''}`}>
-            {carregar3D && (
-              <Suspense fallback={null}>
-                <Cena />
-              </Suspense>
-            )}
-          </div>
-
-          <div className="abertura">
-            <h1 id="titulo" className="abertura-titulo">
-              <span>Na sua rua,</span> <span>quem aparece vende.</span>
-            </h1>
-            <p className="abertura-sub">Site, cardápio digital e Google para o comércio de {listaCidades}.</p>
-            <button type="button" className="botao-principal abertura-botao" onClick={convidar}>
-              {toque ? 'Toque numa loja' : 'Clique numa loja'}
-            </button>
-          </div>
-
-          <Legenda />
-        </section>
+        <Heroi visivel={naCidade || modo2d} />
+        <Legenda visivel={naCidade && !modo2d} />
+        <Painel aberto={painelAberto || modo2d} rotulo="Conteúdo" chave={`${momento}/${caso ?? ''}/${lojaFoco ?? ''}`}>
+          {secoes}
+        </Painel>
       </main>
 
       <BarraApp />
-    </>
+    </div>
   );
 }
