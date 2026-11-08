@@ -146,7 +146,7 @@ export const Cena09: React.FC<CenaProps> = ({ dur, t }) => {
 						</g>
 					</svg>
 				</Plate>
-				<Nota texto="Zona de segurança" inicio={tSeg + 6} x={900} y={950} alinhar="center" corTexto={dentro ? cor.ambar : cor.ciano} />
+				<Nota texto="Zona de segurança" inicio={tSeg + 6} x={300} y={800} alinhar="center" corTexto={dentro ? cor.ambar : cor.ciano} />
 				<Nota texto={dentro ? 'Pessoa detectada · robô desacelera' : 'Sensores monitoram a área'} inicio={tSeg + 12} x={120} y={200} corTexto={dentro ? cor.ambar : cor.branco} tamanho={20} />
 				<PalavraChave texto="SEGURANÇA" inicio={tSeg} x={960} y={130} />
 			</AbsoluteFill>

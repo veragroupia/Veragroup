@@ -145,7 +145,7 @@ export const Cena18: React.FC<CenaProps> = ({ dur, t }) => {
 	const foto = temMidia('cnpem/sirius');
 	const titulo = 1 - prog(f, tEsq + 6, 20, entra);
 	const esq = prog(f, tEsq - 4, 24);
-	const C: [number, number] = [700, 580];
+	const C: [number, number] = [700, 540];
 	const R = 260;
 	const [sx, sy] = posicaoEstacao(R);
 	const lupa = prog(f, tPequenos - 6, 30);
@@ -196,7 +196,7 @@ export const Cena18: React.FC<CenaProps> = ({ dur, t }) => {
 				</Camera>
 				<Nota texto="1 · Acelerador linear" inicio={tEsq + 4} fim={tLuz + 10} x={C[0] - 120} y={C[1] + 50} alinhar="center" corTexto={cor.branco} tamanho={17} />
 				<Nota texto="2 · Acelerador injetor" inicio={tEsq + 16} fim={tLuz + 10} x={C[0]} y={C[1] + R * 0.74 - 30} alinhar="center" corTexto={cor.cinza} tamanho={17} />
-				<Nota texto="3 · Anel de armazenamento" inicio={tEsq + 28} x={C[0]} y={C[1] + R + 52} alinhar="center" corTexto={cor.ciano} tamanho={17} />
+				<Nota texto="3 · Anel de armazenamento" inicio={tEsq + 28} x={C[0]} y={C[1] + R + 40} alinhar="center" corTexto={cor.ciano} tamanho={17} />
 				<Nota texto="Elétrons quase na velocidade da luz" inicio={tEsq + 40} fim={tLuz} x={C[0] + R + 40} y={C[1] + 40} corTexto={cor.branco} tamanho={17} />
 				<Nota texto="4 · Ímãs curvam a trajetória: os elétrons emitem luz síncrotron" inicio={tLuz} x={C[0]} y={C[1] - R - 110} alinhar="center" corTexto={cor.ambar} tamanho={17} />
 				<Nota texto="Estação experimental: a luz ilumina a amostra" inicio={tMateria} x={C[0] + sx + 35} y={C[1] + sy - 100} alinhar="center" corTexto={cor.branco} tamanho={17} />
