@@ -1,0 +1,36 @@
+{
+  "name": "industria-4-0-documentario",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minidocumentário Indústria 4.0 — Remotion",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "lint": "tsc --noEmit",
+    "midias": "node scripts/indexar-midias.mjs",
+    "musica": "node scripts/gerar-trilha.mjs",
+    "previa": "node scripts/indexar-midias.mjs && remotion render Documentario out/previa-sem-narracao.mp4 --codec=h264 --crf=20",
+    "render": "node scripts/indexar-midias.mjs && remotion render Documentario out/industria-4-0.mp4 --codec=h264 --crf=18",
+    "legendas": "node scripts/gerar-srt.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.541",
+    "@remotion/fonts": "^4.0.541",
+    "@remotion/google-fonts": "^4.0.541",
+    "@remotion/media": "^4.0.541",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.541"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@types/d3-geo": "^3.1.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/topojson-client": "^3.1.5",
+    "d3-geo": "^3.1.2",
+    "topojson-client": "^3.1.0",
+    "typescript": "^7.0.2",
+    "world-atlas": "^2.0.2"
+  }
+}

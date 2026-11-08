@@ -1,0 +1,2 @@
+Coloque aqui os arquivos de voz recebidos (M4A, MP3, WAV...). Ex.: 01-davi.m4a
+Depois rode: node scripts/preparar-vozes.mjs

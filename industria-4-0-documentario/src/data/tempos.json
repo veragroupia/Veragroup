@@ -1,0 +1,305 @@
+{
+ "geradoEm": "2026-11-08T21:59:38.254Z",
+ "capitulos": {
+  "01": {
+   "temAudio": false,
+   "origem": "estimativa",
+   "duracao": 55.952,
+   "frases": [
+    {
+     "inicio": 0.15,
+     "fim": 6.909,
+     "confiavel": false
+    },
+    {
+     "inicio": 7.259,
+     "fim": 10.707,
+     "confiavel": false
+    },
+    {
+     "inicio": 11.057,
+     "fim": 16.16,
+     "confiavel": false
+    },
+    {
+     "inicio": 16.91,
+     "fim": 19.876,
+     "confiavel": false
+    },
+    {
+     "inicio": 20.226,
+     "fim": 23.191,
+     "confiavel": false
+    },
+    {
+     "inicio": 23.541,
+     "fim": 27.266,
+     "confiavel": false
+    },
+    {
+     "inicio": 27.616,
+     "fim": 30.857,
+     "confiavel": false
+    },
+    {
+     "inicio": 31.607,
+     "fim": 38.159,
+     "confiavel": false
+    },
+    {
+     "inicio": 38.509,
+     "fim": 45.405,
+     "confiavel": false
+    },
+    {
+     "inicio": 46.155,
+     "fim": 48.776,
+     "confiavel": false
+    },
+    {
+     "inicio": 49.126,
+     "fim": 55.402,
+     "confiavel": false
+    }
+   ]
+  },
+  "02": {
+   "temAudio": false,
+   "origem": "estimativa",
+   "duracao": 58.959,
+   "frases": [
+    {
+     "inicio": 0.15,
+     "fim": 2.495,
+     "confiavel": false
+    },
+    {
+     "inicio": 2.845,
+     "fim": 10.224,
+     "confiavel": false
+    },
+    {
+     "inicio": 10.974,
+     "fim": 16.491,
+     "confiavel": false
+    },
+    {
+     "inicio": 16.841,
+     "fim": 19.945,
+     "confiavel": false
+    },
+    {
+     "inicio": 20.695,
+     "fim": 28.212,
+     "confiavel": false
+    },
+    {
+     "inicio": 28.962,
+     "fim": 33.445,
+     "confiavel": false
+    },
+    {
+     "inicio": 33.795,
+     "fim": 37.795,
+     "confiavel": false
+    },
+    {
+     "inicio": 38.545,
+     "fim": 45.234,
+     "confiavel": false
+    },
+    {
+     "inicio": 45.584,
+     "fim": 49.171,
+     "confiavel": false
+    },
+    {
+     "inicio": 49.921,
+     "fim": 54.748,
+     "confiavel": false
+    },
+    {
+     "inicio": 55.098,
+     "fim": 58.409,
+     "confiavel": false
+    }
+   ]
+  },
+  "03": {
+   "temAudio": false,
+   "origem": "estimativa",
+   "duracao": 59.141,
+   "frases": [
+    {
+     "inicio": 0.15,
+     "fim": 5.253,
+     "confiavel": false
+    },
+    {
+     "inicio": 6.003,
+     "fim": 13.383,
+     "confiavel": false
+    },
+    {
+     "inicio": 14.133,
+     "fim": 21.443,
+     "confiavel": false
+    },
+    {
+     "inicio": 22.193,
+     "fim": 29.021,
+     "confiavel": false
+    },
+    {
+     "inicio": 29.771,
+     "fim": 32.253,
+     "confiavel": false
+    },
+    {
+     "inicio": 32.603,
+     "fim": 38.741,
+     "confiavel": false
+    },
+    {
+     "inicio": 39.491,
+     "fim": 47.216,
+     "confiavel": false
+    },
+    {
+     "inicio": 47.966,
+     "fim": 50.793,
+     "confiavel": false
+    },
+    {
+     "inicio": 51.143,
+     "fim": 58.591,
+     "confiavel": false
+    }
+   ]
+  },
+  "04": {
+   "temAudio": false,
+   "origem": "estimativa",
+   "duracao": 61.226,
+   "frases": [
+    {
+     "inicio": 0.15,
+     "fim": 2.219,
+     "confiavel": false
+    },
+    {
+     "inicio": 2.569,
+     "fim": 10.362,
+     "confiavel": false
+    },
+    {
+     "inicio": 11.112,
+     "fim": 15.94,
+     "confiavel": false
+    },
+    {
+     "inicio": 16.69,
+     "fim": 19.31,
+     "confiavel": false
+    },
+    {
+     "inicio": 19.66,
+     "fim": 23.247,
+     "confiavel": false
+    },
+    {
+     "inicio": 23.597,
+     "fim": 29.872,
+     "confiavel": false
+    },
+    {
+     "inicio": 30.622,
+     "fim": 32.898,
+     "confiavel": false
+    },
+    {
+     "inicio": 33.648,
+     "fim": 36.545,
+     "confiavel": false
+    },
+    {
+     "inicio": 36.895,
+     "fim": 42.412,
+     "confiavel": false
+    },
+    {
+     "inicio": 43.162,
+     "fim": 49.231,
+     "confiavel": false
+    },
+    {
+     "inicio": 49.981,
+     "fim": 53.567,
+     "confiavel": false
+    },
+    {
+     "inicio": 53.917,
+     "fim": 60.676,
+     "confiavel": false
+    }
+   ]
+  },
+  "05": {
+   "temAudio": false,
+   "origem": "estimativa",
+   "duracao": 61.919,
+   "frases": [
+    {
+     "inicio": 0.15,
+     "fim": 4.978,
+     "confiavel": false
+    },
+    {
+     "inicio": 5.328,
+     "fim": 11.397,
+     "confiavel": false
+    },
+    {
+     "inicio": 12.147,
+     "fim": 20.216,
+     "confiavel": false
+    },
+    {
+     "inicio": 20.966,
+     "fim": 23.931,
+     "confiavel": false
+    },
+    {
+     "inicio": 24.281,
+     "fim": 30.971,
+     "confiavel": false
+    },
+    {
+     "inicio": 31.721,
+     "fim": 37.376,
+     "confiavel": false
+    },
+    {
+     "inicio": 37.726,
+     "fim": 42.071,
+     "confiavel": false
+    },
+    {
+     "inicio": 42.821,
+     "fim": 50.338,
+     "confiavel": false
+    },
+    {
+     "inicio": 51.088,
+     "fim": 55.433,
+     "confiavel": false
+    },
+    {
+     "inicio": 55.783,
+     "fim": 61.369,
+     "confiavel": false
+    }
+   ]
+  }
+ }
+}
