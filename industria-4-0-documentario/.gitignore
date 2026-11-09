@@ -1,0 +1,7 @@
+node_modules/
+out/*
+!out/.gitkeep
+public/audio/vozes/originais/*
+!public/audio/vozes/originais/LEIA-ME.txt
+.cache/
+public/audio/vozes/*.wav

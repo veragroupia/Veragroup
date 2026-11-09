@@ -1,0 +1,149 @@
+{
+  "titulo": "Indústria 4.0",
+  "creditos": {
+    "titulo": "Trabalho de Tecnologia — Indústria 4.0",
+    "integrantes": ["Davi Marques", "Alaf Rocha", "Otávio Barbieri", "Pedro Henrique", "João Miguel"]
+  },
+  "capitulos": [
+    {
+      "id": "01",
+      "narrador": "Davi Marques",
+      "tema": "Introdução e revoluções industriais",
+      "audio": "audio/vozes/01-davi.wav",
+      "paragrafos": [
+        [
+          "Como seria trabalhar em uma fábrica que percebe sozinha quando uma máquina está prestes a quebrar?",
+          "Parece ficção científica, mas isso já é realidade.",
+          "Esse é um exemplo da Indústria 4.0, a chamada quarta revolução industrial."
+        ],
+        [
+          "Para entender o nome, vale voltar no tempo.",
+          "A primeira revolução usou máquinas a vapor.",
+          "A segunda trouxe a eletricidade e a produção em massa.",
+          "A terceira introduziu computadores e automação."
+        ],
+        [
+          "Na quarta, o diferencial é a conexão: máquinas, sensores e sistemas trocam dados em tempo real.",
+          "Com isso, uma fábrica pode acompanhar a produção, corrigir falhas e tomar decisões mais rapidamente."
+        ],
+        [
+          "Mas não é só uma mudança nas máquinas.",
+          "É uma transformação na maneira como as pessoas trabalham e como os produtos chegam até nós."
+        ]
+      ]
+    },
+    {
+      "id": "02",
+      "narrador": "Alaf Rocha",
+      "tema": "Principais tecnologias",
+      "audio": "audio/vozes/02-alaf.wav",
+      "paragrafos": [
+        [
+          "Mas como isso funciona na prática?",
+          "Uma das tecnologias é a Internet das Coisas, que conecta máquinas e sensores para compartilhar informações."
+        ],
+        [
+          "Outra é a inteligência artificial, que analisa esses dados e identifica padrões,",
+          "como um equipamento que está perto de falhar."
+        ],
+        [
+          "A robótica também evoluiu: robôs podem ajudar em tarefas repetitivas, perigosas ou que exigem muita precisão."
+        ],
+        [
+          "Já o Big Data permite estudar enormes quantidades de informações,",
+          "e a impressão 3D facilita a criação de protótipos e peças."
+        ],
+        [
+          "Imagine uma linha de produção de carros: sensores identificam mudanças de temperatura e vibração.",
+          "O sistema avisa a equipe antes que uma máquina pare."
+        ],
+        [
+          "Em vez de esperar o problema acontecer, a empresa consegue agir antes.",
+          "Isso é uma fábrica mais conectada e inteligente."
+        ]
+      ]
+    },
+    {
+      "id": "03",
+      "narrador": "Otávio Barbieri",
+      "tema": "Benefícios e impactos",
+      "audio": "audio/vozes/03-otavio.wav",
+      "paragrafos": [
+        ["A principal vantagem da Indústria 4.0 é usar melhor o tempo e os recursos."],
+        ["Quando os sistemas detectam erros mais cedo, as empresas reduzem desperdícios e evitam paradas inesperadas."],
+        ["A tecnologia também ajuda a melhorar a qualidade dos produtos e a segurança de quem trabalha nas fábricas."],
+        ["Outra possibilidade é produzir itens mais personalizados, de acordo com o que o consumidor precisa."],
+        [
+          "E os impactos vão além da indústria.",
+          "Logística, comércio e serviços também podem usar dados e automação para funcionar melhor."
+        ],
+        ["No Brasil, esse avanço pode aumentar a competitividade das empresas e abrir oportunidades para novas profissões."],
+        [
+          "Mas esses benefícios não são automáticos.",
+          "Eles dependem de planejamento, investimento e profissionais preparados para trabalhar com novas tecnologias."
+        ]
+      ]
+    },
+    {
+      "id": "04",
+      "narrador": "Pedro Henrique",
+      "tema": "Desafios",
+      "audio": "audio/vozes/04-pedro.wav",
+      "paragrafos": [
+        [
+          "É aí que aparecem os desafios.",
+          "Modernizar uma fábrica custa dinheiro: é preciso adquirir equipamentos, atualizar sistemas e preparar as equipes."
+        ],
+        ["Para pequenas empresas, esse investimento pode ser ainda mais difícil."],
+        [
+          "Outro desafio é o mercado de trabalho.",
+          "Algumas tarefas repetitivas podem ser automatizadas,",
+          "enquanto crescem as oportunidades em áreas como programação, manutenção e análise de dados."
+        ],
+        ["Isso exige capacitação constante."],
+        [
+          "Também existe o risco de ataques digitais,",
+          "já que máquinas e sistemas conectados precisam proteger informações importantes."
+        ],
+        ["Além disso, nem todas as regiões e empresas brasileiras têm o mesmo acesso à tecnologia."],
+        [
+          "Por isso, a Indústria 4.0 só será realmente positiva",
+          "se o avanço tecnológico vier acompanhado de educação, segurança e oportunidades para mais pessoas."
+        ]
+      ]
+    },
+    {
+      "id": "05",
+      "narrador": "João Miguel",
+      "tema": "CNPEM e conclusão",
+      "audio": "audio/vozes/05-joao.wav",
+      "paragrafos": [
+        [
+          "No Brasil, um exemplo da importância de investir em ciência é o CNPEM,",
+          "o Centro Nacional de Pesquisa em Energia e Materiais, localizado em Campinas, São Paulo."
+        ],
+        ["Lá, cientistas, engenheiros e pesquisadores trabalham em áreas como energia, saúde, nanotecnologia e novos materiais."],
+        [
+          "Um dos seus principais projetos é o Sirius,",
+          "uma estrutura que produz luz síncrotron para estudar a matéria em detalhes extremamente pequenos."
+        ],
+        [
+          "Essas pesquisas podem contribuir para desenvolver medicamentos, melhorar materiais",
+          "e encontrar soluções para desafios da agricultura e da energia."
+        ],
+        ["O CNPEM não é uma fábrica da Indústria 4.0, mas mostra como conhecimento e tecnologia ajudam o país a inovar."],
+        [
+          "No fim, o futuro da indústria depende de máquinas inteligentes,",
+          "mas também de pessoas preparadas, pesquisa científica e investimento em educação."
+        ]
+      ]
+    }
+  ],
+  "destaques": [
+    "Indústria 4.0", "quarta revolução industrial", "máquinas a vapor", "eletricidade", "produção em massa",
+    "computadores e automação", "conexão", "tempo real", "Internet das Coisas", "inteligência artificial",
+    "robótica", "Big Data", "impressão 3D", "temperatura e vibração", "agir antes", "qualidade", "segurança",
+    "personalizados", "competitividade", "novas profissões", "capacitação constante", "ataques digitais",
+    "educação", "CNPEM", "Centro Nacional de Pesquisa em Energia e Materiais", "Sirius", "luz síncrotron"
+  ]
+}
