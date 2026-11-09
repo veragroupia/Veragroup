@@ -11,15 +11,26 @@
 //   4. grava public/audio/vozes/0N-nome.wav (48 kHz, mono, 16 bits).
 // A velocidade e o tom da voz NÃO são alterados.
 //
-// Uso:  node scripts/preparar-vozes.mjs [--sem-tratamento]
+// Opções:
+//   --sem-tratamento   só apara os silêncios das pontas (sem filtros nem normalização)
+//   --so-nivelar       apara e nivela o volume (loudnorm), sem filtro de ruído nem equalização.
+//                      Use quando as gravações JÁ chegaram tratadas.
+// Recortes manuais (opcional): public/audio/vozes/originais/recortes.json, em segundos do arquivo original:
+//   { "02": { "inicio": 2.8 }, "05": { "fim": 56.3 } }
+// Serve para tirar falas que não fazem parte do roteiro (título falado, repetição, "gravando…").
+//
+// Uso:  node scripts/preparar-vozes.mjs [--sem-tratamento | --so-nivelar]
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('../public/audio/vozes/', import.meta.url));
 const pastaOriginais = join(raiz, 'originais');
 const semTratamento = process.argv.includes('--sem-tratamento');
+const soNivelar = process.argv.includes('--so-nivelar');
+const arqRecortes = join(pastaOriginais, 'recortes.json');
+const recortes = existsSync(arqRecortes) ? JSON.parse(readFileSync(arqRecortes, 'utf8')) : {};
 const CAPITULOS = [
 	{ id: '01', nome: 'davi' },
 	{ id: '02', nome: 'alaf' },
@@ -44,6 +55,7 @@ if (!arquivos.length) {
 const aparar =
 	'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.35:detection=rms,' +
 	'areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.5:detection=rms,areverse';
+const nivelar = 'loudnorm=I=-16:LRA=11:TP=-1.5';
 const tratamento = 'highpass=f=70,afftdn=nr=10:nf=-45,equalizer=f=3200:t=q:w=1.2:g=1.5,loudnorm=I=-16:LRA=11:TP=-1.5';
 
 let ok = 0;
@@ -65,11 +77,13 @@ for (const cap of CAPITULOS) {
 		continue;
 	}
 	const antes = duracao(entrada);
-	const filtros = semTratamento ? aparar : `${aparar},${tratamento}`;
-	execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', entrada, '-vn', '-af', filtros, '-ar', '48000', '-ac', '1', '-c:a', 'pcm_s16le', saida]);
+	const filtros = semTratamento ? aparar : soNivelar ? `${aparar},${nivelar}` : `${aparar},${tratamento}`;
+	const rc = recortes[cap.id] ?? {};
+	const janela = [...(rc.inicio != null ? ['-ss', String(rc.inicio)] : []), ...(rc.fim != null ? ['-to', String(rc.fim)] : [])];
+	execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', entrada, ...janela, '-vn', '-af', filtros, '-ar', '48000', '-ac', '1', '-c:a', 'pcm_s16le', saida]);
 	const depois = duracao(saida);
-	console.log(`capítulo ${cap.id} (${cap.nome}): ${original} → ${cap.id}-${cap.nome}.wav · ${antes.toFixed(2)} s → ${depois.toFixed(2)} s (silêncio removido nas pontas: ${(antes - depois).toFixed(2)} s)`);
-	if (antes - depois > 6) console.log(`  atenção: muito silêncio removido; ouça o começo e o fim de ${cap.id}-${cap.nome}.wav`);
+	console.log(`capítulo ${cap.id} (${cap.nome}): ${original} → ${cap.id}-${cap.nome}.wav · ${antes.toFixed(2)} s → ${depois.toFixed(2)} s (removido nas pontas: ${(antes - depois).toFixed(2)} s${janela.length ? `; recorte manual ${JSON.stringify(rc)}` : ''})`);
+	if (antes - depois > 6 && !janela.length) console.log(`  atenção: muito silêncio removido; ouça o começo e o fim de ${cap.id}-${cap.nome}.wav`);
 	ok++;
 }
 console.log(`\n${ok} gravação(ões) preparada(s).`);

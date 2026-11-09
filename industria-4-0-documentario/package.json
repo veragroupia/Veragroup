@@ -5,7 +5,7 @@
   "description": "Minidocumentário Indústria 4.0 — Remotion",
   "type": "module",
   "scripts": {
-    "dev": "remotion studio",
+    "dev": "node scripts/indexar-midias.mjs && remotion studio",
     "lint": "tsc --noEmit",
     "midias": "node scripts/indexar-midias.mjs",
     "musica": "node scripts/gerar-trilha.mjs",

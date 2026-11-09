@@ -4,3 +4,4 @@ out/*
 public/audio/vozes/originais/*
 !public/audio/vozes/originais/LEIA-ME.txt
 .cache/
+public/audio/vozes/*.wav

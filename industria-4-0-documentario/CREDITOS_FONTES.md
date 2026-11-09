@@ -54,4 +54,4 @@ Fontes recomendadas, sempre conferindo a licença de **cada arquivo**:
 | 04 | Pedro Henrique | `public/audio/vozes/04-pedro.wav` |
 | 05 | João Miguel | `public/audio/vozes/05-joao.wav` |
 
-Vozes reais dos integrantes. Nenhuma voz artificial foi usada.
+Vozes reais dos integrantes, recebidas já tratadas e apenas niveladas e aparadas nas pontas. Nenhuma voz artificial foi usada. Os arquivos ficam só no computador (não vão para o Git).

@@ -2,302 +2,355 @@
  "geradoEm": "2026-11-08T21:59:38.254Z",
  "capitulos": {
   "01": {
-   "temAudio": false,
-   "origem": "estimativa",
-   "duracao": 55.952,
+   "temAudio": true,
+   "origem": "pausas+verificacao-asr",
+   "duracao": 46.15,
    "frases": [
     {
-     "inicio": 0.15,
-     "fim": 6.909,
-     "confiavel": false
+     "inicio": 0.29,
+     "fim": 4.85,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 7.259,
-     "fim": 10.707,
-     "confiavel": false
+     "inicio": 5.81,
+     "fim": 8.97,
+     "confiavel": true,
+     "reconhecimento": 0.75
     },
     {
-     "inicio": 11.057,
-     "fim": 16.16,
-     "confiavel": false
+     "inicio": 9.68,
+     "fim": 13.94,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 16.91,
-     "fim": 19.876,
-     "confiavel": false
+     "inicio": 14.71,
+     "fim": 16.73,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 20.226,
-     "fim": 23.191,
-     "confiavel": false
+     "inicio": 17.46,
+     "fim": 19.61,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 23.541,
-     "fim": 27.266,
-     "confiavel": false
+     "inicio": 20.26,
+     "fim": 22.47,
+     "confiavel": false,
+     "reconhecimento": 0.4
     },
     {
-     "inicio": 27.616,
-     "fim": 30.857,
-     "confiavel": false
+     "inicio": 23.09,
+     "fim": 25.3,
+     "confiavel": true,
+     "reconhecimento": 0.83
     },
     {
-     "inicio": 31.607,
-     "fim": 38.159,
-     "confiavel": false
+     "inicio": 26.02,
+     "fim": 31.7,
+     "confiavel": true,
+     "reconhecimento": 0.75
     },
     {
-     "inicio": 38.509,
-     "fim": 45.405,
-     "confiavel": false
+     "inicio": 32.46,
+     "fim": 38.03,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 46.155,
-     "fim": 48.776,
-     "confiavel": false
+     "inicio": 38.96,
+     "fim": 40.67,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 49.126,
-     "fim": 55.402,
-     "confiavel": false
+     "inicio": 41.07,
+     "fim": 45.84,
+     "confiavel": true,
+     "reconhecimento": 0.94
     }
    ]
   },
   "02": {
-   "temAudio": false,
-   "origem": "estimativa",
-   "duracao": 58.959,
+   "temAudio": true,
+   "origem": "pausas+verificacao-asr",
+   "duracao": 49.1,
    "frases": [
     {
-     "inicio": 0.15,
-     "fim": 2.495,
-     "confiavel": false
+     "inicio": 0.2,
+     "fim": 1.91,
+     "confiavel": true,
+     "reconhecimento": 0.83
     },
     {
-     "inicio": 2.845,
-     "fim": 10.224,
-     "confiavel": false
+     "inicio": 2.49,
+     "fim": 8.47,
+     "confiavel": true,
+     "reconhecimento": 0.94
     },
     {
-     "inicio": 10.974,
-     "fim": 16.491,
-     "confiavel": false
+     "inicio": 9.12,
+     "fim": 13.48,
+     "confiavel": false,
+     "reconhecimento": 0.5
     },
     {
-     "inicio": 16.841,
-     "fim": 19.945,
-     "confiavel": false
+     "inicio": 13.73,
+     "fim": 15.74,
+     "confiavel": true,
+     "reconhecimento": 0.88
     },
     {
-     "inicio": 20.695,
-     "fim": 28.212,
-     "confiavel": false
+     "inicio": 16.43,
+     "fim": 23.59,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 28.962,
-     "fim": 33.445,
-     "confiavel": false
+     "inicio": 24.29,
+     "fim": 27.89,
+     "confiavel": true,
+     "reconhecimento": 0.8
     },
     {
-     "inicio": 33.795,
-     "fim": 37.795,
-     "confiavel": false
+     "inicio": 28.32,
+     "fim": 31.65,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 38.545,
-     "fim": 45.234,
-     "confiavel": false
+     "inicio": 32.37,
+     "fim": 37.55,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 45.584,
-     "fim": 49.171,
-     "confiavel": false
+     "inicio": 38.02,
+     "fim": 40.6,
+     "confiavel": true,
+     "reconhecimento": 0.9
     },
     {
-     "inicio": 49.921,
-     "fim": 54.748,
-     "confiavel": false
+     "inicio": 41.88,
+     "fim": 45.87,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 55.098,
-     "fim": 58.409,
-     "confiavel": false
+     "inicio": 46.37,
+     "fim": 48.91,
+     "confiavel": true,
+     "reconhecimento": 1.0
     }
    ]
   },
   "03": {
-   "temAudio": false,
-   "origem": "estimativa",
-   "duracao": 59.141,
+   "temAudio": true,
+   "origem": "pausas+verificacao-asr",
+   "duracao": 42.09,
    "frases": [
     {
-     "inicio": 0.15,
-     "fim": 5.253,
-     "confiavel": false
+     "inicio": 0.07,
+     "fim": 3.84,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 6.003,
-     "fim": 13.383,
-     "confiavel": false
+     "inicio": 4.45,
+     "fim": 9.3,
+     "confiavel": true,
+     "reconhecimento": 0.87
     },
     {
-     "inicio": 14.133,
-     "fim": 21.443,
-     "confiavel": false
+     "inicio": 10.14,
+     "fim": 14.63,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 22.193,
-     "fim": 29.021,
-     "confiavel": false
+     "inicio": 15.41,
+     "fim": 19.96,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 29.771,
-     "fim": 32.253,
-     "confiavel": false
+     "inicio": 20.89,
+     "fim": 22.22,
+     "confiavel": false,
+     "reconhecimento": 0.57
     },
     {
-     "inicio": 32.603,
-     "fim": 38.741,
-     "confiavel": false
+     "inicio": 22.95,
+     "fim": 27.77,
+     "confiavel": true,
+     "reconhecimento": 0.69
     },
     {
-     "inicio": 39.491,
-     "fim": 47.216,
-     "confiavel": false
+     "inicio": 28.64,
+     "fim": 33.49,
+     "confiavel": true,
+     "reconhecimento": 0.88
     },
     {
-     "inicio": 47.966,
-     "fim": 50.793,
-     "confiavel": false
+     "inicio": 34.39,
+     "fim": 36.1,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 51.143,
-     "fim": 58.591,
-     "confiavel": false
+     "inicio": 36.46,
+     "fim": 41.78,
+     "confiavel": true,
+     "reconhecimento": 1.0
     }
    ]
   },
   "04": {
-   "temAudio": false,
-   "origem": "estimativa",
-   "duracao": 61.226,
+   "temAudio": true,
+   "origem": "pausas+verificacao-asr",
+   "duracao": 59.49,
    "frases": [
     {
-     "inicio": 0.15,
-     "fim": 2.219,
-     "confiavel": false
+     "inicio": 0.35,
+     "fim": 1.98,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 2.569,
-     "fim": 10.362,
-     "confiavel": false
+     "inicio": 2.81,
+     "fim": 9.88,
+     "confiavel": true,
+     "reconhecimento": 0.8
     },
     {
-     "inicio": 11.112,
-     "fim": 15.94,
-     "confiavel": false
+     "inicio": 11.53,
+     "fim": 15.34,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 16.69,
-     "fim": 19.31,
-     "confiavel": false
+     "inicio": 16.35,
+     "fim": 18.21,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 19.66,
-     "fim": 23.247,
-     "confiavel": false
+     "inicio": 18.77,
+     "fim": 21.73,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 23.597,
-     "fim": 29.872,
-     "confiavel": false
+     "inicio": 22.33,
+     "fim": 29.0,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 30.622,
-     "fim": 32.898,
-     "confiavel": false
+     "inicio": 30.47,
+     "fim": 32.84,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 33.648,
-     "fim": 36.545,
-     "confiavel": false
+     "inicio": 34.23,
+     "fim": 36.31,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 36.895,
-     "fim": 42.412,
-     "confiavel": false
+     "inicio": 36.6,
+     "fim": 41.66,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 43.162,
-     "fim": 49.231,
-     "confiavel": false
+     "inicio": 42.23,
+     "fim": 46.67,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 49.981,
-     "fim": 53.567,
-     "confiavel": false
+     "inicio": 47.8,
+     "fim": 51.24,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 53.917,
-     "fim": 60.676,
-     "confiavel": false
+     "inicio": 51.37,
+     "fim": 58.88,
+     "confiavel": true,
+     "reconhecimento": 1.0
     }
    ]
   },
   "05": {
-   "temAudio": false,
-   "origem": "estimativa",
-   "duracao": 61.919,
+   "temAudio": true,
+   "origem": "pausas+verificacao-asr",
+   "duracao": 56.3,
    "frases": [
     {
-     "inicio": 0.15,
-     "fim": 4.978,
-     "confiavel": false
+     "inicio": 0.26,
+     "fim": 4.65,
+     "confiavel": true,
+     "reconhecimento": 0.77
     },
     {
-     "inicio": 5.328,
-     "fim": 11.397,
-     "confiavel": false
+     "inicio": 4.76,
+     "fim": 10.68,
+     "confiavel": true,
+     "reconhecimento": 0.79
     },
     {
-     "inicio": 12.147,
-     "fim": 20.216,
-     "confiavel": false
+     "inicio": 11.36,
+     "fim": 18.47,
+     "confiavel": true,
+     "reconhecimento": 0.93
     },
     {
-     "inicio": 20.966,
-     "fim": 23.931,
-     "confiavel": false
+     "inicio": 19.4,
+     "fim": 21.96,
+     "confiavel": true,
+     "reconhecimento": 0.62
     },
     {
-     "inicio": 24.281,
-     "fim": 30.971,
-     "confiavel": false
+     "inicio": 22.51,
+     "fim": 28.94,
+     "confiavel": true,
+     "reconhecimento": 0.93
     },
     {
-     "inicio": 31.721,
-     "fim": 37.376,
-     "confiavel": false
+     "inicio": 29.54,
+     "fim": 34.69,
+     "confiavel": true,
+     "reconhecimento": 0.67
     },
     {
-     "inicio": 37.726,
-     "fim": 42.071,
-     "confiavel": false
+     "inicio": 34.87,
+     "fim": 37.35,
+     "confiavel": true,
+     "reconhecimento": 0.9
     },
     {
-     "inicio": 42.821,
-     "fim": 50.338,
-     "confiavel": false
+     "inicio": 38.38,
+     "fim": 45.91,
+     "confiavel": true,
+     "reconhecimento": 0.81
     },
     {
-     "inicio": 51.088,
-     "fim": 55.433,
-     "confiavel": false
+     "inicio": 46.8,
+     "fim": 50.23,
+     "confiavel": true,
+     "reconhecimento": 1.0
     },
     {
-     "inicio": 55.783,
-     "fim": 61.369,
-     "confiavel": false
+     "inicio": 50.47,
+     "fim": 55.77,
+     "confiavel": true,
+     "reconhecimento": 0.64
     }
    ]
   }

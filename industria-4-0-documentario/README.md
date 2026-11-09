@@ -15,7 +15,7 @@ Vídeo de cerca de 5 minutos, 1920 × 1080, 30 fps, H.264, em português, em cin
 
 - **Parte visual pronta**: as 20 cenas, a trilha e os efeitos sonoros. Tudo é original e foi feito para este projeto.
 - **Prévia sem narração**: `out/previa-sem-narracao.mp4`. Os tempos são **estimados** pelo tamanho de cada frase. As legendas aparecem nesses tempos estimados só para ajudar a revisar.
-- **Vozes**: ainda não foram gravadas. O projeto já está pronto para recebê-las (veja abaixo). Nenhuma voz artificial é usada.
+- **Vozes**: as cinco gravações já foram recebidas, preparadas e alinhadas (veja "Estado das vozes" abaixo). Nenhuma voz artificial é usada. Os WAVs **não vão para o Git** (`.gitignore`); sem eles o vídeo sai sem voz, com os mesmos tempos.
 
 ## Requisitos
 
@@ -47,7 +47,9 @@ Se o Remotion não conseguir baixar o próprio navegador, aponte para um Chrome 
    - aplica um tratamento leve: graves, redução de ruído, presença e volume;
    - grava os arquivos obrigatórios `public/audio/vozes/01-davi.wav`, `02-alaf.wav`, `03-otavio.wav`, `04-pedro.wav` e `05-joao.wav`.
 
-   **A velocidade da voz não muda.** Use `--sem-tratamento` se o filtro de ruído deixar a voz estranha.
+   **A velocidade da voz não muda.** Use `--sem-tratamento` se o filtro de ruído deixar a voz estranha, ou `--so-nivelar` quando as gravações já chegaram tratadas (apara as pontas e iguala o volume, sem mexer em ruído nem equalização).
+
+   Falas que não fazem parte do roteiro (um título falado antes do texto, uma frase repetida no fim) saem com um recorte manual em `public/audio/vozes/originais/recortes.json`, em segundos do arquivo original: `{ "02": { "inicio": 2.75 }, "05": { "fim": 56.3 } }`. O original nunca é alterado.
 3. Sincronize as frases com a voz:
    ```bash
    python3 scripts/alinhar.py            # ou --modelo medium, mais preciso e mais lento
@@ -59,6 +61,8 @@ Se o Remotion não conseguir baixar o próprio navegador, aponte para um Chrome 
    npm run legendas     # out/industria-4-0.srt, com o texto real falado
    npm run render
    ```
+
+**Sem o faster-whisper?** `python3 scripts/alinhar-por-pausas.py` alinha por frase usando as pausas da fala. Com `MODELO_SHERPA=<pasta do modelo> ... --verificar` ele também confere cada trecho com reconhecimento de fala (sherpa-onnx + Whisper, baixado de https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) e ajusta as fronteiras que caírem fora do lugar. Não gera tempo de palavra: dentro de uma frase, os destaques são proporcionais ao texto. O relatório mostra, frase a frase, o que foi ouvido.
 
 **Sem Python?** `node scripts/estimar-tempos.mjs --proporcional` usa a duração real de cada gravação e espalha as frases de forma proporcional. É só aproximado: todas as frases ficam para revisão manual. Saber a duração do arquivo não garante que a fala esteja sincronizada.
 
@@ -72,6 +76,18 @@ Nenhuma cena tem duração fixa. `src/data/linhaDoTempo.ts` calcula a linha do t
 - a trilha abaixa sozinha enquanto alguém fala.
 
 Assim, quando as gravações mudam, o vídeo inteiro se ajusta. A animação acompanha a voz, e não o contrário.
+
+## Estado das vozes
+
+| Capítulo | Arquivo recebido | Observação |
+|---|---|---|
+| 01 Davi | `Industria_4_0_Voz_Limpa.wav` | |
+| 02 Alaf | `Industria_4_0_Narracao_Limpa.mp3` | começa com um título falado ("Tecnologias da Indústria 4.0"), cortado: `inicio: 2.75` |
+| 03 Otávio | `Industria_4_0_audio_tratado.wav` | o `.mp3` com o mesmo nome é o mesmo áudio; foi usado o WAV |
+| 04 Pedro | `industria_4_0_desafios_audio_01.mp3` | pico acima de 0 dBFS no MP3; o nivelamento corrige |
+| 05 João | `Audio_CNPEm_Voz_Tratada_48kHz.wav` | termina com uma fala extra depois de "educação" ("Orientação. O CNPEM."), cortada: `fim: 56.3` |
+
+Os cinco foram aparados e nivelados com `--so-nivelar` (todos entre −16,1 e −16,7 LUFS). O alinhamento está em `src/data/tempos.json`, e o relatório frase a frase em `out/relatorio-alinhamento.txt`.
 
 ## Como colocar imagens e vídeos reais
 
@@ -122,6 +138,7 @@ src/
 scripts/
   preparar-vozes.mjs            conversão e tratamento das gravações (ffmpeg)
   alinhar.py                    alinhamento palavra a palavra (faster-whisper)
+  alinhar-por-pausas.py         alinhamento por frase (pausas + verificação opcional com sherpa-onnx)
   estimar-tempos.mjs            tempos estimados (prévia) ou proporcionais
   gerar-srt.mjs                 legendas .srt
   gerar-trilha.mjs              trilha e efeitos originais, sintetizados (regera public/audio/musica e efeitos)

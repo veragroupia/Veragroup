@@ -20,4 +20,8 @@ const andar = (dir) => {
 };
 andar(join(raiz, 'media'));
 writeFileSync(fileURLToPath(new URL('../src/data/midias.generated.json', import.meta.url)), JSON.stringify(saida, null, 1) + '\n');
+// vozes presentes (o vídeo só usa a narração de capítulos cujo WAV existe)
+const vozes = readdirSync(join(raiz, 'audio/vozes')).filter((n) => /^0\d-.+\.wav$/i.test(n));
+writeFileSync(fileURLToPath(new URL('../src/data/vozes.generated.json', import.meta.url)), JSON.stringify(vozes, null, 1) + '\n');
+console.log(`vozes encontradas: ${vozes.length ? vozes.join(', ') : 'nenhuma'}`);
 console.log(`${Object.keys(saida).length} mídia(s) indexada(s)`, Object.keys(saida));
